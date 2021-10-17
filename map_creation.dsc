@@ -46,9 +46,10 @@ juggernaut_command:
         - else if <context.args.get[2]> == help:
             - define perm cubeville.juggernaut.map.help
             - inject jug_perms
-            - narrate "<&e><&l>Help for Juggernaut maps: <&nl><&a>/juggernaut map create <&lt>name<&gt> <&7>- Starts setup process for a new map <&nl><&a>/juggernaut map remove <&lt>name<&gt> <&7>- Removes a map <&nl><&a>/juggernaut map end <&lt>name<&gt> <&7>- Ends the current game running on this map"
+            - narrate <proc[jug_help_proc].context[map]>
         - else:
-# Insert some help permission system
+            - define perm cubeville.juggernaut.map.help
+            - inject jug_perms
             - define prop_com "/juggernaut map help"
             - narrate <proc[jug_help_arg].context[<[prop_com]>]>
     - else if <context.args.get[1]> == open:
@@ -75,9 +76,10 @@ juggernaut_command:
     - else if <context.args.get[1]> == help:
         - define perm cubeville.juggernaut.help
         - inject jug_perms
-        - narrate "<&e><&l>Help for Juggernaut: <&nl><&a>/juggernaut map <&c><&l><element[^].on_click[/juggernaut<&sp>map<&sp>help].on_hover[<&7>Click<&sp>here<&sp>for<&sp>map<&sp>help.]> <&7>- Commands involving the management of maps <&nl><&a>/juggernaut open <&7>- Opens the map selection menu <&nl><&a>/juggernaut reload <&7>- Reloads the config files <&nl><&a>/juggernaut leave <&7>- Leaves the current game you are in"
+        - narrate <proc[jug_help_proc].context[general]>
     - else:
-# Insert some help permission system
+        - define perm cubeville.juggernaut.help
+        - inject jug_perms
         - define prop_com "/juggernaut help"
         - narrate <proc[jug_help_arg].context[<[prop_com]>]>
 jug_perms:
@@ -87,6 +89,40 @@ jug_perms:
     - if !<player.has_permission[<[perm]>]>:
         - narrate "<&c>No permission!"
         - stop
+jug_help_proc:
+    type: procedure
+    definitions: type
+    script:
+    - define list <list[]>
+    - if <[type]> == general:
+        - define list:->:<&e><&l>Help<&sp>for<&sp>Juggernaut<&co>
+        - if <player.has_permission[cubeville.juggernaut.map.help]>:
+            - define msg "<&a>/juggernaut map <&c><&l><element[^].on_click[/juggernaut<&sp>map<&sp>help].on_hover[<&7>Click<&sp>here<&sp>for<&sp>map<&sp>help.]> <&7>- Commands involving the management of maps"
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.open]>:
+            - define msg "<&a>/juggernaut open <&7>- Opens the map selection menu"
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.reload]>:
+            - define msg "<&a>/juggernaut reload <&7>- Reloads the Juggernaut config files"
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.leave]>:
+            - define msg "<&a>/juggernaut leave <&7>- Leaves the game you are currently in"
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.setspawn]>:
+            - define msg "<&a>/juggernaut setspawn <&7>- Sets the location players spawn after leaving a game"
+            - define list:->:<[msg]>
+    - else if <[type]> == map:
+        - define list:->:<&e><&l>Help<&sp>for<&sp>Juggernaut<&sp>maps<&co>
+        - if <player.has_permission[cubeville.juggernaut.map.create]>:
+            - define msg "<&a>/juggernaut map create <&lt>name<&gt> <&7>- Starts setup process for a new map"
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.map.remove]>:
+            - define msg "<&a>/juggernaut map remove <&lt>name<&gt> <&7>- Removes a map"
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.map.end]>:
+            - define msg "<&a>/juggernaut map end <&lt>name<&gt> <&7>- Ends the current game running on this map"
+            - define list:->:<[msg]>
+    - determine <[list].separated_by[<&nl>]>
 jug_mis_arg:
     type: procedure
     definitions: arg|command
