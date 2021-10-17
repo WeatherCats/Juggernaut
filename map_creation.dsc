@@ -1,4 +1,3 @@
-#Is this working!!!!
 juggernaut_command:
     type: command
     name: juggernaut
