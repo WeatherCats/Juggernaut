@@ -6,6 +6,8 @@ juggernaut_command:
     script:
     - if <context.args.get[1]> == map:
         - if <context.args.get[2]> == create:
+            - define perm cubeville.juggernaut.map.create
+            - inject jug_perms
             - if <context.args.get[3].exists>:
                 - narrate "<&7>Please type in the display name of the map, or type <&a>cancel <&7>to cancel setup. You can use color codes such as &6 for vanilla colors or &#ff55ff for hex colors." targets:<player>
                 - flag <player> jug_setup:1
@@ -15,6 +17,8 @@ juggernaut_command:
                 - define prop_com "/juggernaut map create <&lt>name<&gt>"
                 - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
         - else if <context.args.get[2]> == remove:
+            - define perm cubeville.juggernaut.map.remove
+            - inject jug_perms
             - if <context.args.get[3].exists>:
                 - if <server.flag[juggernaut_maps].keys.contains[<context.args.get[3]>]>:
                     - flag server juggernaut_maps:<server.flag[juggernaut_maps].exclude[<context.args.get[3]>]>
@@ -26,6 +30,8 @@ juggernaut_command:
                 - define prop_com "/juggernaut map remove <&lt>name<&gt>"
                 - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
         - else if <context.args.get[2]> == end:
+            - define perm cubeville.juggernaut.map.end
+            - inject jug_perms
             - if <context.args.get[3].exists>:
                 - if <server.flag[juggernaut_maps].keys.contains[<context.args.get[3]>]>:
                     - flag server juggernaut_maps.<context.args.get[3]>.game_data.countdown:!
@@ -38,28 +44,49 @@ juggernaut_command:
                 - define prop_com "/juggernaut map end <&lt>name<&gt>"
                 - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
         - else if <context.args.get[2]> == help:
+            - define perm cubeville.juggernaut.map.help
+            - inject jug_perms
             - narrate "<&e><&l>Help for Juggernaut maps: <&nl><&a>/juggernaut map create <&lt>name<&gt> <&7>- Starts setup process for a new map <&nl><&a>/juggernaut map remove <&lt>name<&gt> <&7>- Removes a map <&nl><&a>/juggernaut map end <&lt>name<&gt> <&7>- Ends the current game running on this map"
         - else:
+# Insert some help permission system
             - define prop_com "/juggernaut map help"
             - narrate <proc[jug_help_arg].context[<[prop_com]>]>
     - else if <context.args.get[1]> == open:
+        - define perm cubeville.juggernaut.open
+        - inject jug_perms
         - inventory open d:jug_map_selection_gui
     - else if <context.args.get[1]> == reload:
+        - define perm cubeville.juggernaut.reload
+        - inject jug_perms
         - yaml load:juggernaut.yml id:juggernaut
         - narrate "<&a>Juggernaut config reloaded!"
     - else if <context.args.get[1]> == leave:
+        - define perm cubeville.juggernaut.leave
+        - inject jug_perms
         - if <player.has_flag[juggernaut_data.in_game]>:
             - run jug_remove_player def:<player.flag[juggernaut_data].get[map]>
         - else:
             - narrate "<&c>You aren't in a game!"
     - else if <context.args.get[1]> == setspawn:
+        - define perm cubeville.juggernaut.setspawn
+        - inject jug_perms
         - flag <player> jug_setup:spawn
         - narrate "<&7>Please stand where the Juggernaut lobby's spawn should be and type in one of the following: <&nl><&a>save<&7>: Save an auto-corrected location <&nl><&a>exact<&7>: Save your exact location <&nl><&a>cancel<&7>: Cancel setting the spawn." targets:<player>
     - else if <context.args.get[1]> == help:
+        - define perm cubeville.juggernaut.help
+        - inject jug_perms
         - narrate "<&e><&l>Help for Juggernaut: <&nl><&a>/juggernaut map <&c><&l><element[^].on_click[/juggernaut<&sp>map<&sp>help].on_hover[<&7>Click<&sp>here<&sp>for<&sp>map<&sp>help.]> <&7>- Commands involving the management of maps <&nl><&a>/juggernaut open <&7>- Opens the map selection menu <&nl><&a>/juggernaut reload <&7>- Reloads the config files <&nl><&a>/juggernaut leave <&7>- Leaves the current game you are in"
     - else:
+# Insert some help permission system
         - define prop_com "/juggernaut help"
         - narrate <proc[jug_help_arg].context[<[prop_com]>]>
+jug_perms:
+    type: task
+    definitions: perm
+    script:
+    - if !<player.has_permission[<[perm]>]>:
+        - narrate "<&c>No permission!"
+        - stop
 jug_mis_arg:
     type: procedure
     definitions: arg|command
