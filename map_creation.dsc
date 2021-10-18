@@ -434,8 +434,8 @@ jug_kill_script:
             - adjust <player> invulnerable:true
             - adjust <context.entity> clear_body_arrows
             - inventory clear d:<context.entity.inventory>
-            - inventory set d:<context.entity.inventory> o:jug_waiting_kit slot:1
             - inventory open d:JUG_KIT_SELECTION_GUI
+            - inventory set d:<context.entity.inventory> o:jug_waiting_kit slot:1
             - adjust <context.entity> fake_experience:1|<yaml[juggernaut].read[respawn_timer].round>
             - repeat <yaml[juggernaut].read[respawn_timer].round>:
                 - if <context.entity.has_flag[juggernaut_data.in_game]>:
@@ -480,7 +480,8 @@ jug_leave_lobby:
         - foreach <server.flag[juggernaut_maps]>:
             - run jug_stop_game def:<[key]>
         on player right clicks block with:jug_waiting_kit:
-        - inventory open d:JUG_KIT_SELECTION_GUI
+        - if !<player.has_flag[juggernaut_data.kit_selection]>:
+            - inventory open d:JUG_KIT_SELECTION_GUI
         on player right clicks block with:jug_waiting_ready:
         - if <player.flag[juggernaut_data].get[ready_spam]> < <yaml[juggernaut].read[ready_spam_limit]>:
             - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_with[<player.flag[juggernaut_data].get[map]>.game_data.ready_players].as[<server.flag[juggernaut_maps].deep_get[<player.flag[juggernaut_data].get[map]>.game_data.ready_players].include[<player>]>]>
@@ -764,16 +765,19 @@ jug_kit_selection_gui:
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
 jug_kit_inv_click:
     type: world
+    debug: false
     events:
         on player clicks item_flagged:kit in jug_kit_selection_gui:
         - flag <player> juggernaut_data.kit:<context.item.flag[kit]>
+        - flag <player> juggernaut_data.kit_selection:!
         - if <player.has_flag[juggernaut_data.dead]>:
-            - flag <player> juggernaut_data.kit_selection:!
             - if !<player.has_flag[juggernaut_data.dead_countdown]>:
                 - run jug_respawn_script player:<player>
         - inventory close o:<player.inventory>
         after player flagged:juggernaut_data.kit_selection closes jug_kit_selection_gui:
-        - inventory open d:JUG_KIT_SELECTION_GUI
+        - wait 1t
+        - if <player.open_inventory> == <player.inventory>:
+            - inventory open d:JUG_KIT_SELECTION_GUI
 jug_give_kit:
     type: task
     script:
@@ -860,12 +864,15 @@ jug_ninja_ability:
             - cast glowing duration:10000s <player> no_icon no_particles
 jug_ability_actionbar:
     type: task
+    debug: false
     definitions: item|use_time|ability|player_type|display_name
     script:
     - define wait_time <[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>].div[15]>
     - if <[wait_time]> > 1.5:
         - define multiplier <[wait_time].div[1.5].round_up>
         - define wait_time:/:<[multiplier]>
+    - else:
+        - define multiplier 1
     - actionbar "<&e><[ability.display_name]> (<[ability.click_type].to_titlecase> Click) <&7><&l><element[|].repeat[15]>"
     - repeat <[multiplier].mul[15].if_null[15]>:
         - if !<player.has_flag[juggernaut_data.dead]> && <player.has_flag[juggernaut_data.in_game]>:
