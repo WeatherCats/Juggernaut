@@ -369,7 +369,7 @@ jug_kill_script:
         - determine 20
         on player flagged:juggernaut_data.in_game dies:
         - define map <context.entity.flag[juggernaut_data.map]>
-        - if <context.damager.exists> && <context.damager> != <context.entity>:
+        - if <context.damager.exists> && <context.damager> != <context.entity> && <context.damager.is_player>:
             - if <context.damager.has_flag[juggernaut_data.is_juggernaut]>:
                 - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score:+:1
                 - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score_time:<util.time_now>
@@ -390,7 +390,7 @@ jug_kill_script:
                 - narrate "<&4>[<&c>Juggernaut<&4>] <&c><context.damager.name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<context.damager>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
                 - run jug_update_sidebar def:<[map]>|on|<context.damager>
         - else if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
-            - if <context.entity.flag[juggernaut_data.last_damager].exists> && <context.entity.flag[juggernaut_data.last_damager]> != <context.entity>:
+            - if <context.entity.flag[juggernaut_data.last_damager].exists> && <context.entity.flag[juggernaut_data.last_damager]> != <context.entity> && <context.entity.flag[juggernaut_data.last_damager].is_player>:
                 - define killer <context.entity.flag[juggernaut_data.last_damager]>
                 - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:3
                 - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score_time:<util.time_now>
@@ -598,6 +598,10 @@ jug_waiting_leave:
     display name: <&e>Leave Lobby
     lore:
     - <&7>Right click this item to leave the lobby.
+jug_exit_menu_item:
+    type: item
+    material: ARROW
+    display name: <&e><&lt><&lt> Back
 jug_player_compass_gui:
   type: inventory
   inventory: CHEST
@@ -763,17 +767,65 @@ jug_kit_selection_gui:
     - [g] [] [] [] [] [] [] [] [g]
     - [g] [] [] [] [] [] [] [] [g]
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
+jug_kit_preview_gui:
+  type: inventory
+  inventory: CHEST
+  title: Kits
+  size: 54
+  gui: true
+  debug: false
+  definitions:
+    g: black_stained_glass_pane[display_name=<&sp>]
+    b: jug_exit_menu_item[flag=menu:jug_kit_selection_gui;display_name=test]
+  procedural items:
+    - define list <list>
+    - define kit_root <yaml[juggernaut].read[kits].get[<player.flag[juggernaut_data.preview_kit]>]>
+    - define item <[kit_root].get[chestplate_type]>[lore=<&7>Armor:<&sp><&a><[kit_root.armor]><&nl><&7>Armor<&sp>Tougness:<&sp><&a><[kit_root.armor_toughness]><&nl><&7>Speed:<&sp><&a><[kit_root.speed]>;hides=ALL;unbreakable=true]
+    - define list:->:<[item]>
+    - repeat 37:
+        - if <[value]> == 37:
+            - define value 41
+        - if <[kit_root.inventory.<[value]>].exists>:
+            - define item_root <[kit_root.inventory.<[value]>]>
+            - define item <[item_root].get[type].as_item>
+            - define lore <list[]>
+            - if <[item_root.attack_damage].exists>:
+                - define lore:->:<&7>Attack<&sp>Damage:<&sp><&a><[item_root.attack_damage]>
+            - if <[item_root.attack_speed].exists>:
+                - define lore:->:<&7>Attack<&sp>Speed:<&sp><&a><[item_root.attack_speed]>
+            - if <[item_root.projectile_damage].exists>:
+                - define lore:->:<&7>Projectile<&sp>Damage:<&sp><&a><[item_root.projectile_damage]>
+            - adjust def:item lore:<[lore]>
+            - adjust def:item hides:all
+            - adjust def:item unbreakable:true
+            - define list:->:<[item]>
+        - else:
+            - define list:->:air
+    - determine <[list]>
+  slots:
+    - [b] [g] [g] [g] [] [g] [g] [g] [g]
+    - [] [] [] [] [] [] [] [] []
+    - [] [] [] [] [] [] [] [] []
+    - [] [] [] [] [] [] [] [] []
+    - [] [] [] [] [] [] [] [] []
+    - [] [g] [g] [g] [g] [g] [g] [g] [g]
 jug_kit_inv_click:
     type: world
     debug: false
     events:
-        on player clicks item_flagged:kit in jug_kit_selection_gui:
-        - flag <player> juggernaut_data.kit:<context.item.flag[kit]>
-        - flag <player> juggernaut_data.kit_selection:!
-        - if <player.has_flag[juggernaut_data.dead]>:
-            - if !<player.has_flag[juggernaut_data.dead_countdown]>:
-                - run jug_respawn_script player:<player>
-        - inventory close o:<player.inventory>
+        on player clicks item_flagged:kit in jug_*:
+        - if <context.click> == LEFT:
+            - flag <player> juggernaut_data.kit:<context.item.flag[kit]>
+            - flag <player> juggernaut_data.kit_selection:!
+            - if <player.has_flag[juggernaut_data.dead]>:
+                - if !<player.has_flag[juggernaut_data.dead_countdown]>:
+                    - run jug_respawn_script player:<player>
+            - inventory close o:<player.inventory>
+        - else if <context.click> == RIGHT:
+            - flag <player> juggernaut_data.preview_kit:<context.item.flag[kit]>
+            - inventory open d:jug_kit_preview_gui
+        on player clicks item_flagged:menu in jug_*:
+        - inventory open d:<context.item.flag[menu]>
         after player flagged:juggernaut_data.kit_selection closes jug_kit_selection_gui:
         - wait 1t
         - if <player.open_inventory> == <player.inventory>:
@@ -813,6 +865,8 @@ jug_abilities:
         - else:
             - define player_type player
         - if <util.time_now.duration_since[<context.item.flag[last_used]>].in_seconds> >= <[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>]> || !<context.item.flag[last_used].exists>:
+            - inventory adjust slot:<player.held_item_slot> flag:last_used:<util.time_now>
+            - run jug_ability_actionbar def:<context.item.flag[kit_item]>|<util.time_now>|<[ability]>|<[player_type]>|
             - choose <[ability.type]>:
                 - case tank:
                     - cast damage_resistance duration:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]> amplifier:9
@@ -840,14 +894,50 @@ jug_abilities:
                 - case ninja:
                     - cast invisibility duration:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>
                     - run jug_ninja_ability def:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>
-            - inventory adjust slot:<player.held_item_slot> flag:last_used:<util.time_now>
-            - run jug_ability_actionbar def:<context.item.flag[kit_item]>|<util.time_now>|<[ability]>|<[player_type]>|
             - if <[enchant_armor]>:
                 - inventory adjust slot:39 enchantments:<map[].with[luck].as[1]>
                 - wait <[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>s
                 - inventory adjust slot:39 remove_enchantments:<list[].include[luck]>
         - else:
             - narrate "<&c>Your ability is still on cooldown for <&l><[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>].sub[<util.time_now.duration_since[<context.item.flag[last_used]>].in_seconds>].round_up>s<&c>!"
+        on player flagged:juggernaut_data.in_game toggles item_flagged:kit_item:
+        - if <context.state>:
+            - if <player.item_in_hand.advanced_matches[shield]>:
+                - define slot <player.held_item_slot>
+                - define item <player.item_in_hand>
+                - define ability <yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.inventory.<player.item_in_hand.flag[kit_item]>.ability]>
+            - else if <player.item_in_offhand.advanced_matches[shield]>:
+                - define slot 41
+                - define item <player.item_in_offhand>
+                - define ability <yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.inventory.<player.item_in_offhand.flag[kit_item]>.ability]>
+            - if <[ability.click_type]> == shift_shield:
+                - if !<player.is_sneaking>:
+                    - stop
+            - if <player.has_flag[juggernaut_data.is_juggernaut]>:
+                - define player_type juggernaut
+            - else:
+                - define player_type player
+            - if <util.time_now.duration_since[<[item].flag[last_used]>].in_seconds> >= <[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>]> || !<[item].flag[last_used].exists>:
+                - inventory adjust slot:<[slot]> flag:last_used:<util.time_now>
+                - run jug_ability_actionbar def:<[item].flag[kit_item]>|<util.time_now>|<[ability]>|<[player_type]>|
+                - choose <[ability.type]>:
+                    - case knight:
+                        - inventory adjust slot:<[slot]> flag:ability_active:true
+                        - repeat <[ability.bash_duration.<[player_type]>].if_null[<[ability.bash_duration]>].mul[20].round>:
+                            - if <player.inventory.slot[<[slot]>].has_flag[ability_active]>:
+                                - adjust <player> velocity:<player.location.direction.vector.mul[<[ability.bash_velocity.<[player_type]>].if_null[<[ability.bash_velocity]>]>].with_y[-1]>
+                                - hurt <[ability.bash_damage.<[player_type]>].if_null[<[ability.bash_damage]>]> <player.eye_location.find_entities[player].within[2].exclude[<player>]> source:<player> cause:ENTITY_ATTACK
+                                - wait 1t
+                                - adjust <player> velocity:<player.location.direction.vector.mul[0]>
+                - inventory adjust slot:<[slot]> flag:ability_active:!
+            - else:
+                - narrate "<&c>Your ability is still on cooldown for <&l><[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>].sub[<util.time_now.duration_since[<[item].flag[last_used]>].in_seconds>].round_up>s<&c>!"
+        - else:
+            - if <player.item_in_hand.advanced_matches[shield]>:
+                - define slot <player.held_item_slot>
+            - else if <player.item_in_offhand.advanced_matches[shield]>:
+                - define slot 41
+            - inventory adjust slot:<[slot]> flag:ability_active:!
 jug_ninja_ability:
     type: task
     definitions: duration
