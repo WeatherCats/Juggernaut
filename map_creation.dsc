@@ -242,6 +242,7 @@ jug_map_selection_gui:
   debug: false
   definitions:
     g: black_stained_glass_pane[display_name=<&sp>]
+    t: jug_tutorial_item
   procedural items:
     - define list <list>
 # Fills empty slots with player heads, with page number allowing those later im the list access
@@ -257,7 +258,7 @@ jug_map_selection_gui:
     - [g] [] [] [] [] [] [] [] [g]
     - [g] [] [] [] [] [] [] [] [g]
     - [g] [] [] [] [] [] [] [] [g]
-    - [g] [g] [g] [g] [g] [g] [g] [g] [g]
+    - [g] [g] [g] [g] [t] [g] [g] [g] [g]
 jug_inv_click:
     type: world
     events:
@@ -328,6 +329,9 @@ jug_inv_click:
             - inventory set d:<player.inventory> o:jug_player_compass slot:1
             - heal
             - run jug_sidebar_display
+        on player clicks jug_tutorial_item in jug_map_selection_gui:
+            - run jug_tutorial def:intro
+            - inventory close d:<player.inventory>
 jug_kill_script:
     type: world
     events:
@@ -602,6 +606,12 @@ jug_exit_menu_item:
     type: item
     material: ARROW
     display name: <&e><&lt><&lt> Back
+jug_tutorial_item:
+    type: item
+    material: PLAYER_HEAD
+    mechanisms:
+     skull_skin: 937fb91e-562d-4ab3-b495-3c8b183c38bb|eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmFkYzA0OGE3Y2U3OGY3ZGFkNzJhMDdkYTI3ZDg1YzA5MTY4ODFlNTUyMmVlZWQxZTNkYWYyMTdhMzhjMWEifX19
+    display name: <&e>Tutorial
 jug_player_compass_gui:
   type: inventory
   inventory: CHEST
@@ -1006,3 +1016,26 @@ jug_map_interact:
             click trigger:
                 script:
                 - inventory open d:jug_map_selection_gui
+jug_tutorial:
+    type: task
+    definitions: stage
+    script:
+    - choose <[stage]>:
+        - case intro:
+            - clickable jug_tutorial def:points usages:1 save:next
+            - clickable jug_tutorial def:none usages:1 save:prev
+            - narrate "<&c><&l>-/-/-/- <&e>Introduction to Juggernaut <&c><&l>-\-\-\-<&nl><&7>Welcome to Juggernaut! Juggernaut is sort of like a reverse tag in Minecraft, with one player being it (the juggernaut), and everyone else trying to kill them to become the juggernaut. If you want more information, I would recommend clicking the arrows below to look at the next pages!<&nl><&c><&l>-/-/-/- <element[<&e>≪<&sp>Prev].on_click[<entry[prev].command>]> <&c><&l>-/-\- <element[<&e>Next<&sp>≫].on_click[<entry[next].command>]> <&c><&l>-\-\-\-"
+        - case points:
+            - clickable jug_tutorial def:starting usages:1 save:next
+            - clickable jug_tutorial def:intro usages:1 save:prev
+            - narrate "<&c><&l>-/-/-/- <&e>Score & Winning <&c><&l>-\-\-\-<&nl><&7>In order to win, you must reach a certain amount of points specified in the sidebar. There are two ways to get points: Either kill the juggernaut (3), or kill a player as the juggernaut (1).<&nl><&c><&l>-/-/-/- <element[<&e>≪<&sp>Prev].on_click[<entry[prev].command>]> <&c><&l>-/-\- <element[<&e>Next<&sp>≫].on_click[<entry[next].command>]> <&c><&l>-\-\-\-"
+        - case starting:
+            - clickable jug_tutorial def:kits usages:1 save:next
+            - clickable jug_tutorial def:points usages:1 save:prev
+            - narrate "<&c><&l>-/-/-/- <&e>Starting a Game <&c><&l>-\-\-\-<&nl><&7>Once you have clicked a map, you will get put into a waiting lobby. Here, you can pick your kit (your choice resets every time you join a lobby), and you can ready up. If every player is ready, the game countdown is automatically set to be lower and the game will start momentarily.<&nl><&c><&l>-/-/-/- <element[<&e>≪<&sp>Prev].on_click[<entry[prev].command>]> <&c><&l>-/-\- <element[<&e>Next<&sp>≫].on_click[<entry[next].command>]> <&c><&l>-\-\-\-"
+        - case kits:
+            - clickable jug_tutorial def:none usages:1 save:next
+            - clickable jug_tutorial def:starting usages:1 save:prev
+            - narrate "<&c><&l>-/-/-/- <&e>Kits & Abilities <&c><&l>-\-\-\-<&nl><&7>There are several kits you can choose from. Don't worry, you can switch kits every time you die! If you want to see what a kit does, just right click and it will show a preview of the kit. Kits also have abilities that can be activated by clicking on an item while playing, and have various powers. These abilities are even more powerful if you are the juggernaut!<&nl><&c><&l>-/-/-/- <element[<&e>≪<&sp>Prev].on_click[<entry[prev].command>]> <&c><&l>-/-\- <element[<&e>Next<&sp>≫].on_click[<entry[next].command>]> <&c><&l>-\-\-\-"
+        - case none:
+            - narrate "<&c>I'm sorry, that page doesn't exist."
