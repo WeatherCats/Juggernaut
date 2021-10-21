@@ -558,7 +558,8 @@ jug_leave_lobby:
             - inventory set d:<player.inventory> o:jug_waiting_ready slot:2
             - flag <player> juggernaut_data.ready_spam:+:1
             - wait <yaml[juggernaut].read[ready_spam_rate]>s
-            - flag <player> juggernaut_data.ready_spam:-:1
+            - if <player.flag[juggernaut_data.ready_spam].exists>:
+                - flag <player> juggernaut_data.ready_spam:-:1
         - else:
             - narrate "<&c>Please slow down!"
 jug_remove_player:
@@ -810,6 +811,7 @@ jug_kit_selection_gui:
         - define item <[value].get[gui_item].as_item>
         - adjust def:item display_name:<[sec]><&l><&k>;<[prim]><&l><&k>;<[sec]><&l><&k>;<&sp><[prim]><[value].get[display_name]><&sp><[sec]><&l><&k>;<[prim]><&l><&k>;<[sec]><&l><&k>;
         - adjust def:item flag:kit:<[key]>
+        - adjust def:item lore:<&7><[value.description].split_lines_by_width[250].replace[<&nl>].with[<&nl><&7>]>
         - define list <[list].include[<[item]>]>
     - determine <[list]>
   slots:
@@ -847,6 +849,14 @@ jug_kit_preview_gui:
                 - define lore:->:<&7>Attack<&sp>Speed:<&sp><&a><[item_root.attack_speed]>
             - if <[item_root.projectile_damage].exists>:
                 - define lore:->:<&7>Projectile<&sp>Damage:<&sp><&a><[item_root.projectile_damage]>
+            - if <[item_root.ability].exists>:
+                - define lore:->:<&7>Ability:<&sp><&a><[item_root.ability.display_name]>
+                - define lore:->:<&e><&sp>Description<&sp><&7>-<&sp><[item_root.ability.description].split_lines_by_width[250].replace[<&nl>].with[<&nl><&sp><&7>]>
+                - foreach <[item_root.ability.description_stats]>:
+                    - if <[item_root.ability.<[value]>.player].exists> || <[item_root.ability.<[value]>.juggernaut].exists>:
+                        - define lore:->:<&e><&sp><[key]><&sp><&7>-<&sp><&f><[item_root.ability.<[value]>.player].if_null[<[item_root.ability.<[value]>]>]><&7>/<&c><[item_root.ability.<[value]>.juggernaut].if_null[<[item_root.ability.<[value]>]>]>
+                    - else:
+                        - define lore:->:<&e><&sp><[key]><&sp><&7>-<&sp><&a><[item_root.ability.<[value]>]>
             - adjust def:item lore:<[lore]>
             - adjust def:item hides:all
             - adjust def:item unbreakable:true
