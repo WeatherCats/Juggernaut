@@ -381,7 +381,8 @@ jug_kill_script:
         - if <context.damager.exists>:
             - if <context.damager.has_flag[juggernaut_data.is_juggernaut]> || <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
                 - if !<context.damager.has_flag[juggernaut_data.dead]> && !<context.damager.has_flag[juggernaut_data.spectator]>:
-                    - flag <context.entity> juggernaut_data.last_damager:<context.damager>
+                    - if <context.damager> != <player>:
+                        - flag <context.entity> juggernaut_data.last_damager:<context.damager>
                     - if <context.projectile.has_flag[sharpshooter]>:
                         - define ability <yaml[juggernaut].read[kits.<context.damager.flag[juggernaut_data.kit]>.inventory.<context.projectile.flag[kit_item]>.ability]>
                         - if <context.damager.has_flag[juggernaut_data.is_juggernaut]>:
@@ -414,6 +415,9 @@ jug_kill_script:
         on player flagged:juggernaut_data.in_game changes food level:
         - determine 20
         on player flagged:juggernaut_data.in_game dies:
+        - if <context.entity.has_flag[juggernaut_data.dead]>:
+            - determine passively cancelled
+            - stop
         - define map <context.entity.flag[juggernaut_data.map]>
         - if <context.damager.exists> && <context.damager> != <context.entity> && <context.damager.is_player>:
             - if <context.damager.has_flag[juggernaut_data.is_juggernaut]>:
@@ -812,6 +816,9 @@ jug_kit_selection_gui:
         - adjust def:item display_name:<[sec]><&l><&k>;<[prim]><&l><&k>;<[sec]><&l><&k>;<&sp><[prim]><[value].get[display_name]><&sp><[sec]><&l><&k>;<[prim]><&l><&k>;<[sec]><&l><&k>;
         - adjust def:item flag:kit:<[key]>
         - adjust def:item lore:<&7><[value.description].split_lines_by_width[250].replace[<&nl>].with[<&nl><&7>]>
+        - adjust def:item hides:all
+        - if <[item].flag[kit]> == <player.flag[juggernaut_data.kit]>:
+            - adjust def:item enchantments:<map[].with[luck].as[1]>
         - define list <[list].include[<[item]>]>
     - determine <[list]>
   slots:
@@ -950,9 +957,15 @@ jug_abilities:
                     - playeffect effect:heart at:<player.location> quantity:50 offset:0.2,0.8,0.2
                 - case assassin:
                     - repeat <[ability.blink_duration.<[player_type]>].if_null[<[ability.blink_duration]>].mul[20].round>:
-                        - adjust <player> velocity:<player.location.direction.vector.mul[<[ability.blink_velocity.<[player_type]>].if_null[<[ability.blink_velocity]>]>]>
-                        - wait 1t
-                        - adjust <player> velocity:<player.location.direction.vector.mul[0]>
+                        - if !<player.has_flag[juggernaut_data.dead]>:
+                            - adjust <player> velocity:<player.location.direction.vector.mul[<[ability.blink_velocity.<[player_type]>].if_null[<[ability.blink_velocity]>]>]>
+                            - adjust <player> fake_experience:<element[1].sub[<[value].div[<[ability.blink_duration.<[player_type]>].if_null[<[ability.blink_duration]>].mul[20].round>]>]>|0
+                            - wait 1t
+                        - else:
+                            - adjust <player> fake_experience
+                            - stop
+                    - adjust <player> velocity:<player.location.direction.vector.mul[0]>
+                    - adjust <player> fake_experience
                 - case ninja:
                     - cast invisibility duration:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>
                     - run jug_ninja_ability def:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>
@@ -972,6 +985,8 @@ jug_abilities:
                 - define slot 41
                 - define item <player.item_in_offhand>
                 - define ability <yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.inventory.<player.item_in_offhand.flag[kit_item]>.ability]>
+            - else:
+                - stop
             - if <[ability.click_type]> == shift_shield:
                 - if !<player.is_sneaking>:
                     - stop
@@ -986,11 +1001,16 @@ jug_abilities:
                     - case knight:
                         - inventory adjust slot:<[slot]> flag:ability_active:true
                         - repeat <[ability.bash_duration.<[player_type]>].if_null[<[ability.bash_duration]>].mul[20].round>:
-                            - if <player.inventory.slot[<[slot]>].has_flag[ability_active]>:
+                            - if <player.inventory.slot[<[slot]>].has_flag[ability_active]> && !<player.has_flag[juggernaut_data.dead]>:
                                 - adjust <player> velocity:<player.location.direction.vector.mul[<[ability.bash_velocity.<[player_type]>].if_null[<[ability.bash_velocity]>]>].with_y[-1]>
+                                - adjust <player> fake_experience:<element[1].sub[<[value].div[<[ability.bash_duration.<[player_type]>].if_null[<[ability.bash_duration]>].mul[20].round>]>]>|0
                                 - hurt <[ability.bash_damage.<[player_type]>].if_null[<[ability.bash_damage]>]> <player.eye_location.find_entities[player].within[2].exclude[<player>]> source:<player> cause:ENTITY_ATTACK
                                 - wait 1t
-                                - adjust <player> velocity:<player.location.direction.vector.mul[0]>
+                            - else:
+                                - adjust <player> fake_experience
+                                - inventory adjust slot:<[slot]> flag:ability_active:!
+                                - stop
+                        - adjust <player> velocity:<player.location.direction.vector.mul[0]>
                 - inventory adjust slot:<[slot]> flag:ability_active:!
             - else:
                 - narrate "<&c>Your ability is still on cooldown for <&l><[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>].sub[<util.time_now.duration_since[<[item].flag[last_used]>].in_seconds>].round_up>s<&c>!"
@@ -1019,6 +1039,9 @@ jug_ability_actionbar:
     debug: false
     definitions: item|use_time|ability|player_type|display_name
     script:
+    - if !<[ability].exists>:
+        - narrate "<&c>ERROR CODE 70: Invalid Ability."
+        - stop
     - define wait_time <[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>].div[15]>
     - if <[wait_time]> > 1.5:
         - define multiplier <[wait_time].div[1.5].round_up>
