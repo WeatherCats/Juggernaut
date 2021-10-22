@@ -313,6 +313,7 @@ jug_inv_click:
             - inventory clear d:<player.inventory>
             - heal
             - inventory set d:<player.inventory> o:jug_waiting_leave slot:9
+            - inventory set d:<player.inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random] slot:5
             - inventory set d:<player.inventory> o:jug_waiting_ready slot:2
             - inventory set d:<player.inventory> o:jug_waiting_kit slot:1
             - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_with[<[map]>.game_data.countdown].as[<server.flag[juggernaut_maps].deep_get[<[map]>.game_data.saved_countdown]>]>
@@ -350,11 +351,7 @@ jug_inv_click:
                             - run jug_update_sidebar def:<[map]>|on
                             - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys>:
                                 - cast damage_resistance duration:<yaml[juggernaut].read[spawn_protection_duration]> amplifier:<yaml[juggernaut].read[spawn_protection_level].sub[1]> player:<[value]>
-                                - if <[value].has_flag[juggernaut_data.kit]>:
-                                    - run jug_give_kit player:<[value]>
-                                - else:
-                                    - flag <[value]> juggernaut_data.kit:<yaml[juggernaut].read[kits].keys.random>
-                                    - run jug_give_kit player:<[value]>
+                                - run jug_give_kit player:<[value]>
                         - wait 1s
                     - else:
                         - stop
@@ -486,6 +483,7 @@ jug_kill_script:
             - inventory clear d:<context.entity.inventory>
             - inventory open d:JUG_KIT_SELECTION_GUI
             - inventory set d:<context.entity.inventory> o:jug_waiting_kit slot:1
+            - inventory set d:<player.inventory> o:<yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.display_name]>] slot:5
             - adjust <context.entity> fake_experience:1|<yaml[juggernaut].read[respawn_timer].round>
             - repeat <yaml[juggernaut].read[respawn_timer].round>:
                 - if <context.entity.has_flag[juggernaut_data.in_game]>:
@@ -819,7 +817,13 @@ jug_kit_selection_gui:
         - adjust def:item hides:all
         - if <[item].flag[kit]> == <player.flag[juggernaut_data.kit]>:
             - adjust def:item enchantments:<map[].with[luck].as[1]>
-        - define list <[list].include[<[item]>]>
+        - define list:->:<[item]>
+    - repeat <element[28].sub[<[list].size>]>:
+        - define list:->:air
+    - define item FIREWORK_STAR[display_name=<element[<&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;<&sp><&7>Random<&sp>Item<&sp><&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;].escaped>;lore=<&7>Chooses<&sp>a<&sp>random<&sp>kit.;flag=kit:random;hides=all]
+    - if !<player.has_flag[juggernaut_data.kit]>:
+        - define item FIREWORK_STAR[display_name=<element[<&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;<&sp><&7>Random<&sp>Item<&sp><&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;].escaped>;lore=<&7>Chooses<&sp>a<&sp>random<&sp>kit.;flag=kit:random;hides=all;enchantments=<map[].with[luck].as[1]>]
+    - define list:->:<[item]>
     - determine <[list]>
   slots:
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
@@ -827,7 +831,7 @@ jug_kit_selection_gui:
     - [g] [] [] [] [] [] [] [] [g]
     - [g] [] [] [] [] [] [] [] [g]
     - [g] [] [] [] [] [] [] [] [g]
-    - [g] [g] [g] [g] [g] [g] [g] [g] [g]
+    - [g] [g] [g] [g] [] [g] [g] [g] [g]
 jug_kit_preview_gui:
   type: inventory
   inventory: CHEST
@@ -883,16 +887,26 @@ jug_kit_inv_click:
     debug: false
     events:
         on player clicks item_flagged:kit in jug_*:
-        - if <context.click> == LEFT:
-            - flag <player> juggernaut_data.kit:<context.item.flag[kit]>
+        - if <context.item.flag[kit]> != random:
+            - if <context.click> == LEFT:
+                - flag <player> juggernaut_data.kit:<context.item.flag[kit]>
+                - flag <player> juggernaut_data.kit_selection:!
+                - inventory set d:<player.inventory> o:<yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.display_name]>] slot:5
+                - if <player.has_flag[juggernaut_data.dead]>:
+                    - if !<player.has_flag[juggernaut_data.dead_countdown]>:
+                        - run jug_respawn_script player:<player>
+                - inventory close o:<player.inventory>
+            - else if <context.click> == RIGHT:
+                - flag <player> juggernaut_data.preview_kit:<context.item.flag[kit]>
+                - inventory open d:jug_kit_preview_gui
+        - else:
+            - flag <player> juggernaut_data.kit:!
             - flag <player> juggernaut_data.kit_selection:!
+            - inventory set d:<player.inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random] slot:5
             - if <player.has_flag[juggernaut_data.dead]>:
                 - if !<player.has_flag[juggernaut_data.dead_countdown]>:
                     - run jug_respawn_script player:<player>
             - inventory close o:<player.inventory>
-        - else if <context.click> == RIGHT:
-            - flag <player> juggernaut_data.preview_kit:<context.item.flag[kit]>
-            - inventory open d:jug_kit_preview_gui
         on player clicks item_flagged:menu in jug_*:
         - inventory open d:<context.item.flag[menu]>
         after player flagged:juggernaut_data.kit_selection closes jug_kit_selection_gui:
@@ -902,6 +916,8 @@ jug_kit_inv_click:
 jug_give_kit:
     type: task
     script:
+    - if !<player.has_flag[juggernaut_data.kit]>:
+        - flag <player> juggernaut_data.kit:<yaml[juggernaut].read[kits].keys.random>
     - define kit_root <yaml[juggernaut].read[kits].get[<player.flag[juggernaut_data.kit]>]>
     - inventory clear d:<player.inventory>
     - inventory set d:<player.inventory> o:leather_boots[color=#<[kit_root].get[secondary_color]>;attribute_modifiers=<map.with[GENERIC_armor].as[<list[<map.with[operation].as[ADD_NUMBER].with[amount].as[0].with[slot].as[FEET]>]>]>;hides=ALL;unbreakable=true] slot:37
