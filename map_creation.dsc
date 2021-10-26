@@ -4,99 +4,133 @@ juggernaut_command:
     description: Juggernaut command.
     usage: /juggernaut
     script:
-    - if <context.args.get[1]> == map:
-        - if <context.args.get[2]> == create:
-            - define perm cubeville.juggernaut.map.create
+    - choose <context.args.get[1]>:
+        - case map:
+            - choose <context.args.get[2]>:
+                - case create:
+                    - define perm cubeville.juggernaut.map.create
+                    - inject jug_perms
+                    - if <player.has_flag[jug_setup]>:
+                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
+                        - stop
+                    - if !<context.args.get[3].matches_character_set[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_]>:
+                        - narrate "<&c>Invalid characters specified!"
+                        - stop
+                    - if <server.flag[juggernaut_maps.<context.args.get[3]>].exists>:
+                        - narrate "<&c>There is already a map with that name!"
+                        - stop
+                    - if <context.args.get[3].exists>:
+                        - narrate "<&7>Please type in the display name of the map, or type <&a>cancel <&7>to cancel setup. You can use color codes such as &6 for vanilla colors or &#ff55ff for hex colors." targets:<player>
+                        - flag <player> jug_setup:1
+                        - flag <player> current_map_setup_map:<map[]>
+                        - flag <player> current_map_setup_name:<context.args.get[3]>
+                    - else:
+                        - define prop_com "/juggernaut map create <&lt>name<&gt>"
+                        - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
+                - case remove:
+                    - define perm cubeville.juggernaut.map.remove
+                    - inject jug_perms
+                    - if <player.has_flag[jug_setup]>:
+                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
+                        - stop
+                    - if <context.args.get[3].exists>:
+                        - if <server.flag[juggernaut_maps].keys.contains[<context.args.get[3]>]>:
+                            - flag <player> remove_map:<context.args.get[3]>
+                            - flag <player> jug_setup:remove
+                            - narrate "<&7>Please type in <&a>confirm <&7>to remove map, or <&a>cancel <&7>to cancel."
+                        - else:
+                            - narrate "<&c>Invalid map specified."
+                    - else:
+                        - define prop_com "/juggernaut map remove <&lt>name<&gt>"
+                        - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
+                - case end:
+                    - define perm cubeville.juggernaut.map.end
+                    - inject jug_perms
+                    - if <context.args.get[3].exists>:
+                        - if <server.flag[juggernaut_maps].keys.contains[<context.args.get[3]>]>:
+                            - flag server juggernaut_maps.<context.args.get[3]>.game_data.countdown:!
+                            - flag server juggernaut_maps.<context.args.get[3]>.game_data.saved_countdown:!
+                            - run jug_stop_game def:<context.args.get[3]>
+                            - narrate "<&a><context.args.get[3]> <&7>game ended."
+                        - else:
+                            - narrate "<&c>Invalid map specified."
+                    - else:
+                        - define prop_com "/juggernaut map end <&lt>name<&gt>"
+                        - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
+                - case help:
+                    - define perm cubeville.juggernaut.map.help
+                    - inject jug_perms
+                    - narrate <proc[jug_help_proc].context[map]>
+                - default:
+                    - define perm cubeville.juggernaut.map.help
+                    - inject jug_perms
+                    - define prop_com "/juggernaut map help"
+                    - narrate <proc[jug_help_arg].context[<[prop_com]>]>
+        - case open:
+            - define perm cubeville.juggernaut.open
+            - inject jug_perms
+            - inventory open d:jug_map_selection_gui
+        - case reload:
+            - define perm cubeville.juggernaut.reload
+            - inject jug_perms
+            - yaml load:juggernaut.yml id:juggernaut
+            - narrate "<&a>Juggernaut config reloaded!"
+        - case leave:
+            - define perm cubeville.juggernaut.leave
+            - inject jug_perms
+            - if <player.has_flag[juggernaut_data.in_game]>:
+                - run jug_remove_player def:<player.flag[juggernaut_data].get[map]>
+            - else:
+                - narrate "<&c>You aren't in a game!"
+        - case setspawn:
+            - define perm cubeville.juggernaut.setspawn
             - inject jug_perms
             - if <player.has_flag[jug_setup]>:
-                - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
-                - stop
-            - if !<context.args.get[3].matches_character_set[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_]>:
-                - narrate "<&c>Invalid characters specified!"
-                - stop
-            - if <server.flag[juggernaut_maps.<context.args.get[3]>].exists>:
-                - narrate "<&c>There is already a map with that name!"
-                - stop
-            - if <context.args.get[3].exists>:
-                - narrate "<&7>Please type in the display name of the map, or type <&a>cancel <&7>to cancel setup. You can use color codes such as &6 for vanilla colors or &#ff55ff for hex colors." targets:<player>
-                - flag <player> jug_setup:1
-                - flag <player> current_map_setup_map:<map[]>
-                - flag <player> current_map_setup_name:<context.args.get[3]>
-            - else:
-                - define prop_com "/juggernaut map create <&lt>name<&gt>"
-                - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
-        - else if <context.args.get[2]> == remove:
-            - define perm cubeville.juggernaut.map.remove
+                    - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
+                    - stop
+            - flag <player> jug_setup:spawn
+            - narrate "<&7>Please stand where the Juggernaut lobby's spawn should be and type in one of the following: <&nl><&a>save<&7>: Save an auto-corrected location <&nl><&a>exact<&7>: Save your exact location <&nl><&a>cancel<&7>: Cancel setting the spawn." targets:<player>
+        - case help:
+            - define perm cubeville.juggernaut.help
             - inject jug_perms
-            - if <player.has_flag[jug_setup]>:
-                - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
-                - stop
-            - if <context.args.get[3].exists>:
-                - if <server.flag[juggernaut_maps].keys.contains[<context.args.get[3]>]>:
-                    - flag <player> remove_map:<context.args.get[3]>
-                    - flag <player> jug_setup:remove
-                    - narrate "<&7>Please type in <&a>confirm <&7>to remove map, or <&a>cancel <&7>to cancel."
-                - else:
-                    - narrate "<&c>Invalid map specified."
-            - else:
-                - define prop_com "/juggernaut map remove <&lt>name<&gt>"
-                - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
-        - else if <context.args.get[2]> == end:
-            - define perm cubeville.juggernaut.map.end
+            - narrate <proc[jug_help_proc].context[general]>
+        - case debug:
+            - choose <context.args.get[2]>:
+                - case map:
+                    - define perm cubeville.juggernaut.debug.map
+                    - inject jug_perms
+                    - if !<server.flag[juggernaut_maps.<context.args.get[3]>].exists> && <context.args.get[3].exists>:
+                        - narrate "<&c>That map doesn't exist!"
+                        - stop
+                    - else if <context.args.get[3].exists>:
+                        - narrate <server.flag[juggernaut_maps.<context.args.get[3]>]>
+                    - else:
+                        - narrate <server.flag[juggernaut_maps]>
+                - case player:
+                    - define perm cubeville.juggernaut.debug.player
+                    - inject jug_perms
+                    - if !<context.args.get[3].exists>:
+                        - define prop_com "/juggernaut debug player <&lt>name<&gt>"
+                        - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
+                        - stop
+                    - if !<server.match_offline_player[<context.args.get[3]>].exists> || <server.match_offline_player[<context.args.get[3]>].name> != <context.args.get[3]>:
+                        - narrate "<&c>That player doesn't exist!"
+                        - stop
+                    - narrate <server.match_offline_player[<context.args.get[3]>].flag[juggernaut_data]>
+                - case help:
+                    - define perm cubeville.juggernaut.debug.help
+                    - inject jug_perms
+                    - narrate <proc[jug_help_proc].context[debug]>
+                - default:
+                    - define perm cubeville.juggernaut.debug.help
+                    - inject jug_perms
+                    - define prop_com "/juggernaut debug help"
+                    - narrate <proc[jug_help_arg].context[<[prop_com]>]>
+        - default:
+            - define perm cubeville.juggernaut.help
             - inject jug_perms
-            - if <context.args.get[3].exists>:
-                - if <server.flag[juggernaut_maps].keys.contains[<context.args.get[3]>]>:
-                    - flag server juggernaut_maps.<context.args.get[3]>.game_data.countdown:!
-                    - flag server juggernaut_maps.<context.args.get[3]>.game_data.saved_countdown:!
-                    - run jug_stop_game def:<context.args.get[3]>
-                    - narrate "<&a><context.args.get[3]> <&7>game ended."
-                - else:
-                    - narrate "<&c>Invalid map specified."
-            - else:
-                - define prop_com "/juggernaut map end <&lt>name<&gt>"
-                - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
-        - else if <context.args.get[2]> == help:
-            - define perm cubeville.juggernaut.map.help
-            - inject jug_perms
-            - narrate <proc[jug_help_proc].context[map]>
-        - else:
-            - define perm cubeville.juggernaut.map.help
-            - inject jug_perms
-            - define prop_com "/juggernaut map help"
+            - define prop_com "/juggernaut help"
             - narrate <proc[jug_help_arg].context[<[prop_com]>]>
-    - else if <context.args.get[1]> == open:
-        - define perm cubeville.juggernaut.open
-        - inject jug_perms
-        - inventory open d:jug_map_selection_gui
-    - else if <context.args.get[1]> == reload:
-        - define perm cubeville.juggernaut.reload
-        - inject jug_perms
-        - yaml load:juggernaut.yml id:juggernaut
-        - narrate "<&a>Juggernaut config reloaded!"
-    - else if <context.args.get[1]> == leave:
-        - define perm cubeville.juggernaut.leave
-        - inject jug_perms
-        - if <player.has_flag[juggernaut_data.in_game]>:
-            - run jug_remove_player def:<player.flag[juggernaut_data].get[map]>
-        - else:
-            - narrate "<&c>You aren't in a game!"
-    - else if <context.args.get[1]> == setspawn:
-        - define perm cubeville.juggernaut.setspawn
-        - inject jug_perms
-        - if <player.has_flag[jug_setup]>:
-                - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
-                - stop
-        - flag <player> jug_setup:spawn
-        - narrate "<&7>Please stand where the Juggernaut lobby's spawn should be and type in one of the following: <&nl><&a>save<&7>: Save an auto-corrected location <&nl><&a>exact<&7>: Save your exact location <&nl><&a>cancel<&7>: Cancel setting the spawn." targets:<player>
-    - else if <context.args.get[1]> == help:
-        - define perm cubeville.juggernaut.help
-        - inject jug_perms
-        - narrate <proc[jug_help_proc].context[general]>
-    - else:
-        - define perm cubeville.juggernaut.help
-        - inject jug_perms
-        - define prop_com "/juggernaut help"
-        - narrate <proc[jug_help_arg].context[<[prop_com]>]>
 jug_perms:
     type: task
     definitions: perm
@@ -113,6 +147,9 @@ jug_help_proc:
         - define list:->:<&e><&l>Help<&sp>for<&sp>Juggernaut<&co>
         - if <player.has_permission[cubeville.juggernaut.map.help]>:
             - define msg "<&a>/juggernaut map <&c><&l><element[^].on_click[/juggernaut<&sp>map<&sp>help].on_hover[<&7>Click<&sp>here<&sp>for<&sp>map<&sp>help.]> <&7>- Commands involving the management of maps"
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.debug.help]>:
+            - define msg "<&a>/juggernaut debug <&c><&l><element[^].on_click[/juggernaut<&sp>debug<&sp>help].on_hover[<&7>Click<&sp>here<&sp>for<&sp>debug<&sp>help.]> <&7>- Commands to assist with debugging"
             - define list:->:<[msg]>
         - if <player.has_permission[cubeville.juggernaut.open]>:
             - define msg "<&a>/juggernaut open <&7>- Opens the map selection menu"
@@ -136,6 +173,14 @@ jug_help_proc:
             - define list:->:<[msg]>
         - if <player.has_permission[cubeville.juggernaut.map.end]>:
             - define msg "<&a>/juggernaut map end <&lt>name<&gt> <&7>- Ends the current game running on this map"
+            - define list:->:<[msg]>
+    - else if <[type]> == debug:
+        - define list:->:<&e><&l>Help<&sp>for<&sp>debug<&sp>commands<&co>
+        - if <player.has_permission[cubeville.juggernaut.debug.map]>:
+            - define msg "<&a>/juggernaut debug map [name] <&7>- Shows juggernaut data for a map. If no map is specified, shows juggernaut data for all maps."
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.debug.player]>:
+            - define msg "<&a>/juggernaut debug player <&lt>name<&gt> <&7>- Shows juggernaut data for a player"
             - define list:->:<[msg]>
     - determine <[list].separated_by[<&nl>]>
 jug_mis_arg:
@@ -312,6 +357,7 @@ jug_inv_click:
             - teleport <player> to:<server.flag[juggernaut_maps].deep_get[<[map]>.waiting_spawn]>
             - inventory clear d:<player.inventory>
             - heal
+            - adjust <player> invulnerable:true
             - inventory set d:<player.inventory> o:jug_waiting_leave slot:9
             - inventory set d:<player.inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random] slot:5
             - inventory set d:<player.inventory> o:jug_waiting_ready slot:2
@@ -352,6 +398,7 @@ jug_inv_click:
                             - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys>:
                                 - cast damage_resistance duration:<yaml[juggernaut].read[spawn_protection_duration]> amplifier:<yaml[juggernaut].read[spawn_protection_level].sub[1]> player:<[value]>
                                 - run jug_give_kit player:<[value]>
+                                - adjust <[value]> invulnerable:false
                         - wait 1s
                     - else:
                         - stop
@@ -389,8 +436,9 @@ jug_kill_script:
                         - define maxDis <[ability.max_distance.<[player_type]>].if_null[<[ability.max_distance]>]>
                         - define minDam <[ability.min_damage_multiplier.<[player_type]>].if_null[<[ability.min_damage_multiplier]>]>
                         - define maxDam <[ability.max_damage_multiplier.<[player_type]>].if_null[<[ability.max_damage_multiplier]>]>
-                        - define sharp_damage <context.final_damage.mul[<context.projectile.flag[shot_origin].distance[<context.entity.location>].div[<[maxDis].div[<[maxDam].sub[<[minDam]>]>]>].add[<[minDam]>].min[<[maxDam]>]>]>
-                        - narrate "<&7>You dealt <&a><&l><context.projectile.flag[shot_origin].distance[<context.entity.location>].div[<[maxDis].div[<[maxDam].sub[<[minDam]>]>]>].add[<[minDam]>].min[<[maxDam]>].round_to_precision[0.01]>x <&7>more damage!"
+                        - define damageMultiplier <context.projectile.flag[shot_origin].distance[<context.entity.location>].div[<[maxDis].div[<[maxDam].sub[<[minDam]>]>]>].add[<[minDam]>].min[<[maxDam]>]>
+                        - define sharp_damage <context.final_damage.mul[<[damageMultiplier]>]>
+                        - narrate "<&7>You dealt <&a><&l><[damageMultiplier].round_to_precision[0.01].substring[1,<[damageMultiplier].round_to_precision[0.01].index_of[.].add[2]>]>x <&7>more damage!"
                         - determine <[sharp_damage]>
                 - else:
                     - determine passively cancelled
@@ -412,7 +460,10 @@ jug_kill_script:
         on player flagged:juggernaut_data.in_game changes food level:
         - determine 20
         on player flagged:juggernaut_data.in_game dies:
-        - if <context.entity.has_flag[juggernaut_data.dead]>:
+        - if <context.entity.has_flag[juggernaut_data.dead]> || <context.entity.has_flag[juggernaut_data.spectator]>:
+            - determine passively cancelled
+            - stop
+        - if <server.flag[juggernaut_maps.<context.entity.flag[juggernaut_data.map]>.game_data.phase]> != 2:
             - determine passively cancelled
             - stop
         - define map <context.entity.flag[juggernaut_data.map]>
