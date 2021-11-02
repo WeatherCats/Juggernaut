@@ -981,7 +981,10 @@ jug_give_kit:
         - if <[value.projectile_damage].exists>:
             - adjust def:item flag:projectile_damage:<[value.projectile_damage]>
         - adjust def:item hides:all
-        - adjust def:item unbreakable:true
+        - if !<[value.durability].exists>:
+            - adjust def:item unbreakable:true
+        - else:
+            - adjust def:item durability:<[item].max_durability.sub[<[value.durability]>]>
         - inventory set d:<player.inventory> o:<[item]> slot:<[key]>
 jug_abilities:
     type: world
@@ -1057,6 +1060,8 @@ jug_abilities:
             - if <[ability.click_type]> == shift_shield:
                 - if !<player.is_sneaking>:
                     - stop
+            - if <player.item_cooldown[shield].in_seconds> > 0:
+                - stop
             - if <player.has_flag[juggernaut_data.is_juggernaut]>:
                 - define player_type juggernaut
             - else:
@@ -1087,6 +1092,21 @@ jug_abilities:
             - else if <player.item_in_offhand.advanced_matches[shield]>:
                 - define slot 41
             - inventory adjust slot:<[slot]> flag:ability_active:!
+        on player breaks held shield:
+            - narrate <context.slot>
+            - define item <context.item>
+            - define slot <context.slot>
+            - adjust def:item durability:<[item].max_durability.sub[<yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.inventory.<[item].flag[kit_item]>.durability]>]>
+            - wait 1t
+            - inventory set d:<player.inventory> o:air slot:<[slot]>
+            - animate <player> STOP_USE_ITEM
+            - wait 1t
+            - itemcooldown <[item].material> d:<yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.inventory.<[item].flag[kit_item]>.durability_cooldown]>s
+            - inventory set d:<player.inventory> o:<[item]> slot:<[slot]>
+            - wait <yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.inventory.<[item].flag[kit_item]>.durability_cooldown]>s
+            - animate <player> START_USE_OFFHAND_ITEM
+            - wait 1t
+            - animate <player> STOP_USE_ITEM
 jug_ninja_ability:
     type: task
     definitions: duration
@@ -1129,6 +1149,8 @@ jug_load_config:
     type: world
     events:
         on server start:
+        - yaml load:juggernaut.yml id:juggernaut
+        on reload scripts:
         - yaml load:juggernaut.yml id:juggernaut
 jug_viewers:
     type: procedure
