@@ -69,6 +69,7 @@ juggernaut_command:
         - case open:
             - define perm cubeville.juggernaut.open
             - inject jug_perms
+            - flag <player> gui_page:1
             - inventory open d:jug_map_selection_gui
         - case reload:
             - define perm cubeville.juggernaut.reload
@@ -317,9 +318,13 @@ jug_map_selection_gui:
     g: black_stained_glass_pane[display_name=<&sp>]
     t: jug_tutorial_item
   procedural items:
+    - define size 28
+    - define pageMin <[size].mul[<player.flag[gui_page].sub[1]>].add[1]>
+    - define pageMax <[size].mul[<player.flag[gui_page]>]>
+    - define page <server.flag[juggernaut_maps].keys.get[<[pageMin]>].to[<[pageMax]>]>
     - define list <list>
 # Fills empty slots with player heads, with page number allowing those later im the list access
-    - foreach <server.flag[juggernaut_maps].keys>:
+    - foreach <[page]>:
         - define item <server.flag[juggernaut_maps].deep_get[<[value]>.display_item]>
         - adjust def:item display_name:<&f><&l><server.flag[juggernaut_maps].deep_get[<[value]>.display_name].parse_color>
         - adjust def:item flag:map:<[value]>
@@ -338,6 +343,16 @@ jug_map_selection_gui:
             - define players Player
         - adjust def:item lore:<&7><server.flag[juggernaut_maps.<[value]>.game_data.players].keys.size.if_null[0]><&sp><[players]><&nl><[phase]>
         - define list <[list].include[<[item]>]>
+    - repeat <[size].sub[<[page].size>]>:
+        - define list:->:air
+    - if <player.flag[gui_page]> > 1:
+        - define list <[list].include[jug_prev_page_item[flag=menu:jug_map_selection_gui]]>
+    - else:
+        - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
+    - if <server.flag[juggernaut_maps].keys.get[<[pageMax].add[1]>].exists>:
+        - define list <[list].include[jug_next_page_item[flag=menu:jug_map_selection_gui]]>
+    - else:
+        - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
     - determine <[list]>
   slots:
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
@@ -345,7 +360,12 @@ jug_map_selection_gui:
     - [g] [] [] [] [] [] [] [] [g]
     - [g] [] [] [] [] [] [] [] [g]
     - [g] [] [] [] [] [] [] [] [g]
-    - [g] [g] [g] [g] [t] [g] [g] [g] [g]
+    - [] [g] [g] [g] [t] [g] [g] [g] []
+jug_page_proc:
+    type: procedure
+    definitions: size
+    script:
+    - narrate <[size]>
 jug_inv_click:
     type: world
     events:
@@ -469,13 +489,13 @@ jug_kill_script:
         - define map <context.entity.flag[juggernaut_data.map]>
         - if <context.damager.exists> && <context.damager> != <context.entity> && <context.damager.is_player>:
             - if <context.damager.has_flag[juggernaut_data.is_juggernaut]>:
-                - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score:+:1
+                - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score:+:<yaml[juggernaut].read[juggernaut_kill_points]>
                 - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score_time:<util.time_now>
                 - narrate "<&4>[<&c>Juggernaut<&4>] <&e><context.entity.name> <&7>was killed by <&c><context.damager.name>" targets:<proc[jug_viewers].context[<[map]>]>
                 - narrate "<&4>[<&c>Juggernaut<&4>] <&c><context.damager.name> <&7>now has <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<context.damager>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
                 - run jug_update_sidebar def:<[map]>|on|<context.damager>
             - else if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
-                - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score:+:3
+                - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score:+:<yaml[juggernaut].read[kill_juggernaut_points]>
                 - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score_time:<util.time_now>
                 - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<context.damager>
                 - flag <context.entity> juggernaut_data.is_juggernaut:!
@@ -490,7 +510,7 @@ jug_kill_script:
         - else if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
             - if <context.entity.flag[juggernaut_data.last_damager].exists> && <context.entity.flag[juggernaut_data.last_damager]> != <context.entity> && <context.entity.flag[juggernaut_data.last_damager].is_player>:
                 - define killer <context.entity.flag[juggernaut_data.last_damager]>
-                - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:3
+                - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<yaml[juggernaut].read[kill_juggernaut_points]>
                 - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score_time:<util.time_now>
                 - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[killer]>
                 - flag <context.entity> juggernaut_data.is_juggernaut:!
@@ -503,7 +523,7 @@ jug_kill_script:
                 - run jug_update_sidebar def:<[map]>|on|<[killer]>
             - else if <context.entity.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<context.entity>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first.exists>:
                 - define killer <context.entity.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<context.entity>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first>
-                - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:3
+                - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<yaml[juggernaut].read[kill_juggernaut_points]>
                 - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score_time:<util.time_now>
                 - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[killer]>
                 - flag <context.entity> juggernaut_data.is_juggernaut:!
@@ -532,6 +552,7 @@ jug_kill_script:
             - adjust <player> invulnerable:true
             - adjust <context.entity> clear_body_arrows
             - inventory clear d:<context.entity.inventory>
+            - flag <player> gui_page:1
             - inventory open d:JUG_KIT_SELECTION_GUI
             - inventory set d:<context.entity.inventory> o:jug_waiting_kit slot:1
             - inventory set d:<player.inventory> o:<yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.display_name]>] slot:5
@@ -580,6 +601,7 @@ jug_leave_lobby:
             - run jug_stop_game def:<[key]>
         on player right clicks block with:jug_waiting_kit:
         - if !<player.has_flag[juggernaut_data.kit_selection]>:
+            - flag <player> gui_page:1
             - inventory open d:JUG_KIT_SELECTION_GUI
         on player right clicks block with:jug_waiting_ready:
         - if <player.flag[juggernaut_data].get[ready_spam]> < <yaml[juggernaut].read[ready_spam_limit]>:
@@ -702,6 +724,18 @@ jug_exit_menu_item:
     type: item
     material: ARROW
     display name: <&e><&lt><&lt> Back
+jug_prev_page_item:
+    type: item
+    material: ARROW
+    display name: <&e><&lt><&lt> Previous Page
+    flags:
+        page: -1
+jug_next_page_item:
+    type: item
+    material: ARROW
+    display name: <&e> Next Page <&gt><&gt>
+    flags:
+        page: 1
 jug_tutorial_item:
     type: item
     material: PLAYER_HEAD
@@ -718,14 +752,28 @@ jug_player_compass_gui:
   definitions:
     g: black_stained_glass_pane[display_name=<&sp>]
   procedural items:
+    - define size 28
+    - define pageMin <[size].mul[<player.flag[gui_page].sub[1]>].add[1]>
+    - define pageMax <[size].mul[<player.flag[gui_page]>]>
+    - define page <proc[jug_active_players].context[<player.flag[juggernaut_data.map]>].alphanumeric.get[<[pageMin]>].to[<[pageMax]>]>
     - define list <list>
 # Fills empty slots with player heads, with page number allowing those later im the list access
-    - foreach <proc[jug_active_players].context[<player.flag[juggernaut_data.map]>]>:
+    - foreach <[page]>:
         - define item <item[player_head]>
         - adjust def:item skull_skin:<[value].uuid>
         - adjust def:item display_name:<&e><[value].name>
         - adjust def:item flag:player:<[value]>
         - define list <[list].include[<[item]>]>
+    - repeat <[size].sub[<[page].size>]>:
+        - define list:->:air
+    - if <player.flag[gui_page]> > 1:
+        - define list <[list].include[jug_prev_page_item[flag=menu:jug_player_compass_gui]]>
+    - else:
+        - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
+    - if <proc[jug_active_players].context[<player.flag[juggernaut_data.map]>].alphanumeric.get[<[pageMax].add[1]>].exists>:
+        - define list <[list].include[jug_next_page_item[flag=menu:jug_player_compass_gui]]>
+    - else:
+        - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
     - determine <[list]>
   slots:
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
@@ -744,6 +792,7 @@ jug_player_compass_click:
             - narrate "<&c>That player is either no longer playing or dead!"
         on player flagged:juggernaut_data.in_game right clicks block with:jug_player_compass bukkit_priority:LOW:
         - determine passively cancelled
+        - flag <player> gui_page:1
         - inventory open d:jug_player_compass_gui
 jug_player_compass:
     type: item
@@ -857,8 +906,14 @@ jug_kit_selection_gui:
   definitions:
     g: black_stained_glass_pane[display_name=<&sp>]
   procedural items:
+    - define size 28
+    - define pageMin <[size].mul[<player.flag[gui_page].sub[1]>].add[1]>
+    - define pageMax <[size].mul[<player.flag[gui_page]>]>
+    - define pageList <yaml[juggernaut].read[kits].keys.get[<[pageMin]>].to[<[pageMax]>]>
+    - foreach <[pageList]>:
+        - define page.<[value]>:<yaml[juggernaut].read[kits.<[value]>]>
     - define list <list>
-    - foreach <yaml[juggernaut].read[kits]>:
+    - foreach <[page]>:
         - define prim <&color[#<[value].get[primary_color]>]>
         - define sec <&color[#<[value].get[secondary_color]>]>
         - define item <[value].get[gui_item].as_item>
@@ -871,10 +926,18 @@ jug_kit_selection_gui:
         - define list:->:<[item]>
     - repeat <element[28].sub[<[list].size>]>:
         - define list:->:air
+    - if <player.flag[gui_page]> > 1:
+        - define list <[list].include[jug_prev_page_item[flag=menu:jug_kit_selection_gui]]>
+    - else:
+        - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
     - define item FIREWORK_STAR[display_name=<element[<&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;<&sp><&7>Random<&sp>Item<&sp><&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;].escaped>;lore=<&7>Chooses<&sp>a<&sp>random<&sp>kit.;flag=kit:random;hides=all]
     - if !<player.has_flag[juggernaut_data.kit]>:
         - define item FIREWORK_STAR[display_name=<element[<&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;<&sp><&7>Random<&sp>Item<&sp><&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;].escaped>;lore=<&7>Chooses<&sp>a<&sp>random<&sp>kit.;flag=kit:random;hides=all;enchantments=<map[].with[luck].as[1]>]
     - define list:->:<[item]>
+    - if <yaml[juggernaut].read[kits].keys.get[<[pageMax].add[1]>].exists>:
+        - define list <[list].include[jug_next_page_item[flag=menu:jug_kit_selection_gui]]>
+    - else:
+        - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
     - determine <[list]>
   slots:
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
@@ -882,7 +945,7 @@ jug_kit_selection_gui:
     - [g] [] [] [] [] [] [] [] [g]
     - [g] [] [] [] [] [] [] [] [g]
     - [g] [] [] [] [] [] [] [] [g]
-    - [g] [g] [g] [g] [] [g] [g] [g] [g]
+    - [] [g] [g] [g] [] [g] [g] [g] []
 jug_kit_preview_gui:
   type: inventory
   inventory: CHEST
@@ -959,6 +1022,9 @@ jug_kit_inv_click:
                     - run jug_respawn_script player:<player>
             - inventory close o:<player.inventory>
         on player clicks item_flagged:menu in jug_*:
+        - narrate <context.item.flag[page]>
+        - if <context.item.has_flag[page]>:
+            - flag <player> gui_page:+:<context.item.flag[page]>
         - inventory open d:<context.item.flag[menu]>
         after player flagged:juggernaut_data.kit_selection closes jug_kit_selection_gui:
         - wait 1t
@@ -1179,6 +1245,7 @@ jug_map_interact:
         1:
             click trigger:
                 script:
+                - flag <player> gui_page:1
                 - inventory open d:jug_map_selection_gui
 jug_tutorial:
     type: task
@@ -1192,7 +1259,7 @@ jug_tutorial:
         - case points:
             - clickable jug_tutorial def:starting usages:1 save:next
             - clickable jug_tutorial def:intro usages:1 save:prev
-            - narrate "<&c><&l>-/-/-/- <&e>Score & Winning <&c><&l>-\-\-\-<&nl><&7>In order to win, you must reach a certain amount of points specified in the sidebar. There are two ways to get points: Either kill the juggernaut (3), or kill a player as the juggernaut (1).<&nl><&c><&l>-/-/-/- <element[<&e>≪<&sp>Prev].on_click[<entry[prev].command>]> <&c><&l>-/-\- <element[<&e>Next<&sp>≫].on_click[<entry[next].command>]> <&c><&l>-\-\-\-"
+            - narrate "<&c><&l>-/-/-/- <&e>Score & Winning <&c><&l>-\-\-\-<&nl><&7>In order to win, you must reach a certain amount of points specified in the sidebar. There are two ways to get points: Either kill the juggernaut (<&a><yaml[juggernaut].read[kill_juggernaut_points].if_null[null]><&7>), or kill a player as the juggernaut (<&a><yaml[juggernaut].read[juggernaut_kill_points].if_null[null]><&7>).<&nl><&c><&l>-/-/-/- <element[<&e>≪<&sp>Prev].on_click[<entry[prev].command>]> <&c><&l>-/-\- <element[<&e>Next<&sp>≫].on_click[<entry[next].command>]> <&c><&l>-\-\-\-"
         - case starting:
             - clickable jug_tutorial def:kits usages:1 save:next
             - clickable jug_tutorial def:points usages:1 save:prev
