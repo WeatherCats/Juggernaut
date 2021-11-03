@@ -127,6 +127,75 @@ juggernaut_command:
                     - inject jug_perms
                     - define prop_com "/juggernaut debug help"
                     - narrate <proc[jug_help_arg].context[<[prop_com]>]>
+        - case backup:
+            - choose <context.args.get[2]>:
+                - case load:
+                    - define perm cubeville.juggernaut.backup.load
+                    - inject jug_perms
+                    - if <player.has_flag[jug_setup]>:
+                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
+                        - stop
+                    - if <context.args.get[3].exists>:
+                        - if <server.flag[juggernaut_backup_maps].keys.contains[<context.args.get[3]>]>:
+                            - flag <player> load_map:<context.args.get[3]>
+                            - flag <player> jug_setup:backup_load
+                            - if <server.flag[juggernaut_maps].keys.contains[<context.args.get[3]>]>:
+                                - narrate "<&7>Please type in <&a>confirm <&7>to load map from backup, or <&a>cancel <&7>to cancel. <&c>(!!! This map already exists)"
+                            - else:
+                                - narrate "<&7>Please type in <&a>confirm <&7>to load map from backup, or <&a>cancel <&7>to cancel."
+                        - else:
+                            - narrate "<&c>Invalid map specified."
+                    - else:
+                        - define prop_com "/juggernaut backup load <&lt>name<&gt>"
+                        - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
+                - case remove:
+                    - define perm cubeville.juggernaut.backup.remove
+                    - inject jug_perms
+                    - if <player.has_flag[jug_setup]>:
+                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
+                        - stop
+                    - if <context.args.get[3].exists>:
+                        - if <server.flag[juggernaut_backup_maps].keys.contains[<context.args.get[3]>]>:
+                            - flag <player> remove_map:<context.args.get[3]>
+                            - flag <player> jug_setup:backup_remove
+                            - narrate "<&7>Please type in <&a>confirm <&7>to remove backup map, or <&a>cancel <&7>to cancel."
+                        - else:
+                            - narrate "<&c>Invalid map specified."
+                    - else:
+                        - define prop_com "/juggernaut backup remove <&lt>name<&gt>"
+                        - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
+                - case save:
+                    - define perm cubeville.juggernaut.backup.save
+                    - inject jug_perms
+                    - if <player.has_flag[jug_setup]>:
+                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
+                        - stop
+                    - if <context.args.get[3].exists>:
+                        - if <server.flag[juggernaut_maps].keys.contains[<context.args.get[3]>]>:
+                            - flag <player> save_map:<context.args.get[3]>
+                            - flag <player> jug_setup:backup_save
+                            - if <server.flag[juggernaut_backup_maps].keys.contains[<context.args.get[3]>]>:
+                                - narrate "<&7>Please type in <&a>confirm <&7>to save map to a backup, or <&a>cancel <&7>to cancel. <&c>(!!! This backup already exists)"
+                            - else:
+                                - narrate "<&7>Please type in <&a>confirm <&7>to save map to a backup, or <&a>cancel <&7>to cancel."
+                        - else:
+                            - narrate "<&c>Invalid map specified."
+                    - else:
+                        - define prop_com "/juggernaut backup save <&lt>name<&gt>"
+                        - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
+                - case list:
+                    - define perm cubeville.juggernaut.backup.list
+                    - inject jug_perms
+                    - narrate <server.flag[juggernaut_backup_maps].keys.separated_by[,<&sp>]>
+                - case help:
+                    - define perm cubeville.juggernaut.backup.help
+                    - inject jug_perms
+                    - narrate <proc[jug_help_proc].context[backup]>
+                - default:
+                    - define perm cubeville.juggernaut.backup.help
+                    - inject jug_perms
+                    - define prop_com "/juggernaut backup help"
+                    - narrate <proc[jug_help_arg].context[<[prop_com]>]>
         - default:
             - define perm cubeville.juggernaut.help
             - inject jug_perms
@@ -151,6 +220,9 @@ jug_help_proc:
             - define list:->:<[msg]>
         - if <player.has_permission[cubeville.juggernaut.debug.help]>:
             - define msg "<&a>/juggernaut debug <&c><&l><element[^].on_click[/juggernaut<&sp>debug<&sp>help].on_hover[<&7>Click<&sp>here<&sp>for<&sp>debug<&sp>help.]> <&7>- Commands to assist with debugging"
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.backup.help]>:
+            - define msg "<&a>/juggernaut backup <&c><&l><element[^].on_click[/juggernaut<&sp>backup<&sp>help].on_hover[<&7>Click<&sp>here<&sp>for<&sp>backup<&sp>help.]> <&7>- Commands to interact with map backups"
             - define list:->:<[msg]>
         - if <player.has_permission[cubeville.juggernaut.open]>:
             - define msg "<&a>/juggernaut open <&7>- Opens the map selection menu"
@@ -182,6 +254,20 @@ jug_help_proc:
             - define list:->:<[msg]>
         - if <player.has_permission[cubeville.juggernaut.debug.player]>:
             - define msg "<&a>/juggernaut debug player <&lt>name<&gt> <&7>- Shows juggernaut data for a player"
+            - define list:->:<[msg]>
+    - else if <[type]> == backup:
+        - define list:->:<&e><&l>Help<&sp>for<&sp>debug<&sp>commands<&co>
+        - if <player.has_permission[cubeville.juggernaut.backup.save]>:
+            - define msg "<&a>/juggernaut backup save <&lt>name<&gt> <&7>- Saves the current form of the map to a backup. This replaces any current backup of this map."
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.backup.load]>:
+            - define msg "<&a>/juggernaut backup load <&lt>name<&gt> <&7>- Loads the backup of a map to be the current map. This replaces any current version of this map."
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.backup.remove]>:
+            - define msg "<&a>/juggernaut backup remove <&lt>name<&gt> <&7>- Removes the backup of a map."
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.backup.list]>:
+            - define msg "<&a>/juggernaut backup list <&7>- Lists the names of all current backup maps."
             - define list:->:<[msg]>
     - determine <[list].separated_by[<&nl>]>
 jug_mis_arg:
@@ -247,6 +333,7 @@ jug_map_setup_chat:
             - if <context.message> == save:
                 - if <player.we_selection.exists>:
                     - define region <player.we_selection>
+                    - flag <player> current_map_setup_map:<player.flag[current_map_setup_map].with[region].as[<[region]>]>
                     - note <[region]> as:jug_<player.flag[current_map_setup_name]>
                 - else:
                     - narrate "<&c>Make a WorldEdit region selection first."
@@ -282,6 +369,41 @@ jug_map_setup_chat:
                 - stop
             - flag <player> jug_setup:!
             - flag <player> remove_map:!
+        - else if <player.flag[jug_setup]> == backup_remove:
+            - if <context.message> == confirm:
+                - flag server juggernaut_backup_maps.<player.flag[remove_map]>:!
+                - narrate "<&a><player.flag[remove_map]> <&7>backup map successfully removed."
+            - else:
+                - narrate "<&c>Invalid choice!"
+                - stop
+            - flag <player> jug_setup:!
+            - flag <player> remove_map:!
+        - else if <player.flag[jug_setup]> == backup_load:
+            - if <server.flag[juggernaut_maps.<player.flag[load_map]>.game_data.phase]> != 0:
+                - narrate "<&c>There must not be an active game in order to load/save maps to/from a backup!"
+                - stop
+            - if <context.message> == confirm:
+                - note <server.flag[juggernaut_backup_maps.<player.flag[load_map]>.region]> as:jug_<player.flag[load_map]>
+                - flag server juggernaut_maps.<player.flag[load_map]>:<server.flag[juggernaut_backup_maps.<player.flag[load_map]>]>
+                - narrate <server.flag[juggernaut_backup_maps.<player.flag[load_map]>]>
+                - narrate "<&a><player.flag[load_map]> <&7>map successfully loaded."
+            - else:
+                - narrate "<&c>Invalid choice!"
+                - stop
+            - flag <player> jug_setup:!
+            - flag <player> load_map:!
+        - else if <player.flag[jug_setup]> == backup_save:
+            - if <server.flag[juggernaut_maps.<player.flag[save_map]>.game_data.phase]> != 0:
+                - narrate "<&c>There must not be an active game in order to load/save maps to/from a backup!"
+                - stop
+            - if <context.message> == confirm:
+                - flag server juggernaut_backup_maps.<player.flag[save_map]>:<server.flag[juggernaut_maps.<player.flag[save_map]>]>
+                - narrate "<&a><player.flag[save_map]> <&7>map successfully saved to a backup."
+            - else:
+                - narrate "<&c>Invalid choice!"
+                - stop
+            - flag <player> jug_setup:!
+            - flag <player> save_map:!
         on player flagged:jug_setup clicks in player*:
         - if <player.flag[jug_setup]> == 2:
             - determine passively cancelled
