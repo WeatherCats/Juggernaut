@@ -4,26 +4,36 @@ juggernaut_command:
     description: Juggernaut command.
     usage: /juggernaut
     script:
-    - choose <context.args.get[1]>:
+    - define args <context.args>
+    - foreach <[args]>:
+        - if <[value].regex_matches[^-.*]>:
+            - define args:<-:<[value]>
+            - define mods:->:<[value]>
+    - choose <[args].get[1]>:
         - case map:
-            - choose <context.args.get[2]>:
+            - if <[mods].contains[-b]>:
+                - define skipBackup true
+            - narrate <[skipBackup]>
+            - choose <[args].get[2]>:
                 - case create:
                     - define perm cubeville.juggernaut.map.create
                     - inject jug_perms
                     - if <player.has_flag[jug_setup]>:
                         - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
                         - stop
-                    - if !<context.args.get[3].matches_character_set[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_]>:
+                    - if !<[args].get[3].matches_character_set[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_]>:
                         - narrate "<&c>Invalid characters specified!"
                         - stop
-                    - if <server.flag[juggernaut_maps.<context.args.get[3]>].exists>:
+                    - if <server.flag[juggernaut_maps.<[args].get[3]>].exists>:
                         - narrate "<&c>There is already a map with that name!"
                         - stop
-                    - if <context.args.get[3].exists>:
+                    - if <[args].get[3].exists>:
                         - narrate "<&7>Please type in the display name of the map, or type <&a>cancel <&7>to cancel setup. You can use color codes such as &6 for vanilla colors or &#ff55ff for hex colors." targets:<player>
                         - flag <player> jug_setup:1
                         - flag <player> current_map_setup_map:<map[]>
-                        - flag <player> current_map_setup_name:<context.args.get[3]>
+                        - flag <player> current_map_setup_name:<[args].get[3]>
+                        - if <[skipBackup].exists>:
+                            - flag <player> skip_backup:true
                     - else:
                         - define prop_com "/juggernaut map create <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
@@ -33,9 +43,9 @@ juggernaut_command:
                     - if <player.has_flag[jug_setup]>:
                         - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
                         - stop
-                    - if <context.args.get[3].exists>:
-                        - if <server.flag[juggernaut_maps].keys.contains[<context.args.get[3]>]>:
-                            - flag <player> remove_map:<context.args.get[3]>
+                    - if <[args].get[3].exists>:
+                        - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
+                            - flag <player> remove_map:<[args].get[3]>
                             - flag <player> jug_setup:remove
                             - narrate "<&7>Please type in <&a>confirm <&7>to remove map, or <&a>cancel <&7>to cancel."
                         - else:
@@ -46,12 +56,12 @@ juggernaut_command:
                 - case end:
                     - define perm cubeville.juggernaut.map.end
                     - inject jug_perms
-                    - if <context.args.get[3].exists>:
-                        - if <server.flag[juggernaut_maps].keys.contains[<context.args.get[3]>]>:
-                            - flag server juggernaut_maps.<context.args.get[3]>.game_data.countdown:!
-                            - flag server juggernaut_maps.<context.args.get[3]>.game_data.saved_countdown:!
-                            - run jug_stop_game def:<context.args.get[3]>
-                            - narrate "<&a><context.args.get[3]> <&7>game ended."
+                    - if <[args].get[3].exists>:
+                        - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
+                            - flag server juggernaut_maps.<[args].get[3]>.game_data.countdown:!
+                            - flag server juggernaut_maps.<[args].get[3]>.game_data.saved_countdown:!
+                            - run jug_stop_game def:<[args].get[3]>
+                            - narrate "<&a><[args].get[3]> <&7>game ended."
                         - else:
                             - narrate "<&c>Invalid map specified."
                     - else:
@@ -96,28 +106,28 @@ juggernaut_command:
             - inject jug_perms
             - narrate <proc[jug_help_proc].context[general]>
         - case debug:
-            - choose <context.args.get[2]>:
+            - choose <[args].get[2]>:
                 - case map:
                     - define perm cubeville.juggernaut.debug.map
                     - inject jug_perms
-                    - if !<server.flag[juggernaut_maps.<context.args.get[3]>].exists> && <context.args.get[3].exists>:
+                    - if !<server.flag[juggernaut_maps.<[args].get[3]>].exists> && <[args].get[3].exists>:
                         - narrate "<&c>That map doesn't exist!"
                         - stop
-                    - else if <context.args.get[3].exists>:
-                        - narrate <server.flag[juggernaut_maps.<context.args.get[3]>]>
+                    - else if <[args].get[3].exists>:
+                        - narrate <server.flag[juggernaut_maps.<[args].get[3]>]>
                     - else:
                         - narrate <server.flag[juggernaut_maps]>
                 - case player:
                     - define perm cubeville.juggernaut.debug.player
                     - inject jug_perms
-                    - if !<context.args.get[3].exists>:
+                    - if !<[args].get[3].exists>:
                         - define prop_com "/juggernaut debug player <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
                         - stop
-                    - if !<server.match_offline_player[<context.args.get[3]>].exists> || <server.match_offline_player[<context.args.get[3]>].name> != <context.args.get[3]>:
+                    - if !<server.match_offline_player[<[args].get[3]>].exists> || <server.match_offline_player[<[args].get[3]>].name> != <[args].get[3]>:
                         - narrate "<&c>That player doesn't exist!"
                         - stop
-                    - narrate <server.match_offline_player[<context.args.get[3]>].flag[juggernaut_data]>
+                    - narrate <server.match_offline_player[<[args].get[3]>].flag[juggernaut_data]>
                 - case help:
                     - define perm cubeville.juggernaut.debug.help
                     - inject jug_perms
@@ -128,18 +138,18 @@ juggernaut_command:
                     - define prop_com "/juggernaut debug help"
                     - narrate <proc[jug_help_arg].context[<[prop_com]>]>
         - case backup:
-            - choose <context.args.get[2]>:
+            - choose <[args].get[2]>:
                 - case load:
                     - define perm cubeville.juggernaut.backup.load
                     - inject jug_perms
                     - if <player.has_flag[jug_setup]>:
                         - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
                         - stop
-                    - if <context.args.get[3].exists>:
-                        - if <server.flag[juggernaut_backup_maps].keys.contains[<context.args.get[3]>]>:
-                            - flag <player> load_map:<context.args.get[3]>
+                    - if <[args].get[3].exists>:
+                        - if <server.flag[juggernaut_backup_maps].keys.contains[<[args].get[3]>]>:
+                            - flag <player> load_map:<[args].get[3]>
                             - flag <player> jug_setup:backup_load
-                            - if <server.flag[juggernaut_maps].keys.contains[<context.args.get[3]>]>:
+                            - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
                                 - narrate "<&7>Please type in <&a>confirm <&7>to load map from backup, or <&a>cancel <&7>to cancel. <&c>(!!! This map already exists)"
                             - else:
                                 - narrate "<&7>Please type in <&a>confirm <&7>to load map from backup, or <&a>cancel <&7>to cancel."
@@ -154,9 +164,9 @@ juggernaut_command:
                     - if <player.has_flag[jug_setup]>:
                         - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
                         - stop
-                    - if <context.args.get[3].exists>:
-                        - if <server.flag[juggernaut_backup_maps].keys.contains[<context.args.get[3]>]>:
-                            - flag <player> remove_map:<context.args.get[3]>
+                    - if <[args].get[3].exists>:
+                        - if <server.flag[juggernaut_backup_maps].keys.contains[<[args].get[3]>]>:
+                            - flag <player> remove_map:<[args].get[3]>
                             - flag <player> jug_setup:backup_remove
                             - narrate "<&7>Please type in <&a>confirm <&7>to remove backup map, or <&a>cancel <&7>to cancel."
                         - else:
@@ -170,11 +180,11 @@ juggernaut_command:
                     - if <player.has_flag[jug_setup]>:
                         - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
                         - stop
-                    - if <context.args.get[3].exists>:
-                        - if <server.flag[juggernaut_maps].keys.contains[<context.args.get[3]>]>:
-                            - flag <player> save_map:<context.args.get[3]>
+                    - if <[args].get[3].exists>:
+                        - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
+                            - flag <player> save_map:<[args].get[3]>
                             - flag <player> jug_setup:backup_save
-                            - if <server.flag[juggernaut_backup_maps].keys.contains[<context.args.get[3]>]>:
+                            - if <server.flag[juggernaut_backup_maps].keys.contains[<[args].get[3]>]>:
                                 - narrate "<&7>Please type in <&a>confirm <&7>to save map to a backup, or <&a>cancel <&7>to cancel. <&c>(!!! This backup already exists)"
                             - else:
                                 - narrate "<&7>Please type in <&a>confirm <&7>to save map to a backup, or <&a>cancel <&7>to cancel."
@@ -239,10 +249,10 @@ jug_help_proc:
     - else if <[type]> == map:
         - define list:->:<&e><&l>Help<&sp>for<&sp>Juggernaut<&sp>maps<&co>
         - if <player.has_permission[cubeville.juggernaut.map.create]>:
-            - define msg "<&a>/juggernaut map create <&lt>name<&gt> <&7>- Starts setup process for a new map"
+            - define msg "<&a>/juggernaut map create <&lt>name<&gt> <element[<&e>[-b]].on_hover[<&7>Prevent<&sp>saving<&sp>changes<&sp>to<&sp>backup]> <&7>- Starts setup process for a new map"
             - define list:->:<[msg]>
         - if <player.has_permission[cubeville.juggernaut.map.remove]>:
-            - define msg "<&a>/juggernaut map remove <&lt>name<&gt> <&7>- Removes a map"
+            - define msg "<&a>/juggernaut map remove <&lt>name<&gt> <element[<&e>[-b]].on_hover[<&7>Prevent<&sp>saving<&sp>changes<&sp>to<&sp>backup]> <&7>- Removes a map"
             - define list:->:<[msg]>
         - if <player.has_permission[cubeville.juggernaut.map.end]>:
             - define msg "<&a>/juggernaut map end <&lt>name<&gt> <&7>- Ends the current game running on this map"
@@ -289,6 +299,10 @@ jug_map_setup_chat:
             - flag <player> jug_setup:!
             - flag <player> current_map_setup_map:!
             - flag <player> current_map_setup_name:!
+            - flag <player> skip_backup:!
+            - flag <player> remove_map:!
+            - flag <player> save_map:!
+            - flag <player> load_map:!
             - narrate <&a>Cancelled!
             - stop
         - if <player.flag[jug_setup]> == 1:
@@ -342,7 +356,9 @@ jug_map_setup_chat:
             - if !<server.has_flag[juggernaut_maps]>:
                 - flag server juggernaut_maps:<map[]>
             - flag server juggernaut_maps.<player.flag[current_map_setup_name]>:<player.flag[current_map_setup_map]>
-            - flag server juggernaut_backup_maps.<player.flag[current_map_setup_name]>:<player.flag[current_map_setup_map]>
+            - if !<player.has_flag[skip_backup]>:
+                - flag server juggernaut_backup_maps.<player.flag[current_map_setup_name]>:<player.flag[current_map_setup_map]>
+                - flag <player> skip_backup:!
             - flag <player> jug_setup:!
             - narrate <server.flag[juggernaut_maps]>
         - else if <player.flag[jug_setup]> == spawn:
@@ -363,6 +379,9 @@ jug_map_setup_chat:
                 - flag server juggernaut_maps.<player.flag[remove_map]>.game_data.countdown:!
                 - flag server juggernaut_maps.<player.flag[remove_map]>.game_data.saved_countdown:!
                 - flag server juggernaut_maps.<player.flag[remove_map]>:!
+                - if !<player.has_flag[skip_backup]>:
+                    - flag server juggernaut_backup_maps.<player.flag[remove_map]>:!
+                    - flag <player> skip_backup:!
                 - narrate "<&a><player.flag[remove_map]> <&7>map successfully removed."
             - else:
                 - narrate "<&c>Invalid choice!"
@@ -379,7 +398,7 @@ jug_map_setup_chat:
             - flag <player> jug_setup:!
             - flag <player> remove_map:!
         - else if <player.flag[jug_setup]> == backup_load:
-            - if <server.flag[juggernaut_maps.<player.flag[load_map]>.game_data.phase]> != 0:
+            - if <server.flag[juggernaut_maps.<player.flag[load_map]>.game_data.phase].if_null[0]> != 0:
                 - narrate "<&c>There must not be an active game in order to load/save maps to/from a backup!"
                 - stop
             - if <context.message> == confirm:
@@ -393,7 +412,7 @@ jug_map_setup_chat:
             - flag <player> jug_setup:!
             - flag <player> load_map:!
         - else if <player.flag[jug_setup]> == backup_save:
-            - if <server.flag[juggernaut_maps.<player.flag[save_map]>.game_data.phase]> != 0:
+            - if <server.flag[juggernaut_maps.<player.flag[save_map]>.game_data.phase].if_null[0]> != 0:
                 - narrate "<&c>There must not be an active game in order to load/save maps to/from a backup!"
                 - stop
             - if <context.message> == confirm:
@@ -714,7 +733,7 @@ jug_leave_lobby:
     events:
         on player right clicks block with:jug_waiting_leave:
         - run jug_remove_player def:<player.flag[juggernaut_data].get[map]>
-        on player quits:
+        on player flagged:juggernaut_data.in_game quits:
         - run jug_remove_player def:<player.flag[juggernaut_data].get[map]>
         on player flagged:juggernaut_data.clear_player joins:
         - run jug_remove_player def:<player.flag[juggernaut_data].get[map]>
