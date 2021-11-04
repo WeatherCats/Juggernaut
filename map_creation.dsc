@@ -67,6 +67,33 @@ juggernaut_command:
                     - else:
                         - define prop_com "/juggernaut map end <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
+                - case close:
+                    - define perm cubeville.juggernaut.map.close
+                    - inject jug_perms
+                    - if <[args].get[3].exists>:
+                        - if <server.flag[juggernaut_maps.<[args].get[3]>.game_data.phase]> != 0:
+                            - narrate "<&c>There is a game active on this map! In order to close this map, there must be no game currently active."
+                            - stop
+                        - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
+                            - flag server juggernaut_maps.<[args].get[3]>.game_data.phase:-1
+                            - narrate "<&a><[args].get[3]> <&7>closed."
+                        - else:
+                            - narrate "<&c>Invalid map specified."
+                    - else:
+                        - define prop_com "/juggernaut map close <&lt>name<&gt>"
+                        - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
+                - case open:
+                    - define perm cubeville.juggernaut.map.open
+                    - inject jug_perms
+                    - if <[args].get[3].exists>:
+                        - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
+                            - flag server juggernaut_maps.<[args].get[3]>.game_data.phase:0
+                            - narrate "<&a><[args].get[3]> <&7>opened."
+                        - else:
+                            - narrate "<&c>Invalid map specified."
+                    - else:
+                        - define prop_com "/juggernaut map open <&lt>name<&gt>"
+                        - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
                 - case help:
                     - define perm cubeville.juggernaut.map.help
                     - inject jug_perms
@@ -256,6 +283,12 @@ jug_help_proc:
             - define list:->:<[msg]>
         - if <player.has_permission[cubeville.juggernaut.map.end]>:
             - define msg "<&a>/juggernaut map end <&lt>name<&gt> <&7>- Ends the current game running on this map"
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.map.close]>:
+            - define msg "<&a>/juggernaut map close <&lt>name<&gt> <&7>- Closes this map, meaning nobody can enter"
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.map.open]>:
+            - define msg "<&a>/juggernaut map open <&lt>name<&gt> <&7>- Opens this map, allowing players to enter"
             - define list:->:<[msg]>
     - else if <[type]> == debug:
         - define list:->:<&e><&l>Help<&sp>for<&sp>debug<&sp>commands<&co>
@@ -579,6 +612,8 @@ jug_inv_click:
         on player clicks jug_tutorial_item in jug_map_selection_gui:
             - run jug_tutorial def:intro
             - inventory close d:<player.inventory>
+        on player flagged:juggernaut_data.in_game clicks item in player*:
+            - determine passively cancelled
 jug_kill_script:
     type: world
     events:
@@ -1310,10 +1345,12 @@ jug_abilities:
             - wait 1t
             - itemcooldown <[item].material> d:<yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.inventory.<[item].flag[kit_item]>.durability_cooldown]>s
             - inventory set d:<player.inventory> o:<[item]> slot:<[slot]>
+            # If this ever starts activating the ability while the player was sneaking when the cooldown ends (but without the player touching the shield), remove everything from here to the next comment
             - wait <yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.inventory.<[item].flag[kit_item]>.durability_cooldown]>s
             - animate <player> START_USE_OFFHAND_ITEM
             - wait 1t
             - animate <player> STOP_USE_ITEM
+            # Stop removing here.
 jug_ninja_ability:
     type: task
     definitions: duration
