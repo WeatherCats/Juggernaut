@@ -770,8 +770,6 @@ jug_leave_lobby:
         - run jug_remove_player def:<player.flag[juggernaut_data].get[map]>
         on player flagged:juggernaut_data.in_game quits:
         - run jug_remove_player def:<player.flag[juggernaut_data].get[map]>
-        on player flagged:juggernaut_data.clear_player joins:
-        - run jug_remove_player def:<player.flag[juggernaut_data].get[map]>
         on server start:
         - foreach <server.flag[juggernaut_maps]>:
             - run jug_stop_game def:<[key]>
@@ -817,9 +815,6 @@ jug_remove_player:
     type: task
     definitions: map
     script:
-    - if !<player.is_online>:
-        - flag <player> juggernaut_data.clear_player:true
-        - stop
     - if <server.flag[juggernaut_maps.<[map]>.game_data.ready_players].size> > 0:
         - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_with[<[map]>.game_data.ready_players].as[<server.flag[juggernaut_maps].deep_get[<[map]>.game_data.ready_players].exclude[<player>]>]>
     - if <server.flag[juggernaut_maps.<[map]>.game_data.players].contains[<player>]>:
@@ -829,6 +824,50 @@ jug_remove_player:
     - adjust <player> show_to_players:<player.flag[juggernaut_data.hidden_from]>
     - adjust <player> can_fly:false
     - adjust <player> invulnerable:false
+    - if <player.has_flag[juggernaut_data.is_juggernaut]> && <server.flag[juggernaut_maps.<[map]>.game_data.phase]> >= 2:
+        - if <player.flag[juggernaut_data.last_damager].exists> && <player.flag[juggernaut_data.last_damager]> != <player> && <player.flag[juggernaut_data.last_damager].is_player>:
+            - define killer <player.flag[juggernaut_data.last_damager]>
+            - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<yaml[juggernaut].read[kill_juggernaut_points]>
+            - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score_time:<util.time_now>
+            - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[killer]>
+            - flag <player> juggernaut_data.is_juggernaut:!
+            - flag <[killer]> juggernaut_data.is_juggernaut:true
+            - cast glowing remove <player>
+            - if !<[killer].has_flag[juggernaut_data.invis]>:
+                - cast glowing duration:10000s <[killer]> no_icon no_particles
+            - narrate "<&4>[<&c>Juggernaut<&4>] <&c><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
+            - narrate "<&4>[<&c>Juggernaut<&4>] <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
+            - run jug_update_sidebar def:<[map]>|on|<[killer]>
+        - else if <player.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<player>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first.exists>:
+            - define killer <player.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<player>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first>
+            - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<yaml[juggernaut].read[kill_juggernaut_points]>
+            - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score_time:<util.time_now>
+            - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[killer]>
+            - flag <player> juggernaut_data.is_juggernaut:!
+            - flag <[killer]> juggernaut_data.is_juggernaut:true
+            - cast glowing remove <player>
+            - if !<[killer].has_flag[juggernaut_data.invis]>:
+                - cast glowing duration:10000s <[killer]> no_icon no_particles
+            - narrate "<&4>[<&c>Juggernaut<&4>] <&c><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
+            - narrate "<&4>[<&c>Juggernaut<&4>] <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
+            - run jug_update_sidebar def:<[map]>|on|<[killer]>
+        - else if <server.flag[juggernaut_maps.<[map]>.players].keys.exclude[<player>].exists>:
+            - define killer <server.flag[juggernaut_maps.<[map]>.players].keys.exclude[<player>].random>
+            - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<yaml[juggernaut].read[kill_juggernaut_points]>
+            - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score_time:<util.time_now>
+            - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[killer]>
+            - flag <player> juggernaut_data.is_juggernaut:!
+            - flag <[killer]> juggernaut_data.is_juggernaut:true
+            - cast glowing remove <player>
+            - if !<[killer].has_flag[juggernaut_data.invis]>:
+                - cast glowing duration:10000s <[killer]> no_icon no_particles
+            - narrate "<&4>[<&c>Juggernaut<&4>] <&c><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
+            - narrate "<&4>[<&c>Juggernaut<&4>] <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
+            - run jug_update_sidebar def:<[map]>|on|<[killer]>
+        - else:
+            - narrate "<&4>[<&c>Juggernaut<&4>] <&c><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
+    - else if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> >= 2:
+        - narrate "<&4>[<&c>Juggernaut<&4>] <&e><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
     - flag <player> juggernaut_data:!
     - inventory clear d:<player.inventory>
     - sidebar remove
