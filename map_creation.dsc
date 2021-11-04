@@ -34,6 +34,8 @@ juggernaut_command:
                         - flag <player> current_map_setup_name:<[args].get[3]>
                         - if <[skipBackup].exists>:
                             - flag <player> skip_backup:true
+                        - if <[mods].contains[-c]>::
+                            - flag <player> auto_close:true
                     - else:
                         - define prop_com "/juggernaut map create <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
@@ -47,6 +49,8 @@ juggernaut_command:
                         - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
                             - flag <player> remove_map:<[args].get[3]>
                             - flag <player> jug_setup:remove
+                            - if <[skipBackup].exists>:
+                                - flag <player> skip_backup:true
                             - narrate "<&7>Please type in <&a>confirm <&7>to remove map, or <&a>cancel <&7>to cancel."
                         - else:
                             - narrate "<&c>Invalid map specified."
@@ -385,12 +389,16 @@ jug_map_setup_chat:
                 - else:
                     - narrate "<&c>Make a WorldEdit region selection first."
                     - stop
-            - flag <player> current_map_setup_map:<player.flag[current_map_setup_map].with[game_data].as[<map[].with[players].as[].with[spectators].as[<list[]>].with[juggernaut].as[].with[phase].as[0].with[dead].as[].with[countdown].as[0].with[saved_countdown].as[0].with[ready_players].as[<list[]>]>]>
+            - if <player.has_flag[auto_close]>:
+                - define phase -1
+                - flag <player> auto_close:!
+            - flag <player> current_map_setup_map:<player.flag[current_map_setup_map].with[game_data].as[<map[].with[players].as[].with[spectators].as[<list[]>].with[juggernaut].as[].with[phase].as[<[phase].if_null[0]>].with[dead].as[].with[countdown].as[0].with[saved_countdown].as[0].with[ready_players].as[<list[]>]>]>
             - if !<server.has_flag[juggernaut_maps]>:
                 - flag server juggernaut_maps:<map[]>
             - flag server juggernaut_maps.<player.flag[current_map_setup_name]>:<player.flag[current_map_setup_map]>
             - if !<player.has_flag[skip_backup]>:
                 - flag server juggernaut_backup_maps.<player.flag[current_map_setup_name]>:<player.flag[current_map_setup_map]>
+            - else:
                 - flag <player> skip_backup:!
             - flag <player> jug_setup:!
             - narrate <server.flag[juggernaut_maps]>
@@ -414,6 +422,7 @@ jug_map_setup_chat:
                 - flag server juggernaut_maps.<player.flag[remove_map]>:!
                 - if !<player.has_flag[skip_backup]>:
                     - flag server juggernaut_backup_maps.<player.flag[remove_map]>:!
+                - else:
                     - flag <player> skip_backup:!
                 - narrate "<&a><player.flag[remove_map]> <&7>map successfully removed."
             - else:
