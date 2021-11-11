@@ -75,8 +75,8 @@ juggernaut_command:
                     - define perm cubeville.juggernaut.map.close
                     - inject jug_perms
                     - if <[args].get[3].exists>:
-                        - if <server.flag[juggernaut_maps.<[args].get[3]>.game_data.phase]> != 0:
-                            - narrate "<&c>There is a game active on this map! In order to close this map, there must be no game currently active."
+                        - if <server.flag[juggernaut_maps.<[args].get[3]>.game_data.players].keys.size> != 0:
+                            - narrate "<&c>There are players currently on this map! In order to close this map, there must be no players on this map."
                             - stop
                         - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
                             - flag server juggernaut_maps.<[args].get[3]>.game_data.phase:-1
@@ -440,8 +440,8 @@ jug_map_setup_chat:
             - flag <player> jug_setup:!
             - flag <player> remove_map:!
         - else if <player.flag[jug_setup]> == backup_load:
-            - if <server.flag[juggernaut_maps.<player.flag[load_map]>.game_data.phase].if_null[0]> != 0:
-                - narrate "<&c>There must not be an active game in order to load/save maps to/from a backup!"
+            - if <server.flag[juggernaut_maps.<player.flag[load_map]>.game_data.players].keys.size> != 0:
+                - narrate "<&c>There must be no players in the active map in order to load/save maps to/from a backup!"
                 - stop
             - if <context.message> == confirm:
                 - note <server.flag[juggernaut_backup_maps.<player.flag[load_map]>.region]> as:jug_<player.flag[load_map]>
@@ -454,8 +454,8 @@ jug_map_setup_chat:
             - flag <player> jug_setup:!
             - flag <player> load_map:!
         - else if <player.flag[jug_setup]> == backup_save:
-            - if <server.flag[juggernaut_maps.<player.flag[save_map]>.game_data.phase].if_null[0]> != 0:
-                - narrate "<&c>There must not be an active game in order to load/save maps to/from a backup!"
+            - if <server.flag[juggernaut_maps.<player.flag[save_map]>.game_data.players].keys.size> != 0:
+                - narrate "<&c>There must be no players in the active map in order to load/save maps to/from a backup!"
                 - stop
             - if <context.message> == confirm:
                 - flag server juggernaut_backup_maps.<player.flag[save_map]>:<server.flag[juggernaut_maps.<player.flag[save_map]>]>
@@ -554,12 +554,16 @@ jug_inv_click:
     events:
         on player clicks item_flagged:map in jug_map_selection_gui:
         - define map <context.item.flag[map]>
+        - if <player.has_flag[juggernaut_data.in_game]>:
+            - narrate "<&c>You are already in a game!"
+            - stop
         - if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> <= 1 && <server.flag[juggernaut_maps.<[map]>.game_data.phase]> != -1:
             - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_with[<[map]>.game_data.players.<player>].as[<map[].with[score].as[0].with[score_time].as[<util.time_now>]>]>
             - flag <player> juggernaut_data:<map[].with[map].as[<[map]>].with[ready_spam].as[0].with[leave_spam].as[0].with[in_game].as[true]>
             - teleport <player> to:<server.flag[juggernaut_maps].deep_get[<[map]>.waiting_spawn]>
             - inventory clear d:<player.inventory>
             - heal
+            - feed <player> amount:20
             - adjust <player> invulnerable:true
             - inventory set d:<player.inventory> o:jug_waiting_leave slot:9
             - inventory set d:<player.inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random] slot:5
@@ -588,6 +592,7 @@ jug_inv_click:
                             - define juggernaut <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.random>
                             - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[juggernaut]>
                             - flag <[juggernaut]> juggernaut_data.is_juggernaut:true
+                            - title 'title:<&c>You are the Juggernaut!'
                             - cast glowing duration:10000s <[juggernaut]> no_icon no_particles
                             - teleport <[juggernaut]> to:<server.flag[juggernaut_maps.<[map]>.jug_spawn]>
                             - flag server juggernaut_maps.<[map]>.game_data.countdown:!
@@ -691,6 +696,7 @@ jug_kill_script:
                     - cast glowing duration:10000s <context.damager> no_icon no_particles
                 - narrate "<&4>[<&c>Juggernaut<&4>] <&c><context.entity.name> <&7>was killed by <&e><context.damager.name>" targets:<proc[jug_viewers].context[<[map]>]>
                 - narrate "<&4>[<&c>Juggernaut<&4>] <&c><context.damager.name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<context.damager>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
+                - title 'title:<&c>You are now the Juggernaut!' targets:<context.damager>
                 - run jug_update_sidebar def:<[map]>|on|<context.damager>
         - else if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
             - if <context.entity.flag[juggernaut_data.last_damager].exists> && <context.entity.flag[juggernaut_data.last_damager]> != <context.entity> && <context.entity.flag[juggernaut_data.last_damager].is_player>:
@@ -705,6 +711,7 @@ jug_kill_script:
                     - cast glowing duration:10000s <[killer]> no_icon no_particles
                 - narrate "<&4>[<&c>Juggernaut<&4>] <&c><context.entity.name> <&7>was killed by <&e><[killer].name>" targets:<proc[jug_viewers].context[<[map]>]>
                 - narrate "<&4>[<&c>Juggernaut<&4>] <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
+                - title 'title:<&c>You are now the Juggernaut!' targets:<[killer]>
                 - run jug_update_sidebar def:<[map]>|on|<[killer]>
             - else if <context.entity.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<context.entity>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first.exists>:
                 - define killer <context.entity.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<context.entity>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first>
@@ -718,6 +725,7 @@ jug_kill_script:
                     - cast glowing duration:10000s <[killer]> no_icon no_particles
                 - narrate "<&4>[<&c>Juggernaut<&4>] <&c><context.entity.name> <&7>died!" targets:<proc[jug_viewers].context[<[map]>]>
                 - narrate "<&4>[<&c>Juggernaut<&4>] <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
+                - title 'title:<&c>You are now the Juggernaut!' targets:<[killer]>
                 - run jug_update_sidebar def:<[map]>|on|<[killer]>
             - else:
                 - narrate "<&4>[<&c>Juggernaut<&4>] <&c><context.entity.name> <&7>died!" targets:<proc[jug_viewers].context[<[map]>]>
@@ -846,6 +854,7 @@ jug_remove_player:
                 - cast glowing duration:10000s <[killer]> no_icon no_particles
             - narrate "<&4>[<&c>Juggernaut<&4>] <&c><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
             - narrate "<&4>[<&c>Juggernaut<&4>] <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
+            - title 'title:<&c>You are now the Juggernaut!' targets:<[killer]>
             - run jug_update_sidebar def:<[map]>|on|<[killer]>
         - else if <player.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<player>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first.exists>:
             - define killer <player.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<player>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first>
@@ -859,9 +868,10 @@ jug_remove_player:
                 - cast glowing duration:10000s <[killer]> no_icon no_particles
             - narrate "<&4>[<&c>Juggernaut<&4>] <&c><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
             - narrate "<&4>[<&c>Juggernaut<&4>] <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
+            - title 'title:<&c>You are now the Juggernaut!' targets:<[killer]>
             - run jug_update_sidebar def:<[map]>|on|<[killer]>
-        - else if <server.flag[juggernaut_maps.<[map]>.players].keys.exclude[<player>].exists>:
-            - define killer <server.flag[juggernaut_maps.<[map]>.players].keys.exclude[<player>].random>
+        - else if <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.exclude[<player>].exists>:
+            - define killer <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.exclude[<player>].random>
             - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<yaml[juggernaut].read[kill_juggernaut_points]>
             - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score_time:<util.time_now>
             - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[killer]>
@@ -872,6 +882,7 @@ jug_remove_player:
                 - cast glowing duration:10000s <[killer]> no_icon no_particles
             - narrate "<&4>[<&c>Juggernaut<&4>] <&c><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
             - narrate "<&4>[<&c>Juggernaut<&4>] <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
+            - title 'title:<&c>You are now the Juggernaut!' targets:<[killer]>
             - run jug_update_sidebar def:<[map]>|on|<[killer]>
         - else:
             - narrate "<&4>[<&c>Juggernaut<&4>] <&c><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
@@ -1079,7 +1090,7 @@ jug_sidebar_display:
                 - else:
                     - define place <element[<&7><[playerplace]>th<&sp>]>
                 - define sidebarextra <element[<&7>...]>
-                - define sidebarextraplayer <element[<[place]><&6><player.name>:<&sp><&a><&l><server.flag[juggernaut_maps.<[map]>.game_data.players.<player>.score]>]>
+                - define sidebarextraplayer <element[<[place]><&6><&l>YOU<&sp><player.name>:<&sp><&a><&l><server.flag[juggernaut_maps.<[map]>.game_data.players.<player>.score]>]>
     - else:
         - define sidebarlist <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.sort[jug_sort_players]>
     - foreach <[sidebarlist]>:
@@ -1092,10 +1103,16 @@ jug_sidebar_display:
         - else:
             - define place <element[<&7><[loop_index]>th<&sp>]>
         - if <[value]> == <player>:
-            - define playercolor <&6>
+            - define playerextra <&6><&l>YOU<&sp>
         - else:
-            - define playercolor <&7>
-        - define list:->:<element[<[place]><[playercolor]><[value].name>:<&sp><&a><&l><server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]>]>
+            - define playerextra:!
+        - if <server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]> >= <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition].sub[<yaml[juggernaut].read[kill_juggernaut_points]>]> && !<[value].has_flag[juggernaut_data.is_juggernaut]>:
+            - define closeextra <&e><&l>⚠<&sp>
+        - else if <server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]> >= <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition].sub[<yaml[juggernaut].read[juggernaut_kill_points]>]> && <[value].has_flag[juggernaut_data.is_juggernaut]>:
+            - define closeextra <&e><&l>⚠<&sp>
+        - else:
+            - define closeextra:!
+        - define list:->:<element[<[closeextra].if_null[]><[place]><[playerextra].if_null[]><&7><[value].name>:<&sp><&a><&l><server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]>]>
     - if <[sidebarextra].exists>:
         - define list:->:<[sidebarextra]>
     - if <[sidebarextraplayer].exists>:
@@ -1114,9 +1131,9 @@ jug_sort_players:
         - determine -1
     - else if <[p1point]> < <[p2point]>:
         - determine 1
-    - else if <[p1time].is_before[<[p2point]>]>:
+    - else if <[p1time].is_before[<[p2time]>]>:
         - determine -1
-    - else if <[p2time].is_before[<[p1point]>]>:
+    - else if <[p2time].is_before[<[p1time]>]>:
         - determine 1
     - else:
         - determine 0
@@ -1328,6 +1345,7 @@ jug_abilities:
                     - adjust <player> fake_experience
                 - case ninja:
                     - cast invisibility duration:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>
+                    - playeffect at:<player.location.add[0,0.5,0]> effect:SMOKE_LARGE quantity:500
                     - run jug_ninja_ability def:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>
             - if <[enchant_armor]>:
                 - inventory adjust slot:39 enchantments:<map[].with[luck].as[1]>
@@ -1413,6 +1431,8 @@ jug_ninja_ability:
             - flag <player> juggernaut_data.invis:!
         - if <player.has_flag[juggernaut_data.is_juggernaut]>:
             - cast glowing duration:10000s <player> no_icon no_particles
+        - if !<player.has_flag[juggernaut_data.dead]>:
+            - playeffect at:<player.location.add[0,0.5,0]> effect:SMOKE quantity:500 data:0.1
 jug_ability_actionbar:
     type: task
     debug: false
@@ -1496,3 +1516,14 @@ jug_tutorial:
             - narrate "<&c><&l>-/-/-/- <&e>Kits & Abilities <&c><&l>-\-\-\-<&nl><&7>There are several kits you can choose from. Don't worry, you can switch kits every time you die! If you want to see what a kit does, just right click and it will show a preview of the kit. Kits also have abilities that can be activated by clicking on an item while playing, and have various powers. These abilities are even more powerful if you are the juggernaut!<&nl><&c><&l>-/-/-/- <element[<&e>≪<&sp>Prev].on_click[<entry[prev].command>]> <&c><&l>-/-\- <element[<&e>Next<&sp>≫].on_click[<entry[next].command>]> <&c><&l>-\-\-\-"
         - case none:
             - narrate "<&c>I'm sorry, that page doesn't exist."
+jug_protections:
+    type: world
+    events:
+        on player flagged:juggernaut_data.in_game breaks block:
+        - determine passively cancelled
+        on player flagged:juggernaut_data.in_game places block:
+        - determine passively cancelled
+        on player flagged:juggernaut_data.in_game drops item:
+        - determine passively cancelled
+        on player flagged:juggernaut_data.in_game swaps items:
+        - determine passively cancelled
