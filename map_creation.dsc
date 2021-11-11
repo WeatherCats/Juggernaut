@@ -592,7 +592,7 @@ jug_inv_click:
                             - define juggernaut <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.random>
                             - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[juggernaut]>
                             - flag <[juggernaut]> juggernaut_data.is_juggernaut:true
-                            - title 'title:<&c>You are the Juggernaut!'
+                            - title 'title:<&c>You are the Juggernaut!' player:<[juggernaut]>
                             - cast glowing duration:10000s <[juggernaut]> no_icon no_particles
                             - teleport <[juggernaut]> to:<server.flag[juggernaut_maps.<[map]>.jug_spawn]>
                             - flag server juggernaut_maps.<[map]>.game_data.countdown:!
@@ -647,9 +647,11 @@ jug_kill_script:
                         - define minDam <[ability.min_damage_multiplier.<[player_type]>].if_null[<[ability.min_damage_multiplier]>]>
                         - define maxDam <[ability.max_damage_multiplier.<[player_type]>].if_null[<[ability.max_damage_multiplier]>]>
                         - define damageMultiplier <context.projectile.flag[shot_origin].distance[<context.entity.location>].div[<[maxDis].div[<[maxDam].sub[<[minDam]>]>]>].add[<[minDam]>].min[<[maxDam]>]>
-                        - define sharp_damage <context.final_damage.mul[<[damageMultiplier]>]>
                         - narrate "<&7>You dealt <&a><&l><[damageMultiplier].round_to_precision[0.01].substring[1,<[damageMultiplier].round_to_precision[0.01].index_of[.].add[2]>]>x <&7>more damage!"
-                        - determine <[sharp_damage]>
+                    - if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
+                        - determine <context.final_damage.mul[<[damageMultiplier].if_null[1]>].mul[<proc[jug_jug_res_proc].context[<player.flag[juggernaut_data.map]>|<context.cause>]>]>
+                    - else:
+                        - determine <context.final_damage.mul[<[damageMultiplier].if_null[1]>]>
                 - else:
                     - determine passively cancelled
             - else:
@@ -841,7 +843,7 @@ jug_remove_player:
     - adjust <player> show_to_players:<player.flag[juggernaut_data.hidden_from]>
     - adjust <player> can_fly:false
     - adjust <player> invulnerable:false
-    - if <player.has_flag[juggernaut_data.is_juggernaut]> && <server.flag[juggernaut_maps.<[map]>.game_data.phase]> >= 2:
+    - if <player.has_flag[juggernaut_data.is_juggernaut]> && <server.flag[juggernaut_maps.<[map]>.game_data.phase]> >= 2 && <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size> > 0:
         - if <player.flag[juggernaut_data.last_damager].exists> && <player.flag[juggernaut_data.last_damager]> != <player> && <player.flag[juggernaut_data.last_damager].is_player>:
             - define killer <player.flag[juggernaut_data.last_damager]>
             - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<yaml[juggernaut].read[kill_juggernaut_points]>
@@ -1293,6 +1295,7 @@ jug_give_kit:
         - else:
             - adjust def:item durability:<[item].max_durability.sub[<[value.durability]>]>
         - inventory set d:<player.inventory> o:<[item]> slot:<[key]>
+    - give compass[display_name=<&c>Juggernaut<&sp>Tracker]
 jug_abilities:
     type: world
     events:
@@ -1329,6 +1332,7 @@ jug_abilities:
                     - adjust <entry[archer_arrow].spawned_entity> velocity:<player.location.direction.vector.mul[<[ability.arrow_speed.<[player_type]>].if_null[<[ability.arrow_speed]>]>]>
                     - adjust <entry[archer_arrow].spawned_entity> shooter:<player>
                     - adjust <entry[archer_arrow].spawned_entity> damage:<[ability.arrow_damage.<[player_type]>].if_null[<[ability.arrow_damage]>]>
+                    - adjust <entry[archer_arrow].spawned_entity> pickup_status:DISALLOWED
                 - case healer:
                     - heal <[ability.heal_amount.<[player_type]>].if_null[<[ability.heal_amount]>]>
                     - playeffect effect:heart at:<player.location> quantity:50 offset:0.2,0.8,0.2
@@ -1527,3 +1531,36 @@ jug_protections:
         - determine passively cancelled
         on player flagged:juggernaut_data.in_game swaps items:
         - determine passively cancelled
+jug_jug_tracker:
+    type: world
+    events:
+        on player flagged:juggernaut_data.is_juggernaut walks:
+        - ratelimit <player> 1s
+        - define map <player.flag[juggernaut_data.map]>
+        - define juggernaut <player>
+        - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys>:
+            - run jug_jug_tracker_update def:<[juggernaut]> player:<[value]>
+        on player flagged:juggernaut_data.in_game clicks block with:compass bukkit_priority:LOW:
+        - determine passively cancelled
+jug_jug_tracker_update:
+    type: task
+    definitions: juggernaut
+    script:
+    - compass <[juggernaut].location>
+jug_jug_res_proc:
+    type: procedure
+    definitions: map|cause
+    script:
+    - define minPlayers <yaml[juggernaut].read[juggernaut_settings.resistances.min_players]>
+    - define perPlayer <yaml[juggernaut].read[juggernaut_settings.resistances.base.per_player]>
+    - define maxRes <yaml[juggernaut].read[juggernaut_settings.resistances.base.max_res]>
+    - define players <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size>
+    - if <[players]> < <[minPlayers]>:
+        - determine 1
+    - define baseResistance <element[1].sub[<[players].add[1].sub[<[minPlayers]>].mul[<[perPlayer]>].min[<[maxRes]>]>]>
+    - if !<yaml[juggernaut].read[juggernaut_settings.resistances.<[cause]>].exists>:
+        - determine <[baseResistance]>
+    - define perPlayer <yaml[juggernaut].read[juggernaut_settings.resistances.<[cause]>.per_player]>
+    - define maxRes <yaml[juggernaut].read[juggernaut_settings.resistances.<[cause]>.max_res]>
+    - define bonusResistance <element[1].sub[<[players].add[1].sub[<[minPlayers]>].mul[<[perPlayer]>].min[<[maxRes]>]>]>
+    - determine <[baseResistance].mul[<[bonusResistance]>]>
