@@ -520,11 +520,18 @@ jug_map_selection_gui:
                 - define phase <&e>Starting
             - case 2:
                 - define phase <&d>Ongoing
+        - if <server.flag[juggernaut_maps.<[value]>.game_data.phase]> == 0 || <server.flag[juggernaut_maps.<[value]>.game_data.phase]> == 1:
+            - define click_type <&e>Left<&sp>Click:<&sp><&7>Join<&sp>Game
+        - if <server.flag[juggernaut_maps.<[value]>.game_data.phase]> == 2:
+            - if <player.flag[juggernaut_rejoin.id]> == <server.flag[juggernaut_maps.<[value]>.game_data.id]>:
+                - define click_type <&e>Left<&sp>Click:<&sp><&7>Rejoin<&sp>Game<&nl><&e>Right<&sp>Click:<&sp><&7>Spectate<&sp>Game
+            - else:
+                - define click_type <&e>Right<&sp>Click:<&sp><&7>Spectate<&sp>Game
         - if <server.flag[juggernaut_maps.<[value]>.game_data.players].keys.size.if_null[0]> != 1:
             - define players Players
         - else:
             - define players Player
-        - adjust def:item lore:<&7><server.flag[juggernaut_maps.<[value]>.game_data.players].keys.size.if_null[0]><&sp><[players]><&nl><[phase]>
+        - adjust def:item lore:<&7><server.flag[juggernaut_maps.<[value]>.game_data.players].keys.size.if_null[0]><&sp><[players]><&nl><[phase]><&nl><&nl><[click_type]>
         - define list <[list].include[<[item]>]>
     - repeat <[size].sub[<[page].size>]>:
         - define list:->:air
@@ -552,7 +559,7 @@ jug_page_proc:
 jug_inv_click:
     type: world
     events:
-        on player clicks item_flagged:map in jug_map_selection_gui:
+        on player left clicks item_flagged:map in jug_map_selection_gui:
         - define map <context.item.flag[map]>
         - if <player.has_flag[juggernaut_data.in_game]>:
             - narrate "<&c>You are already in a game!"
@@ -588,6 +595,7 @@ jug_inv_click:
                         - else if <server.flag[juggernaut_maps].deep_get[<[map]>.game_data.countdown]> == 0:
                             - playsound <server.flag[juggernaut_maps].deep_get[<[map]>.game_data.players].keys> sound:ENTITY_PLAYER_LEVELUP pitch:1.0
                             - flag server juggernaut_maps.<[map]>.game_data.phase:2
+                            - flag server juggernaut_maps.<[map]>.game_data.id:<util.random.uuid>
                             - teleport <server.flag[juggernaut_maps.<[map]>.game_data.players].keys> to:<server.flag[juggernaut_maps.<[map]>.spawn]>
                             - define juggernaut <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.random>
                             - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[juggernaut]>
@@ -610,7 +618,46 @@ jug_inv_click:
                         - wait 1s
                     - else:
                         - stop
-        - else if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> == 2:
+        - else if <player.flag[juggernaut_rejoin.id]> == <server.flag[juggernaut_maps.<[map]>.game_data.id]>:
+            - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_with[<[map]>.game_data.players.<player>].as[<map[].with[score].as[<player.flag[juggernaut_rejoin.score]>].with[score_time].as[<player.flag[juggernaut_rejoin.score_time]>]>]>
+            - flag <player> juggernaut_data:<map[].with[map].as[<[map]>].with[ready_spam].as[0].with[leave_spam].as[0].with[in_game].as[true]>
+            - inventory clear d:<player.inventory>
+            - run jug_update_sidebar def:<[map]>|on
+            - teleport <player> to:<server.flag[juggernaut_maps.<[map]>.spawn]>
+            - heal <player>
+            - feed <player> amount:20
+            - flag <player> juggernaut_data.dead:true
+            - flag <player> juggernaut_data.dead_countdown:true
+            - flag <player> juggernaut_data.kit_selection:true
+            - flag <player> juggernaut_data.last_damager:!
+            - flag <player> juggernaut_data.hidden_from:<server.flag[juggernaut_maps.<[map]>.game_data.players].keys>
+            - adjust <player> hide_from_players:<player.flag[juggernaut_data.hidden_from]>
+            - adjust <player> can_fly:true
+            - adjust <player> invulnerable:true
+            - adjust <player> clear_body_arrows
+            - inventory clear d:<player.inventory>
+            - flag <player> gui_page:1
+            - inventory open d:JUG_KIT_SELECTION_GUI
+            - inventory set d:<player.inventory> o:jug_waiting_kit slot:1
+            - inventory set d:<player.inventory> o:<yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.display_name]>] slot:5
+            - adjust <player> fake_experience:1|<yaml[juggernaut].read[respawn_timer].round>
+            - repeat <yaml[juggernaut].read[respawn_timer].round>:
+                - if <player.has_flag[juggernaut_data.in_game]>:
+                    - adjust <player> fake_experience:<[value].sub[11].abs.div[10]>|<[value].sub[11].abs>
+                    - wait 1s
+                - else:
+                    - stop
+            - if <player.has_flag[juggernaut_data.in_game]>:
+                - adjust <player> fake_experience
+                - flag <player> juggernaut_data.dead_countdown:!
+                - if !<player.has_flag[juggernaut_data.kit_selection]>:
+                    - run jug_respawn_script player:<player>
+        on player right clicks item_flagged:map in jug_map_selection_gui:
+        - define map <context.item.flag[map]>
+        - if <player.has_flag[juggernaut_data.in_game]>:
+            - narrate "<&c>You are already in a game!"
+            - stop
+        - if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> == 2:
             - flag server juggernaut_maps.<[map]>.game_data.spectators:->:<player>
             - flag <player> juggernaut_data:<map[].with[map].as[<[map]>].with[spectator].as[true].with[in_game].as[true]>
             - flag <player> juggernaut_data.hidden_from:<server.flag[juggernaut_maps.<[map]>.game_data.players].keys>
@@ -834,6 +881,13 @@ jug_remove_player:
     type: task
     definitions: map
     script:
+    - if !<player.has_flag[juggernaut_data.spectator]>:
+        - define rejoin_data <map[]>
+        - define rejoin_data.id:<server.flag[juggernaut_maps.<[map]>.game_data.id]>
+        - define rejoin_data.map:<[map]>
+        - define rejoin_data.score:<server.flag[juggernaut_maps.<[map]>.game_data.players.<player>.score]>
+        - define rejoin_data.score_time:<server.flag[juggernaut_maps.<[map]>.game_data.players.<player>.score_time]>
+        - flag <player> juggernaut_rejoin:<[rejoin_data]>
     - if <server.flag[juggernaut_maps.<[map]>.game_data.ready_players].size> > 0:
         - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_with[<[map]>.game_data.ready_players].as[<server.flag[juggernaut_maps].deep_get[<[map]>.game_data.ready_players].exclude[<player>]>]>
     - if <server.flag[juggernaut_maps.<[map]>.game_data.players].contains[<player>]>:
@@ -888,8 +942,10 @@ jug_remove_player:
             - run jug_update_sidebar def:<[map]>|on|<[killer]>
         - else:
             - narrate "<yaml[juggernaut].read[chat_prefix].parse_color> <&c><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
+            - run jug_update_sidebar def:<[map]>|on
     - else if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> >= 2:
         - narrate "<yaml[juggernaut].read[chat_prefix].parse_color> <&e><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
+        - run jug_update_sidebar def:<[map]>|on
     - flag <player> juggernaut_data:!
     - inventory clear d:<player.inventory>
     - sidebar remove
@@ -1453,15 +1509,21 @@ jug_ability_actionbar:
         - define wait_time:/:<[multiplier]>
     - else:
         - define multiplier 1
-    - actionbar "<&e><[ability.display_name]> (<[ability.click_type].to_titlecase> Click) <&7><&l><element[|].repeat[15]>"
+    - if <[ability.click_type]> == right:
+        - define type_display <element[Right<&sp>Click]>
+    - else if <[ability.click_type]> == left:
+        - define type_display <element[Right<&sp>Click]>
+    - else if <[ability.click_type]> == shift_shield:
+        - define type_display <element[Shift<&sp>Shield]>
+    - actionbar "<&e><[ability.display_name]> (<[type_display]>) <&7><&l><element[|].repeat[15]>"
     - repeat <[multiplier].mul[15].if_null[15]>:
         - if !<player.has_flag[juggernaut_data.dead]> && <player.has_flag[juggernaut_data.in_game]>:
             - waituntil <[wait_time].mul[<[value]>]> <= <util.time_now.duration_since[<[use_time]>].in_seconds>
             - define bars <[value].div[<[multiplier]>].round_down.if_null[<[value]>]>
-            - actionbar "<&e><[ability.display_name]> (<[ability.click_type].to_titlecase> Click) <&c><&l><element[|].repeat[<[bars]>]><&7><&l><element[|].repeat[<[bars].sub[15].abs>]>"
+            - actionbar "<&e><[ability.display_name]> (<[type_display]>) <&c><&l><element[|].repeat[<[bars]>]><&7><&l><element[|].repeat[<[bars].sub[15].abs>]>"
         - else:
             - stop
-    - actionbar "<&e><[ability.display_name]> (<[ability.click_type].to_titlecase> Click) <&a><&l>READY!"
+    - actionbar "<&e><[ability.display_name]> (<[type_display]>) <&a><&l>READY!"
     - narrate "<&e><[ability.display_name]> <&a>is ready!"
 jug_load_config:
     type: world
