@@ -19,7 +19,7 @@ juggernaut_command:
                     - define perm cubeville.juggernaut.map.create
                     - inject jug_perms
                     - if <player.has_flag[jug_setup]>:
-                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
+                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
                         - stop
                     - if !<[args].get[3].matches_character_set[abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_]>:
                         - narrate "<&c>Invalid characters specified!"
@@ -28,7 +28,7 @@ juggernaut_command:
                         - narrate "<&c>There is already a map with that name!"
                         - stop
                     - if <[args].get[3].exists>:
-                        - narrate "<&7>Please type in the display name of the map, or type <&a>cancel <&7>to cancel setup. You can use color codes such as &6 for vanilla colors or &#ff55ff for hex colors." targets:<player>
+                        - narrate "<&7>Please type in <proc[jug_setup_proc].context[<&lt>display<&sp>name<&gt>|input]> <&7>to set the display name of the map, or type <proc[jug_setup_proc].context[cancel|normal]> <&7>to cancel setup. You can use color codes such as &6 for vanilla colors or &#ff55ff for hex colors." targets:<player>
                         - flag <player> jug_setup:1
                         - flag <player> current_map_setup_map:<map[]>
                         - flag <player> current_map_setup_name:<[args].get[3]>
@@ -43,7 +43,7 @@ juggernaut_command:
                     - define perm cubeville.juggernaut.map.remove
                     - inject jug_perms
                     - if <player.has_flag[jug_setup]>:
-                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
+                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
                         - stop
                     - if <[args].get[3].exists>:
                         - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
@@ -51,7 +51,7 @@ juggernaut_command:
                             - flag <player> jug_setup:remove
                             - if <[skipBackup].exists>:
                                 - flag <player> skip_backup:true
-                            - narrate "<&7>Please type in <&a>/juggernaut setup confirm <&7>to remove map, or <&a>cancel <&7>to cancel."
+                            - narrate "<&7>Please type in <proc[jug_setup_proc].context[confirm|normal]> <&7>to remove map, or <proc[jug_setup_proc].context[cancel|normal]> <&7>to cancel."
                         - else:
                             - narrate "<&c>Invalid map specified."
                     - else:
@@ -128,10 +128,10 @@ juggernaut_command:
             - define perm cubeville.juggernaut.setspawn
             - inject jug_perms
             - if <player.has_flag[jug_setup]>:
-                    - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
+                    - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
                     - stop
             - flag <player> jug_setup:spawn
-            - narrate "<&7>Please stand where the Juggernaut lobby's spawn should be and type in one of the following: <&nl><&a>save<&7>: Save an auto-corrected location <&nl><&a>exact<&7>: Save your exact location <&nl><&a>cancel<&7>: Cancel setting the spawn." targets:<player>
+            - narrate "<&7>Please stand where the Juggernaut lobby's spawn should be and type in one of the following: <&nl><proc[jug_setup_proc].context[save|normal]><&7>: Save an auto-corrected location <&nl><proc[jug_setup_proc].context[exact|normal]><&7>: Save your exact location <&nl><proc[jug_setup_proc].context[cancel|normal]><&7>: Cancel setting the spawn." targets:<player>
         - case help:
             - define perm cubeville.juggernaut.help
             - inject jug_perms
@@ -178,16 +178,16 @@ juggernaut_command:
                     - define perm cubeville.juggernaut.backup.load
                     - inject jug_perms
                     - if <player.has_flag[jug_setup]>:
-                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>cancel<&c>!"
+                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
                         - stop
                     - if <[args].get[3].exists>:
                         - if <server.flag[juggernaut_backup_maps].keys.contains[<[args].get[3]>]>:
                             - flag <player> load_map:<[args].get[3]>
                             - flag <player> jug_setup:backup_load
                             - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
-                                - narrate "<&7>Please type in <&a>/juggernaut setup confirm <&7>to load map from backup, or <&a>/juggernaut setup cancel <&7>to cancel. <&c>(!!! This map already exists)"
+                                - narrate "<&7>Please type in <proc[jug_setup_proc].context[confirm|normal]> <&7>to load map from backup, or <proc[jug_setup_proc].context[cancel|normal]> <&7>to cancel. <&c>(!!! This map already exists)"
                             - else:
-                                - narrate "<&7>Please type in <&a>/juggernaut setup confirm <&7>to load map from backup, or <&a>/juggernaut setup cancel <&7>to cancel."
+                                - narrate "<&7>Please type in <proc[jug_setup_proc].context[confirm|normal]> <&7>to load map from backup, or <proc[jug_setup_proc].context[cancel|normal]> <&7>to cancel."
                         - else:
                             - narrate "<&c>Invalid map specified."
                     - else:
@@ -197,13 +197,13 @@ juggernaut_command:
                     - define perm cubeville.juggernaut.backup.remove
                     - inject jug_perms
                     - if <player.has_flag[jug_setup]>:
-                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>/juggernaut setup cancel<&c>!"
+                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
                         - stop
                     - if <[args].get[3].exists>:
                         - if <server.flag[juggernaut_backup_maps].keys.contains[<[args].get[3]>]>:
                             - flag <player> remove_map:<[args].get[3]>
                             - flag <player> jug_setup:backup_remove
-                            - narrate "<&7>Please type in <&a>/juggernaut setup confirm <&7>to remove backup map, or <&a>/juggernaut setup cancel <&7>to cancel."
+                            - narrate "<&7>Please type in <proc[jug_setup_proc].context[confirm|normal]> <&7>to remove backup map, or <proc[jug_setup_proc].context[cancel|normal]> <&7>to cancel."
                         - else:
                             - narrate "<&c>Invalid map specified."
                     - else:
@@ -213,16 +213,16 @@ juggernaut_command:
                     - define perm cubeville.juggernaut.backup.save
                     - inject jug_perms
                     - if <player.has_flag[jug_setup]>:
-                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <&a>/juggernaut setup cancel<&c>!"
+                        - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
                         - stop
                     - if <[args].get[3].exists>:
                         - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
                             - flag <player> save_map:<[args].get[3]>
                             - flag <player> jug_setup:backup_save
                             - if <server.flag[juggernaut_backup_maps].keys.contains[<[args].get[3]>]>:
-                                - narrate "<&7>Please type in <&a>/juggernaut setup confirm <&7>to save map to a backup, or <&a>/juggernaut setup cancel <&7>to cancel. <&c>(!!! This backup already exists)"
+                                - narrate "<&7>Please type in <proc[jug_setup_proc].context[confirm|normal]> <&7>to save map to a backup, or <proc[jug_setup_proc].context[cancel|normal]> <&7>to cancel. <&c>(!!! This backup already exists)"
                             - else:
-                                - narrate "<&7>Please type in <&a>/juggernaut setup confirm <&7>to save map to a backup, or <&a>/juggernaut setup cancel <&7>to cancel."
+                                - narrate "<&7>Please type in <proc[jug_setup_proc].context[confirm|normal]> <&7>to save map to a backup, or <proc[jug_setup_proc].context[cancel|normal]> <&7>to cancel."
                         - else:
                             - narrate "<&c>Invalid map specified."
                     - else:
@@ -280,6 +280,9 @@ jug_help_proc:
             - define list:->:<[msg]>
         - if <player.has_permission[cubeville.juggernaut.setspawn]>:
             - define msg "<&a>/juggernaut setspawn <&7>- Sets the location players spawn after leaving a game"
+            - define list:->:<[msg]>
+        - if <player.has_permission[cubeville.juggernaut.setup]>:
+            - define msg "<&a>/juggernaut setup <&7>- Used whenever chat-style inputs are required"
             - define list:->:<[msg]>
     - else if <[type]> == map:
         - define list:->:<&e><&l>Help<&sp>for<&sp>Juggernaut<&sp>maps<&co>
@@ -348,7 +351,7 @@ jug_setup_task:
     - if <player.flag[jug_setup]> == 1:
         - flag <player> current_map_setup_map:<player.flag[current_map_setup_map].with[display_name].as[<[message]>]>
         - flag <player> jug_setup:2
-        - narrate "<&7>Please select the item to represent the map in your inventory, or type <&a>cancel <&7>to cancel setup." targets:<player>
+        - narrate "<&7>Please select the item to represent the map in your inventory, or type <proc[jug_setup_proc].context[cancel|normal]> <&7>to cancel setup." targets:<player>
     - else if <player.flag[jug_setup]> == 3:
         - if <[message]> == save:
             - define location <player.location.round_down.add[0.5,0.5,0.5].with_yaw[<player.location.yaw.round_to_precision[45]>].with_pitch[0]>
@@ -359,7 +362,7 @@ jug_setup_task:
             - stop
         - flag <player> current_map_setup_map:<player.flag[current_map_setup_map].with[waiting_spawn].as[<[location]>]>
         - flag <player> jug_setup:4
-        - narrate "<&7>Please stand where the main spawn should be and type in one of the following: <&nl><&a>/juggernaut setup save<&7>: Save an auto-corrected location <&nl><&a>/juggernaut setup exact<&7>: Save your exact location <&nl><&a>/juggernaut setup cancel<&7>: Cancel the map creation." targets:<player>
+        - narrate "<&7>Please stand where the main spawn should be and type in one of the following: <&nl><proc[jug_setup_proc].context[save|normal]><&7>: Save an auto-corrected location <&nl><proc[jug_setup_proc].context[exact|normal]><&7>: Save your exact location <&nl><proc[jug_setup_proc].context[cancel|normal]><&7>: Cancel the map creation." targets:<player>
     - else if <player.flag[jug_setup]> == 4:
         - if <[message]> == save:
             - define location <player.location.round_down.add[0.5,0.5,0.5].with_yaw[<player.location.yaw.round_to_precision[45]>].with_pitch[0]>
@@ -370,7 +373,7 @@ jug_setup_task:
             - stop
         - flag <player> current_map_setup_map:<player.flag[current_map_setup_map].with[spawn].as[<[location]>]>
         - flag <player> jug_setup:5
-        - narrate "<&7>Please stand where the juggernaut spawn should be and type in one of the following: <&nl><&a>/juggernaut setup save<&7>: Save an auto-corrected location <&nl><&a>/juggernaut setup exact<&7>: Save your exact location <&nl><&a>/juggernaut setup cancel<&7>: Cancel the map creation." targets:<player>
+        - narrate "<&7>Please stand where the juggernaut spawn should be and type in one of the following: <&nl><proc[jug_setup_proc].context[save|normal]><&7>: Save an auto-corrected location <&nl><proc[jug_setup_proc].context[exact|normal]><&7>: Save your exact location <&nl><proc[jug_setup_proc].context[cancel|normal]><&7>: Cancel the map creation." targets:<player>
     - else if <player.flag[jug_setup]> == 5:
         - if <[message]> == save:
             - define location <player.location.round_down.add[0.5,0.5,0.5].with_yaw[<player.location.yaw.round_to_precision[45]>].with_pitch[0]>
@@ -381,7 +384,7 @@ jug_setup_task:
             - stop
         - flag <player> current_map_setup_map:<player.flag[current_map_setup_map].with[jug_spawn].as[<[location]>]>
         - flag <player> jug_setup:6
-        - narrate "<&7>Please create a worldedit region around the map and type in one of the following: <&nl><&a>/juggernaut setup save<&7>: Save the WorldEdit region <&nl><&a>/juggernaut setup cancel<&7>: Cancel the map creation." targets:<player>
+        - narrate "<&7>Please create a worldedit region around the map and type in one of the following: <&nl><proc[jug_setup_proc].context[save|normal]><&7>: Save the WorldEdit region <&nl><proc[jug_setup_proc].context[cancel|normal]><&7>: Cancel the map creation." targets:<player>
 # The below must be the final step as it does a permanent thing.
     - else if <player.flag[jug_setup]> == 6:
         - if <[message]> == save:
@@ -413,7 +416,7 @@ jug_setup_task:
         - else:
             - narrate "<&c>Invalid choice!"
             - stop
-        - flag <server> juggernaut_spawn:<[location]>
+        - flag server juggernaut_spawn:<[location]>
         - narrate "<&a>Juggernaut spawn saved!"
         - flag <player> jug_setup:!
     - else if <player.flag[jug_setup]> == remove:
@@ -477,9 +480,17 @@ jug_setup_event:
             - if <context.item> != <item[air]>:
                 - flag <player> current_map_setup_map:<player.flag[current_map_setup_map].with[display_item].as[<context.item>]>
                 - flag <player> jug_setup:3
-                - narrate "<&7>Please stand where the waiting lobby spawn should be and type in one of the following: <&nl><&a>save<&7>: Save an auto-corrected location <&nl><&a>exact<&7>: Save your exact location <&nl><&a>cancel<&7>: Cancel the map creation." targets:<player>
+                - narrate "<&7>Please stand where the waiting lobby spawn should be and type in one of the following: <&nl><proc[jug_setup_proc].context[save|normal]><&7>: Save an auto-corrected location <&nl><proc[jug_setup_proc].context[exact|normal]><&7>: Save your exact location <&nl><proc[jug_setup_proc].context[cancel|normal]><&7>: Cancel the map creation." targets:<player>
             - else:
                 - narrate "<&c>Display item must not be air."
+jug_setup_proc:
+    type: procedure
+    definitions: arg|type
+    script:
+    - if <[type]> == normal:
+        - determine <&a><element[/juggernaut<&sp>setup<&sp><[arg]>].on_click[/juggernaut<&sp>setup<&sp><[arg]>].type[SUGGEST_COMMAND].on_hover[<&7>Click<&sp>to<&sp>put<&sp>command<&sp>in<&sp>your<&sp>chat<&sp>bar.]>
+    - else if <[type]> == input:
+        - determine <&a><element[/juggernaut<&sp>setup<&sp><[arg]>].on_click[/juggernaut<&sp>setup].type[SUGGEST_COMMAND].on_hover[<&7>Click<&sp>to<&sp>put<&sp>command<&sp>in<&sp>your<&sp>chat<&sp>bar.]>
 jug_deny_map_leave:
     type: world
     events:
@@ -684,12 +695,21 @@ jug_inv_click:
         on player flagged:juggernaut_rejoin joins:
         - define map <player.flag[juggernaut_rejoin.map]>
         - if <player.flag[juggernaut_rejoin.id]> == <server.flag[juggernaut_maps.<[map]>.game_data.id]>:
-            - clickable jug_rejoin_task def:<[map]> player:<player> save:rejoin
+            - clickable jug_rejoin_task def:<[map]> player:<player> save:rejoin until:30s
             - narrate "<&7>Click <&a><&l><element[[here]].on_click[<entry[rejoin].command>]> <&7>to rejoin the Juggernaut game!"
 jug_rejoin_task:
     type: task
     definitions: map
     script:
+    - if <player.flag[juggernaut_rejoin.id]> != <server.flag[juggernaut_maps.<[map]>.game_data.id]>:
+        - narrate "<&c>The match you left ended!"
+        - stop
+    - if <player.has_flag[juggernaut_data.in_game]>:
+        - narrate "<&c>You can't rejoin a match from within one!"
+        - stop
+    - if <player.location.world> != <server.flag[juggernaut_spawn].world>:
+        - narrate "<&c>You must be in the same world as Juggernaut to rejoin!"
+        - stop
     - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_with[<[map]>.game_data.players.<player>].as[<map[].with[score].as[<player.flag[juggernaut_rejoin.score]>].with[score_time].as[<player.flag[juggernaut_rejoin.score_time]>]>]>
     - flag <player> juggernaut_data:<map[].with[map].as[<[map]>].with[ready_spam].as[0].with[leave_spam].as[0].with[in_game].as[true]>
     - inventory clear d:<player.inventory>
