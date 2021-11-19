@@ -683,7 +683,9 @@ jug_inv_click:
                             - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys>:
                                 - cast damage_resistance duration:<yaml[juggernaut].read[spawn_protection_duration]> amplifier:<yaml[juggernaut].read[spawn_protection_level].sub[1]> player:<[value]>
                                 - run jug_give_kit player:<[value]>
+                                - run jug_mana_start player:<[value]>
                                 - adjust <[value]> invulnerable:false
+                                - flag <player> juggernaut_data.life_id:<util.random.uuid>
                         - wait 1s
                     - else:
                         - stop
@@ -746,14 +748,14 @@ jug_inv_click:
             - determine passively cancelled
         on player flagged:juggernaut_rejoin joins:
         - define map <player.flag[juggernaut_rejoin.map]>
-        - if <player.flag[juggernaut_rejoin.id]> == <server.flag[juggernaut_maps.<[map]>.game_data.id]>:
+        - if <player.flag[juggernaut_rejoin.id]> == <server.flag[juggernaut_maps.<[map]>.game_data.id]> && <server.flag[juggernaut_maps.<[map]>.game_data.id].exists>:
             - clickable jug_rejoin_task def:<[map]> player:<player> save:rejoin until:30s
             - narrate "<&7>Click <&a><&l><element[[here]].on_click[<entry[rejoin].command>]> <&7>to rejoin the Juggernaut game!"
 jug_rejoin_task:
     type: task
     definitions: map
     script:
-    - if <player.flag[juggernaut_rejoin.id]> != <server.flag[juggernaut_maps.<[map]>.game_data.id]>:
+    - if <player.flag[juggernaut_rejoin.id]> != <server.flag[juggernaut_maps.<[map]>.game_data.id]> && <server.flag[juggernaut_maps.<[map]>.game_data.id].exists>:
         - narrate "<&c>The match you left ended!"
         - stop
     - if <player.has_flag[juggernaut_data.in_game]>:
@@ -801,8 +803,8 @@ jug_kill_script:
         on player flagged:juggernaut_data.in_game damaged:
         - if <context.damager.exists>:
             - if <context.damager.has_flag[juggernaut_data.is_juggernaut]> || <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
-                - if !<context.damager.has_flag[juggernaut_data.dead]> && !<context.damager.has_flag[juggernaut_data.spectator]>:
-                    - if <context.damager> != <player>:
+                - if !<context.damager.has_flag[juggernaut_data.dead]> && !<context.damager.has_flag[juggernaut_data.spectator]> && <context.damager> != <context.entity>:
+                    - if <context.damager> != <context.entity>:
                         - flag <context.entity> juggernaut_data.last_damager:<context.damager>
                     - if <context.projectile.has_flag[sharpshooter]>:
                         - define ability <yaml[juggernaut].read[kits.<context.damager.flag[juggernaut_data.kit]>.inventory.<context.projectile.flag[kit_item]>.ability]>
@@ -904,11 +906,13 @@ jug_kill_script:
         - heal <context.entity>
         - determine passively cancelled
         - if <context.entity.has_flag[juggernaut_data.in_game]>:
+            - run jug_mana_end player:<context.entity>
             - flag <context.entity> juggernaut_data.dead:true
             - flag <context.entity> juggernaut_data.dead_countdown:true
             - flag <context.entity> juggernaut_data.kit_selection:true
             - flag <context.entity> juggernaut_data.last_damager:!
             - flag <context.entity> juggernaut_data.hidden_from:<server.flag[juggernaut_maps.<[map]>.game_data.players].keys>
+            - flag <context.entity> juggernaut_data.life_id:!
             - adjust <context.entity> hide_from_players:<player.flag[juggernaut_data.hidden_from]>
             - adjust <context.entity> can_fly:true
             - adjust <player> invulnerable:true
@@ -934,6 +938,7 @@ jug_respawn_script:
     type: task
     script:
     - flag <player> juggernaut_data.dead:!
+    - flag <player> juggernaut_data.life_id:<util.random.uuid>
     - adjust <player> show_to_players:<player.flag[juggernaut_data.hidden_from]>
     - flag <player> juggernaut_data.hidden_from:!
     - adjust <player> can_fly:false
@@ -941,14 +946,77 @@ jug_respawn_script:
     - adjust <player> invulnerable:false
     - adjust <player> fake_experience
     - teleport <player> to:<server.flag[juggernaut_maps.<player.flag[juggernaut_data.map]>.spawn]>
-    - run jug_give_kit
+    - run jug_give_kit player:<player>
+    - run jug_mana_start player:<player>
     - cast damage_resistance duration:5 amplifier:2
-particle_example:
+jug_magic_event:
+    type: world
+    events:
+        on player flagged:juggernaut_data.in_game right clicks block with:item_flagged:magic_damage:
+        - if <player.flag[juggernaut_data.mana]> >= 15:
+            - ratelimit 1s <player>
+            - define particleCount:<context.item.flag[magic_range].mul[5]>
+            - define vector:<player.eye_location>
+            - run jug_mana_use def:15 player:<player>
+            - repeat <[particleCount]>:
+                - playeffect effect:villager_happy at:<[vector].forward[<[value].mul[0.2]>]> offset:0,0,0
+                - hurt <context.item.flag[magic_damage]> <[vector].forward[<[value].mul[0.2]>].find_entities[player].within[0.01]> source:<player> cause:ENTITY_ATTACK
+                - define wait_time:+:<context.item.flag[magic_speed].div[<context.item.flag[magic_range]>].mul[0.2]>
+                - if <[wait_time]> >= 0.05:
+                    - wait <context.item.flag[magic_speed].div[<context.item.flag[magic_range]>].mul[0.2].round_up_to_precision[0.05]>s
+                    - define count:+:1
+                    - define wait_time:-:<context.item.flag[magic_speed].div[<context.item.flag[magic_range]>].mul[0.2].round_up_to_precision[0.05]>
+        - else:
+            - narrate "<&c>You don't have enough mana for that!"
+jug_mana_regen:
     type: task
     script:
-    - repeat 60:
-        - playeffect effect:villager_happy at:<player.eye_location.forward[<[value].mul[0.2]>]> offset:0,0,0
-        - hurt 5 <player.eye_location.forward[<[value].mul[0.2]>].find_entities[player].within[0.01]> source:<player> cause:ENTITY_ATTACK
+    - define count <player.flag[juggernaut_data.mana_list].first>
+    - define life_id:<player.flag[juggernaut_data.life_id]>
+    - flag <player> juggernaut_data.mana_list:<-:<[count]>
+    - flag <player> juggernaut_data.mana_regen:true
+    - repeat <[count]>:
+        - wait 0.4s
+        - if <player.flag[juggernaut_data.life_id]> == <[life_id]>:
+            - run jug_mana_restore player:<player>
+        - else:
+            - stop
+    - flag <player> juggernaut_data.mana_regen:!
+    - if <player.flag[juggernaut_data.mana_list].size> > 0:
+        - run jug_mana_regen player:<player>
+jug_mana_use:
+    type: task
+    definitions: amount
+    script:
+    - flag <player> juggernaut_data.mana:-:<[amount]>
+    - flag <player> juggernaut_data.mana_list:->:<[amount]>
+    - run jug_mana_update player:<player>
+    - if !<player.flag[juggernaut_data.mana_regen].exists>:
+        - run jug_mana_regen player:<player>
+jug_mana_restore:
+    type: task
+    script:
+    - flag <player> juggernaut_data.mana:+:1
+    - run jug_mana_update player:<player>
+jug_mana_update:
+    type: task
+    script:
+    - adjust <player> fake_experience:<player.flag[juggernaut_data.mana].div[100]>|<player.flag[juggernaut_data.mana]>
+jug_mana_start:
+    type: task
+    script:
+    - if <yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.kit_type]> == magic:
+        - flag <player> juggernaut_data.mana:100
+        - flag <player> juggernaut_data.mana_list:<list>
+        - run jug_mana_update player:<player>
+jug_mana_end:
+    type: task
+    script:
+    - if <yaml[juggernaut].read[kits.<player.flag[juggernaut_data.kit]>.kit_type]> == magic:
+        - flag <player> juggernaut_data.mana:!
+        - flag <player> juggernaut_data.mana_list:!
+        - flag <player> juggernaut_data.mana_regen:!
+        - adjust <player> fake_experience
 jug_leave_lobby:
     type: world
     events:
@@ -1085,9 +1153,6 @@ jug_remove_player:
     - wait 1t
     - teleport <player> to:<server.flag[juggernaut_spawn]>
     - flag <player> juggernaut_data:!
-    - wait 10s
-    - if <player.has_flag[juggernaut_data]>:
-        - narrate "<&c>ERROR CODE 110: Please report this error to staff with the error code and this data: <player.flag[juggernaut_data]>"
 jug_stop_game:
     type: task
     definitions: map|win
@@ -1393,6 +1458,12 @@ jug_kit_preview_gui:
                 - define lore:->:<&7>Attack<&sp>Speed:<&sp><&a><[item_root.attack_speed]>
             - if <[item_root.projectile_damage].exists>:
                 - define lore:->:<&7>Projectile<&sp>Damage:<&sp><&a><[item_root.projectile_damage]>
+            - if <[item_root.magic_damage].exists>:
+                - define lore:->:<&7>Magic<&sp>Damage:<&sp><&a><[item_root.magic_damage]>
+            - if <[item_root.magic_range].exists>:
+                - define lore:->:<&7>Magic<&sp>Range:<&sp><&a><[item_root.magic_range]>
+            - if <[item_root.magic_speed].exists>:
+                - define lore:->:<&7>Magic<&sp>Speed:<&sp><&a><[item_root.magic_speed]>
             - if <[item_root.ability].exists>:
                 - define lore:->:<&7>Ability:<&sp><&a><[item_root.ability.display_name]>
                 - define lore:->:<&e><&sp>Description<&sp><&7>-<&sp><[item_root.ability.description].split_lines_by_width[250].replace[<&nl>].with[<&nl><&sp><&7>]>
@@ -1465,6 +1536,12 @@ jug_give_kit:
         - adjust def:item flag:kit_item:<[key]>
         - if <[value.projectile_damage].exists>:
             - adjust def:item flag:projectile_damage:<[value.projectile_damage]>
+        - if <[value.magic_damage].exists>:
+            - adjust def:item flag:magic_damage:<[value.magic_damage]>
+        - if <[value.magic_range].exists>:
+            - adjust def:item flag:magic_range:<[value.magic_range]>
+        - if <[value.magic_speed].exists>:
+            - adjust def:item flag:magic_speed:<[value.magic_speed]>
         - adjust def:item hides:all
         - if !<[value.durability].exists>:
             - adjust def:item unbreakable:true
@@ -1489,7 +1566,7 @@ jug_abilities:
             - define player_type juggernaut
         - else:
             - define player_type player
-        - if <util.time_now.duration_since[<context.item.flag[last_used]>].in_seconds> >= <[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>]> || !<context.item.flag[last_used].exists>:
+        - if ( <util.time_now.duration_since[<context.item.flag[last_used]>].in_seconds> >= <[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>]> || !<context.item.flag[last_used].exists> ) && <[ability.cooldown].exists>:
             - inventory adjust slot:<player.held_item_slot> flag:last_used:<util.time_now>
             - run jug_ability_actionbar def:<context.item.flag[kit_item]>|<util.time_now>|<[ability]>|<[player_type]>|
             - choose <[ability.type]>:
@@ -1529,10 +1606,24 @@ jug_abilities:
                     - run jug_ninja_ability def:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>
             - if <[enchant_armor]>:
                 - inventory adjust slot:39 enchantments:<map[].with[luck].as[1]>
+                - define life_id:<player.flag[juggernaut_data.life_id]>
                 - wait <[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>s
-                - inventory adjust slot:39 remove_enchantments:<list[].include[luck]>
-        - else:
+                - if <player.flag[juggernaut_data.life_id]> == <[life_id]>:
+                    - inventory adjust slot:39 remove_enchantments:<list[].include[luck]>
+        - else if <[ability.mana_cost].exists> && <player.flag[juggernaut_data.mana]> >= <[ability.mana_cost]>:
+            - run jug_mana_use def:<[ability.mana_cost]> player:<player>
+            - choose <[ability.type]>:
+                - case mage:
+                    - spawn fireball <player.eye_location.forward> save:mage_fireball
+                    - flag <entry[mage_fireball].spawned_entity> no_explosion:true
+                    - adjust <entry[mage_fireball].spawned_entity> explosion_fire:false
+                    - adjust <entry[mage_fireball].spawned_entity> explosion_radius:<[ability.fireball_radius.<[player_type]>].if_null[<[ability.fireball_radius]>]>
+                    - adjust <entry[mage_fireball].spawned_entity> velocity:<player.location.direction.vector.mul[<[ability.fireball_speed.<[player_type]>].if_null[<[ability.fireball_speed]>]>]>
+                    - adjust <entry[mage_fireball].spawned_entity> shooter:<player>
+        - else if <[ability.cooldown].exists>:
             - narrate "<&c>Your ability is still on cooldown for <&l><[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>].sub[<util.time_now.duration_since[<context.item.flag[last_used]>].in_seconds>].round_up>s<&c>!"
+        - else if <[ability.mana_cost].exists>:
+            - narrate "<&c>You don't have enough mana for that!"
         on player flagged:juggernaut_data.in_game toggles item_flagged:kit_item:
         - if <context.state>:
             - if <player.item_in_hand.advanced_matches[shield]>:
@@ -1602,18 +1693,20 @@ jug_ninja_ability:
     definitions: duration
     script:
         - cast remove glowing
+        - define life_id <player.flag[juggernaut_data.life_id]>
         - flag <player> juggernaut_data.invis:true
         - narrate <server.flag[juggernaut_maps.<player.flag[juggernaut_data.map]>.game_data.players]>
         - fakeequip <player> for:<server.flag[juggernaut_maps.<player.flag[juggernaut_data.map]>.game_data.players].keys.exclude[<player>]> duration:<[duration]>s hand:air head:air chest:air legs:air boots:air
         - adjust <player> clear_body_arrows
         - repeat <[duration].mul[5]>:
-            - playeffect effect:BLOCK_DUST at:<player.location> quantity:7 special_data:black_wool velocity:<location[0,-1,0]>
-            - wait 0.2s
+            - if <player.flag[juggernaut_data.life_id]> == <[life_id]>:
+                - playeffect effect:BLOCK_DUST at:<player.location> quantity:7 special_data:black_wool velocity:<location[0,-1,0]>
+                - wait 0.2s
         - if <player.has_flag[juggernaut_data.in_game]>:
             - flag <player> juggernaut_data.invis:!
         - if <player.has_flag[juggernaut_data.is_juggernaut]>:
             - cast glowing duration:10000s <player> no_icon no_particles
-        - if !<player.has_flag[juggernaut_data.dead]>:
+        - if <player.flag[juggernaut_data.life_id]> == <[life_id]>:
             - playeffect at:<player.location.add[0,0.5,0]> effect:SMOKE quantity:500 data:0.1
 jug_ability_actionbar:
     type: task
@@ -1624,6 +1717,7 @@ jug_ability_actionbar:
         - narrate "<&c>ERROR CODE 70: Invalid Ability."
         - stop
     - define wait_time <[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>].div[15]>
+    - define life_id:<player.flag[juggernaut_data.life_id]>
     - if <[wait_time]> > 1.5:
         - define multiplier <[wait_time].div[1.5].round_up>
         - define wait_time:/:<[multiplier]>
@@ -1637,10 +1731,11 @@ jug_ability_actionbar:
         - define type_display <element[Shift<&sp>Shield]>
     - actionbar "<&e><[ability.display_name]> (<[type_display]>) <&7><&l><element[|].repeat[15]>"
     - repeat <[multiplier].mul[15].if_null[15]>:
-        - if !<player.has_flag[juggernaut_data.dead]> && <player.has_flag[juggernaut_data.in_game]>:
+        - if !<player.has_flag[juggernaut_data.dead]> && <player.has_flag[juggernaut_data.in_game]> && <player.flag[juggernaut_data.life_id]> == <[life_id]>:
             - waituntil <[wait_time].mul[<[value]>]> <= <util.time_now.duration_since[<[use_time]>].in_seconds>
-            - define bars <[value].div[<[multiplier]>].round_down.if_null[<[value]>]>
-            - actionbar "<&e><[ability.display_name]> (<[type_display]>) <&c><&l><element[|].repeat[<[bars]>]><&7><&l><element[|].repeat[<[bars].sub[15].abs>]>"
+            - if !<player.has_flag[juggernaut_data.dead]> && <player.has_flag[juggernaut_data.in_game]> && <player.flag[juggernaut_data.life_id]> == <[life_id]>:
+                - define bars <[value].div[<[multiplier]>].round_down.if_null[<[value]>]>
+                - actionbar "<&e><[ability.display_name]> (<[type_display]>) <&c><&l><element[|].repeat[<[bars]>]><&7><&l><element[|].repeat[<[bars].sub[15].abs>]>"
         - else:
             - stop
     - actionbar "<&e><[ability.display_name]> (<[type_display]>) <&a><&l>READY!"
@@ -1715,6 +1810,9 @@ jug_protections:
         - determine passively cancelled
         on player flagged:juggernaut_data.in_game swaps items:
         - determine passively cancelled
+        on entity_flagged:no_explosion explodes:
+        #If determine syntax ever changes, look up how to set the list of blocks affect in explodes to none.
+        - determine <list>
 jug_jug_tracker:
     type: world
     debug: false
