@@ -717,6 +717,9 @@ jug_inv_click:
         on player flagged:jug_login_tp joins:
         - narrate test
         - teleport <player> to:<server.flag[juggernaut_spawn]>
+        - cast remove glowing
+        - cast remove invisibility
+        - cast remove resistance
         - flag <player> jug_login_tp:!
         on player flagged:juggernaut_rejoin joins:
         - define map <player.flag[juggernaut_rejoin.map]>
@@ -1068,11 +1071,7 @@ jug_leave_lobby:
         on player right clicks block with:jug_waiting_leave:
         - run jug_remove_player def:<player.flag[juggernaut_data].get[map]>
         on player flagged:juggernaut_data.in_game quits:
-        - flag <player> jug_login_tp:true
         - run jug_remove_player def:<player.flag[juggernaut_data].get[map]>
-        on shutdown:
-        - foreach <server.online_players.filter_tag[<[filter_value].has_flag[juggernaut_data.in_game]>]>:
-            - flag <[value]> jug_login_tp:true
         on player right clicks block with:jug_waiting_spectate_item:
         - determine passively cancelled
         - if <player.flag[juggernaut_data.ready_spam]> >= <yaml[juggernaut].read[ready_spam_limit]>:
@@ -1176,6 +1175,8 @@ jug_remove_player:
     type: task
     definitions: map|type
     script:
+    - if !<player.is_online>:
+        - flag <player> jug_login_tp:true
     - if !<player.has_flag[juggernaut_data.spectator]>:
         - define rejoin_data <map[]>
         - define rejoin_data.id:<server.flag[juggernaut_maps.<[map]>.game_data.id]>
@@ -1694,6 +1695,7 @@ jug_abilities:
             - define player_type juggernaut
         - else:
             - define player_type player
+        - define map <player.flag[juggernaut_data.map]>
         - if ( <util.time_now.duration_since[<context.item.flag[last_used]>].in_seconds> >= <[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>]> || !<context.item.flag[last_used].exists> ) && <[ability.cooldown].exists>:
             - inventory adjust slot:<player.held_item_slot> flag:last_used:<util.time_now>
             - run jug_ability_actionbar def:<context.item.flag[kit_item]>|<util.time_now>|<[ability]>|<[player_type]>|
@@ -1750,12 +1752,16 @@ jug_abilities:
                     - adjust <entry[mage_fireball].spawned_entity> explosion_radius:<[ability.fireball_radius.<[player_type]>].if_null[<[ability.fireball_radius]>]>
                     - adjust <entry[mage_fireball].spawned_entity> velocity:<player.location.direction.vector.mul[<[ability.fireball_speed.<[player_type]>].if_null[<[ability.fireball_speed]>]>]>
                     - adjust <entry[mage_fireball].spawned_entity> shooter:<player>
-                    - wait 15s
-                    - narrate <entry[mage_fireball].spawned_entity.is_spawned>
+                    - define map <player.flag[juggernaut_data.map]>
+                    - repeat 15:
+                        - wait 1s
+                        - if <entry[mage_fireball].spawned_entity.is_spawned>:
+                            - if !<entry[mage_fireball].spawned_entity.location.is_in[jug_<[map]>]>:
+                                - remove <entry[mage_fireball].spawned_entity>
+                        - else:
+                            - stop
                     - if <entry[mage_fireball].spawned_entity.is_spawned>:
-                        - narrate <entry[mage_fireball].spawned_entity>
                         - remove <entry[mage_fireball].spawned_entity>
-                        - narrate <entry[mage_fireball].spawned_entity>
                 - case frostmancer:
                     - define life_id:<player.flag[juggernaut_data.life_id]>
                     - repeat <[ability.snowball_amount.<[player_type]>].if_null[<[ability.snowball_amount]>]>:
@@ -1846,7 +1852,8 @@ jug_ninja_ability:
         - adjust <player> clear_body_arrows
         - repeat <[duration].mul[5]>:
             - if <player.flag[juggernaut_data.life_id]> == <[life_id]>:
-                - playeffect effect:BLOCK_DUST at:<player.location> quantity:7 special_data:black_wool velocity:<location[0,-1,0]>
+                - if <player.is_sprinting>:
+                    - playeffect effect:BLOCK_DUST at:<player.location> quantity:7 special_data:black_wool velocity:<location[0,-1,0]>
                 - wait 0.2s
         - if <player.has_flag[juggernaut_data.in_game]>:
             - flag <player> juggernaut_data.invis:!
