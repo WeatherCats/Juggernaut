@@ -175,6 +175,7 @@ juggernaut_command:
             - feed <player> amount:20
             - adjust <player> invulnerable:true
             - inventory set d:<player.inventory> o:jug_waiting_leave slot:9
+            - inventory set d:<player.inventory> o:jug_host_settings_item slot:1
             - run jug_ready_xp def:<[map]>
         - case reload:
             - define perm cubeville.juggernaut.reload
@@ -705,39 +706,7 @@ jug_inv_click:
             - if <server.flag[juggernaut_maps].deep_get[<[map]>.game_data.players].keys.size> >= <proc[jug_config_read].context[mininum_players]> && <server.flag[juggernaut_maps].deep_get[<[map]>.game_data.phase]> == 0 && !<server.flag[juggernaut_maps.<[map]>.host_data].exists>:
                 - run jug_start_task def:<[map]>
         - else if <player.flag[juggernaut_rejoin.id]> == <server.flag[juggernaut_maps.<[map]>.game_data.id]> && <server.flag[juggernaut_maps.<[map]>.game_data.id].exists>:
-            - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_with[<[map]>.game_data.players.<player>].as[<map[].with[score].as[<player.flag[juggernaut_rejoin.score]>].with[score_time].as[<player.flag[juggernaut_rejoin.score_time]>]>]>
-            - flag <player> juggernaut_data:<map[].with[map].as[<[map]>].with[ready_spam].as[0].with[leave_spam].as[0].with[in_game].as[true]>
-            - inventory clear d:<player.inventory>
-            - run jug_update_sidebar def:<[map]>|on
-            - teleport <player> to:<server.flag[juggernaut_maps.<[map]>.spawn]>
-            - heal <player>
-            - feed <player> amount:20
-            - flag <player> juggernaut_data.dead:true
-            - flag <player> juggernaut_data.dead_countdown:true
-            - flag <player> juggernaut_data.kit_selection:true
-            - flag <player> juggernaut_data.last_damager:!
-            - flag <player> juggernaut_data.hidden_from:<server.flag[juggernaut_maps.<[map]>.game_data.players].keys>
-            - adjust <player> hide_from_players:<player.flag[juggernaut_data.hidden_from]>
-            - adjust <player> can_fly:true
-            - adjust <player> invulnerable:true
-            - adjust <player> clear_body_arrows
-            - inventory clear d:<player.inventory>
-            - flag <player> gui_page:1
-            - inventory open d:JUG_KIT_SELECTION_GUI
-            - inventory set d:<player.inventory> o:jug_waiting_kit slot:1
-            - inventory set d:<player.inventory> o:<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>] slot:5
-            - adjust <player> fake_experience:1|<proc[jug_config_read].context[respawn_timer].round>
-            - repeat <proc[jug_config_read].context[respawn_timer].round>:
-                - if <player.has_flag[juggernaut_data.in_game]>:
-                    - adjust <player> fake_experience:<[value].sub[11].abs.div[10]>|<[value].sub[11].abs>
-                    - wait 1s
-                - else:
-                    - stop
-            - if <player.has_flag[juggernaut_data.in_game]>:
-                - adjust <player> fake_experience
-                - flag <player> juggernaut_data.dead_countdown:!
-                - if !<player.has_flag[juggernaut_data.kit_selection]>:
-                    - run jug_respawn_script player:<player>
+            - run jug_rejoin_task def:<[map]>
         on player right clicks item_flagged:map in jug_map_selection_gui:
         - define map <context.item.flag[map]>
         - if <player.has_flag[juggernaut_data.in_game]>:
@@ -766,8 +735,13 @@ jug_inv_click:
         - teleport <player> to:<server.flag[juggernaut_spawn]>
         - cast remove glowing
         - cast remove invisibility
-        - cast remove resistance
+        - cast remove damage_resistance
         - flag <player> jug_login_tp:!
+        on player flagged:juggernaut_data.is_host joins:
+        - define map <player.flag[juggernaut_data.map]>
+        - if <server.flag[juggernaut_maps.<[map]>.host_data.host]> != <player>:
+            - flag <player> juggernaut_data.is_host:!
+            - run jug_remove_player def:<[map]>|late_host_rejoin
         on player flagged:juggernaut_rejoin joins:
         - define map <player.flag[juggernaut_rejoin.map]>
         - if <player.flag[juggernaut_rejoin.id]> == <server.flag[juggernaut_maps.<[map]>.game_data.id]> && <server.flag[juggernaut_maps.<[map]>.game_data.id].exists>:
@@ -809,13 +783,10 @@ jug_start_task:
                 - flag server juggernaut_maps.<[map]>.game_data.countdown:!
                 - flag server juggernaut_maps.<[map]>.game_data.saved_countdown:!
                 - flag server juggernaut_maps.<[map]>.game_data.ready_players:<list[]>
-                - foreach <proc[jug_config_read].context[victory_conditions].keys.sort_by_number[].reverse>:
-                    - if <[value]> <= <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size>:
-                        - flag server juggernaut_maps.<[map]>.game_data.victory_condition:<proc[jug_config_read].context[victory_conditions.<[value]>]>
-                        - foreach stop
+                - flag server juggernaut_maps.<[map]>.game_data.victory_condition:<proc[jug_config_read].context[victory_conditions|<[map]>]>
                 - run jug_update_sidebar def:<[map]>|on
                 - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys>:
-                    - cast damage_resistance duration:<proc[jug_config_read].context[spawn_protection_duration]> amplifier:<proc[jug_config_read].context[spawn_protection_level].sub[1]> player:<[value]>
+                    - cast damage_resistance duration:<proc[jug_config_read].context[spawn_protection_duration|<[map]>]> amplifier:<proc[jug_config_read].context[spawn_protection_level|<[map]>].sub[1]> player:<[value]>
                     - run jug_give_kit player:<[value]>
                     - run jug_mana_start player:<[value]>
                     - adjust <[value]> invulnerable:false
@@ -877,8 +848,8 @@ jug_rejoin_task:
     - inventory open d:JUG_KIT_SELECTION_GUI
     - inventory set d:<player.inventory> o:jug_waiting_kit slot:1
     - inventory set d:<player.inventory> o:<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>] slot:5
-    - adjust <player> fake_experience:1|<proc[jug_config_read].context[respawn_timer].round>
-    - repeat <proc[jug_config_read].context[respawn_timer].round>:
+    - adjust <player> fake_experience:1|<proc[jug_config_read].context[respawn_timer|<[map]>].round>
+    - repeat <proc[jug_config_read].context[respawn_timer|<[map]>].round>:
         - if <player.has_flag[juggernaut_data.in_game]>:
             - adjust <player> fake_experience:<[value].sub[11].abs.div[10]>|<[value].sub[11].abs>
             - wait 1s
@@ -895,7 +866,7 @@ jug_kill_script:
         on player flagged:juggernaut_data.in_game damaged:
         - if <context.damager.exists>:
             - if <context.damager.has_flag[juggernaut_data.is_juggernaut]> || <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
-                - if ( !<context.damager.has_flag[juggernaut_data.dead]> || <context.cause> != entiity_attack ) && !<context.damager.has_flag[juggernaut_data.spectator]> && <context.damager> != <context.entity> && !<context.damager.has_flag[juggernaut_data.is_host]>:
+                - if ( !<context.damager.has_flag[juggernaut_data.dead]> || <context.cause> != entity_attack ) && !<context.damager.has_flag[juggernaut_data.spectator]> && <context.damager> != <context.entity> && !<context.damager.has_flag[juggernaut_data.is_host]>:
                     - if <context.damager> != <context.entity>:
                         - flag <context.entity> juggernaut_data.last_damager:<context.damager>
                     - if <context.projectile.has_flag[sharpshooter]>:
@@ -910,6 +881,7 @@ jug_kill_script:
                         - define damageMultiplier <context.projectile.flag[shot_origin].distance[<context.entity.location>].div[<[maxDis].div[<[maxDam].sub[<[minDam]>]>]>].add[<[minDam]>].min[<[maxDam]>]>
                         - narrate "<&7>You dealt <&a><&l><[damageMultiplier].round_to_precision[0.01].substring[1,<[damageMultiplier].round_to_precision[0.01].index_of[.].add[2]>]>x <&7>more damage!"
                     - if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
+                        - narrate <proc[jug_jug_res_proc].context[<player.flag[juggernaut_data.map]>|<context.cause>]> targets:<server.online_players>
                         - determine <context.final_damage.mul[<[damageMultiplier].if_null[1]>].mul[<proc[jug_jug_res_proc].context[<player.flag[juggernaut_data.map]>|<context.cause>]>]>
                     - else:
                         - determine <context.final_damage.mul[<[damageMultiplier].if_null[1]>]>
@@ -953,13 +925,13 @@ jug_kill_script:
         - define map <context.entity.flag[juggernaut_data.map]>
         - if <context.damager.exists> && <context.damager> != <context.entity> && <context.damager.is_player>:
             - if <context.damager.has_flag[juggernaut_data.is_juggernaut]>:
-                - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score:+:<proc[jug_config_read].context[juggernaut_kill_points]>
+                - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score:+:<proc[jug_config_read].context[juggernaut_kill_points|<[map]>]>
                 - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score_time:<util.time_now>
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&e><context.entity.name> <&7>was killed by <&c><context.damager.name>" targets:<proc[jug_viewers].context[<[map]>]>
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><context.damager.name> <&7>now has <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<context.damager>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
                 - run jug_update_sidebar def:<[map]>|on|<context.damager>
             - else if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
-                - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score:+:<proc[jug_config_read].context[kill_juggernaut_points]>
+                - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score:+:<proc[jug_config_read].context[kill_juggernaut_points|<[map]>]>
                 - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score_time:<util.time_now>
                 - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<context.damager>
                 - flag <context.entity> juggernaut_data.is_juggernaut:!
@@ -975,7 +947,7 @@ jug_kill_script:
         - else if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
             - if <context.entity.flag[juggernaut_data.last_damager].exists> && <context.entity.flag[juggernaut_data.last_damager]> != <context.entity> && <context.entity.flag[juggernaut_data.last_damager].is_player>:
                 - define killer <context.entity.flag[juggernaut_data.last_damager]>
-                - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<proc[jug_config_read].context[kill_juggernaut_points]>
+                - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<proc[jug_config_read].context[kill_juggernaut_points|<[map]>]>
                 - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score_time:<util.time_now>
                 - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[killer]>
                 - flag <context.entity> juggernaut_data.is_juggernaut:!
@@ -987,9 +959,9 @@ jug_kill_script:
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
                 - title 'title:<&c>You are now the Juggernaut!' targets:<[killer]>
                 - run jug_update_sidebar def:<[map]>|on|<[killer]>
-            - else if <context.entity.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<context.entity>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first.exists>:
-                - define killer <context.entity.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<context.entity>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first>
-                - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<proc[jug_config_read].context[kill_juggernaut_points]>
+            - else if <context.entity.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<context.entity>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>].and[<[filter_value].has_flag[juggernaut_data.is_host].not>]>]>]>].first.exists>:
+                - define killer <context.entity.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<context.entity>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not.and[<[filter_value].has_flag[juggernaut_data.is_host].not>]>]>]>]>].first>
+                - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<proc[jug_config_read].context[kill_juggernaut_points|<[map]>]>
                 - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score_time:<util.time_now>
                 - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[killer]>
                 - flag <context.entity> juggernaut_data.is_juggernaut:!
@@ -1025,10 +997,11 @@ jug_kill_script:
             - inventory open d:JUG_KIT_SELECTION_GUI
             - inventory set d:<context.entity.inventory> o:jug_waiting_kit slot:1
             - inventory set d:<player.inventory> o:<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>] slot:5
-            - adjust <context.entity> fake_experience:1|<proc[jug_config_read].context[respawn_timer].round>
-            - repeat <proc[jug_config_read].context[respawn_timer].round>:
+            - adjust <context.entity> fake_experience:1|<proc[jug_config_read].context[respawn_timer|<[map]>].round>
+            - define respawn_timer:<proc[jug_config_read].context[respawn_timer|<[map]>].round>
+            - repeat <[respawn_timer]>:
                 - if <context.entity.has_flag[juggernaut_data.in_game]>:
-                    - adjust <context.entity> fake_experience:<[value].sub[11].abs.div[10]>|<[value].sub[11].abs>
+                    - adjust <context.entity> fake_experience:<[value].sub[<[respawn_timer].add[1]>].abs.div[<[respawn_timer]>]>|<[value].sub[<[respawn_timer].add[1]>].abs>
                     - wait 1s
                 - else:
                     - stop
@@ -1040,6 +1013,7 @@ jug_kill_script:
 jug_respawn_script:
     type: task
     script:
+    - define map <player.flag[juggernaut_data.map]>
     - flag <player> juggernaut_data.dead:!
     - flag <player> juggernaut_data.life_id:<util.random.uuid>
     - adjust <player> show_to_players:<player.flag[juggernaut_data.hidden_from]>
@@ -1051,7 +1025,7 @@ jug_respawn_script:
     - teleport <player> to:<server.flag[juggernaut_maps.<player.flag[juggernaut_data.map]>.spawn]>
     - run jug_give_kit player:<player>
     - run jug_mana_start player:<player>
-    - cast damage_resistance duration:5 amplifier:2
+    - cast damage_resistance duration:<proc[jug_config_read].context[spawn_protection_duration|<[map]>]> amplifier:<proc[jug_config_read].context[spawn_protection_level|<[map]>].sub[1]>
 jug_magic_event:
     type: world
     events:
@@ -1199,6 +1173,9 @@ jug_leave_lobby:
             - flag <player> gui_page:1
             - inventory open d:JUG_KIT_SELECTION_GUI
         on player right clicks block with:jug_waiting_ready:
+        - define map <player.flag[juggernaut_data.map]>
+        - if <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.contains[<player>]>:
+            - narrate "<&c>You are already ready!"
         - if <player.flag[juggernaut_data].get[ready_spam]> < <proc[jug_config_read].context[ready_spam_limit]>:
             - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_with[<player.flag[juggernaut_data].get[map]>.game_data.ready_players].as[<server.flag[juggernaut_maps].deep_get[<player.flag[juggernaut_data].get[map]>.game_data.ready_players].include[<player>]>]>
             - run jug_ready_xp def:<player.flag[juggernaut_data].get[map]>
@@ -1218,6 +1195,9 @@ jug_leave_lobby:
         - else:
             - narrate "<&c>Please slow down!"
         on player right clicks block with:jug_waiting_unready:
+        - define map <player.flag[juggernaut_data.map]>
+        - if !<server.flag[juggernaut_maps.<[map]>.game_data.players].keys.contains[<player>]>:
+            - narrate "<&c>You are already not ready!"
         - if <player.flag[juggernaut_data].get[ready_spam]> < <proc[jug_config_read].context[ready_spam_limit]>:
             - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_with[<player.flag[juggernaut_data].get[map]>.game_data.ready_players].as[<server.flag[juggernaut_maps].deep_get[<player.flag[juggernaut_data].get[map]>.game_data.ready_players].exclude[<player>]>]>
             - narrate "<&c><player.name> is no longer ready. (<server.flag[juggernaut_maps].deep_get[<player.flag[juggernaut_data].get[map]>.game_data.ready_players].size>/<server.flag[juggernaut_maps].deep_get[<player.flag[juggernaut_data].get[map]>.game_data.players].keys.size>)" targets:<proc[jug_viewers].context[<player.flag[juggernaut_data.map]>]>
@@ -1241,6 +1221,8 @@ jug_remove_player:
     - else if <player.has_flag[juggernaut_data.is_host]>:
         - narrate "<&c>You must stop the hosted game before you can leave!"
         - stop
+    - if  <[type]> == late_host_rejoin:
+        - goto late_host_rejoin1
     - if !<player.has_flag[juggernaut_data.spectator]>:
         - define rejoin_data <map[]>
         - define rejoin_data.id:<server.flag[juggernaut_maps.<[map]>.game_data.id]>
@@ -1254,13 +1236,10 @@ jug_remove_player:
         - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_exclude[<[map]>.game_data.players.<player>]>
     - else if <server.flag[juggernaut_maps.<[map]>.game_data.spectators].contains[<player>]>:
         - flag server juggernaut_maps.<[map]>.game_data.spectators:<-:<player>
-    - adjust <player> show_to_players:<player.flag[juggernaut_data.hidden_from]>
-    - adjust <player> can_fly:false
-    - adjust <player> invulnerable:false
     - if <player.has_flag[juggernaut_data.is_juggernaut]> && <server.flag[juggernaut_maps.<[map]>.game_data.phase]> >= 2 && <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size> > 0:
         - if <player.flag[juggernaut_data.last_damager].exists> && <player.flag[juggernaut_data.last_damager]> != <player> && <player.flag[juggernaut_data.last_damager].is_player>:
             - define killer <player.flag[juggernaut_data.last_damager]>
-            - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<proc[jug_config_read].context[kill_juggernaut_points]>
+            - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<proc[jug_config_read].context[kill_juggernaut_points|<[map]>]>
             - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score_time:<util.time_now>
             - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[killer]>
             - flag <player> juggernaut_data.is_juggernaut:!
@@ -1272,9 +1251,9 @@ jug_remove_player:
             - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
             - title 'title:<&c>You are now the Juggernaut!' targets:<[killer]>
             - run jug_update_sidebar def:<[map]>|on|<[killer]>
-        - else if <player.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<player>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first.exists>:
-            - define killer <player.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<player>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first>
-            - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<proc[jug_config_read].context[kill_juggernaut_points]>
+        - else if <player.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<player>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not.and[<[filter_value].has_flag[juggernaut_data.is_host].not>]>]>]>]>].first.exists>:
+            - define killer <player.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<player>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not.and[<[filter_value].has_flag[juggernaut_data.is_host].not>]>]>]>]>].first>
+            - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<proc[jug_config_read].context[kill_juggernaut_points|<[map]>]>
             - flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score_time:<util.time_now>
             - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[killer]>
             - flag <player> juggernaut_data.is_juggernaut:!
@@ -1306,6 +1285,10 @@ jug_remove_player:
     - else if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> >= 2:
         - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&e><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
         - run jug_update_sidebar def:<[map]>|on
+    - mark late_host_rejoin1
+    - adjust <player> show_to_players:<player.flag[juggernaut_data.hidden_from]>
+    - adjust <player> can_fly:false
+    - adjust <player> invulnerable:false
     - define ready_spam <player.flag[juggernaut_data.ready_spam]>
     - flag <player> juggernaut_data:!
     - if <[type]> == setspectate:
@@ -1325,7 +1308,7 @@ jug_remove_player:
         - teleport <player> to:<server.flag[juggernaut_spawn]>
     - cast remove glowing
     - cast remove invisibility
-    - cast remove resistance
+    - cast remove damage_resistance
     - wait 1t
     - if <[type]> != setspectate:
         - teleport <player> to:<server.flag[juggernaut_spawn]>
@@ -1543,9 +1526,9 @@ jug_sidebar_display:
             - define playerextra <&6><&l>YOU<&sp>
         - else:
             - define playerextra:!
-        - if <server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]> >= <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition].sub[<proc[jug_config_read].context[kill_juggernaut_points]>]> && !<[value].has_flag[juggernaut_data.is_juggernaut]>:
+        - if <server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]> >= <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition].sub[<proc[jug_config_read].context[kill_juggernaut_points|<[map]>]>]> && !<[value].has_flag[juggernaut_data.is_juggernaut]>:
             - define closeextra <&e><&l>⚠<&sp>
-        - else if <server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]> >= <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition].sub[<proc[jug_config_read].context[juggernaut_kill_points]>]> && <[value].has_flag[juggernaut_data.is_juggernaut]>:
+        - else if <server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]> >= <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition].sub[<proc[jug_config_read].context[juggernaut_kill_points|<[map]>]>]> && <[value].has_flag[juggernaut_data.is_juggernaut]>:
             - define closeextra <&e><&l>⚠<&sp>
         - else:
             - define closeextra:!
@@ -1986,7 +1969,7 @@ jug_active_players:
     type: procedure
     definitions: map
     script:
-    - determine <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.filter_tag[<[filter_value].has_flag[juggernaut_data.dead].not>].filter_tag[<[filter_value].has_flag[juggernaut_data.spectator].not>]>
+    - determine <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.filter_tag[<[filter_value].has_flag[juggernaut_data.dead].not>].filter_tag[<[filter_value].has_flag[juggernaut_data.spectator].not.and[<[filter_value].has_flag[juggernaut_data.is_host].not>]>]>
 jug_map_assignment:
 ## When assigning, do '/npc assign --set jug_map_assignment'
     type: assignment
@@ -2062,24 +2045,38 @@ jug_jug_res_proc:
     type: procedure
     definitions: map|cause
     script:
-    - define minPlayers <proc[jug_config_read].context[juggernaut_settings.resistances.min_players]>
-    - define perPlayer <proc[jug_config_read].context[juggernaut_settings.resistances.base.per_player]>
-    - define maxRes <proc[jug_config_read].context[juggernaut_settings.resistances.base.max_res]>
-    - define players <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size>
-    - if <[players]> < <[minPlayers]>:
-        - determine 1
-    - define baseResistance <element[1].sub[<[players].add[1].sub[<[minPlayers]>].mul[<[perPlayer]>].min[<[maxRes]>]>]>
-    - if !<proc[jug_config_read].context[juggernaut_settings.resistances.<[cause]>].exists>:
-        - determine <[baseResistance]>
-    - define perPlayer <proc[jug_config_read].context[juggernaut_settings.resistances.<[cause]>.per_player]>
-    - define maxRes <proc[jug_config_read].context[juggernaut_settings.resistances.<[cause]>.max_res]>
-    - define bonusResistance <element[1].sub[<[players].add[1].sub[<[minPlayers]>].mul[<[perPlayer]>].min[<[maxRes]>]>]>
+    - if !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.resistances.base].exists>:
+        - define minPlayers <proc[jug_config_read].context[juggernaut_settings.resistances.min_players]>
+        - define perPlayer <proc[jug_config_read].context[juggernaut_settings.resistances.base.per_player]>
+        - define maxRes <proc[jug_config_read].context[juggernaut_settings.resistances.base.max_res]>
+        - define players <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size>
+        - if <[players]> < <[minPlayers]> && ( !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.resistances.base].exists> || !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.resistances.<[cause]>].exists>):
+            - determine 1
+        - define baseResistance <element[1].sub[<[players].add[1].sub[<[minPlayers]>].mul[<[perPlayer]>].min[<[maxRes]>]>]>
+    - else:
+        - define baseResistance <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.resistances.base]>
+    - define bonusResistance 1
+    - if !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.resistances.<[cause]>].exists>:
+        - define perPlayer <proc[jug_config_read].context[juggernaut_settings.resistances.<[cause]>.per_player]>
+        - define maxRes <proc[jug_config_read].context[juggernaut_settings.resistances.<[cause]>.max_res]>
+        - define bonusResistance <element[1].sub[<[players].add[1].sub[<[minPlayers]>].mul[<[perPlayer]>].min[<[maxRes]>]>]>
+    - else:
+        - define bonusResistance <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.resistances.<[cause]>]>
     - determine <[baseResistance].mul[<[bonusResistance]>]>
 jug_config_read:
     type: procedure
-    definitions: path
+    definitions: path|map
     script:
     - define result <yaml[juggernaut].read[<[path]>]>
+    - choose <[path]>:
+        - case victory_conditions:
+            - foreach <yaml[juggernaut].read[<[path]>].keys.sort_by_number[].reverse>:
+                    - if <[value]> <= <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size>:
+                        - define result <yaml[juggernaut].read[<[path]>.<[value]>]>
+                        - foreach stop
+    - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.<[path]>].exists>:
+        - define result <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.<[path]>]>
+        - narrate <[result]> targets:<server.online_players>
     - determine <[result]>
 jug_stop_hosting:
     type: task
@@ -2103,23 +2100,46 @@ jug_hosting_main_inv:
   procedural items:
     - define map <player.flag[juggernaut_data.map]>
     - define list <list>
-    - if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> == 0 && <server.flag[juggernaut_maps.<[map]>.game_data.players]> >= <proc[jug_config_read].context[mininum_players]>:
+    - define item <item[clock]>
+    - adjust def:item flag:juggernaut:respawn_timer
+    - adjust def:item display_name:<&e><&l>Respawn<&sp>Timer
+    - adjust def:item "lore:<&7>Time it takes for players to respawn <&nl><&nl><&7>Current: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer].if_null[Default<&sp>(<proc[jug_config_read].context[respawn_timer|<[map]>].round>)]>"
+    - define list:->:<[item]>
+    - define item <item[emerald]>
+    - adjust def:item flag:juggernaut:points
+    - adjust def:item display_name:<&e><&l>Points<&sp>Earned
+    - adjust def:item "lore:<&7>Points earned from various actions <&nl><&nl><player.flag[juggernaut_data.host_data.points].equals[kill_juggernaut_points].if_true[<&a>].if_false[<&7>].if_null[<&a>]>[1] <&7>Kill Juggernaut: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.kill_juggernaut_points].if_null[Default<&sp>(<proc[jug_config_read].context[kill_juggernaut_points|<[map]>].round>)]> <&nl><player.flag[juggernaut_data.host_data.points].equals[juggernaut_kill_points].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[2] <&7>Juggernaut Kill: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.juggernaut_kill_points].if_null[Default<&sp>(<proc[jug_config_read].context[juggernaut_kill_points|<[map]>].round>)]>"
+    - define list:->:<[item]>
+    - define item <item[shield]>
+    - adjust def:item flag:juggernaut:spawn_protection
+    - adjust def:item display_name:<&e><&l>Spawn<&sp>Protection
+    - adjust def:item "lore:<&7>Resistance given when respawning <&nl><&nl><player.flag[juggernaut_data.host_data.spawn_protection].equals[spawn_protection_duration].if_true[<&a>].if_false[<&7>].if_null[<&a>]>[1] <&7>Duration: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.spawn_protection_duration].if_null[Default<&sp>(<proc[jug_config_read].context[spawn_protection_duration|<[map]>].round>)]> <&nl><player.flag[juggernaut_data.host_data.spawn_protection].equals[spawn_protection_level].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[2] <&7>Level: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.spawn_protection_level].if_null[Default<&sp>(<proc[jug_config_read].context[spawn_protection_level|<[map]>].round>)]>"
+    - define list:->:<[item]>
+    - define item <item[gold_ingot]>
+    - adjust def:item flag:juggernaut:victory_condition
+    - adjust def:item display_name:<&e><&l>Victory<&sp>Condition
+    - adjust def:item "lore:<&7>The amount of points required to win <&nl><&nl><&7>Current: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions].if_null[Default<&sp>(Varies)]>"
+    - define list:->:<[item]>
+    - define item <item[diamond_chestplate]>
+    - adjust def:item flag:juggernaut:resistances
+    - adjust def:item display_name:<&e><&l>Juggernaut<&sp>Resistances
+    - adjust def:item "lore:<&7>Damage multipliers to the juggernaut from <&nl><&7>various sources <&nl><&nl><player.flag[juggernaut_data.host_data.resistances].equals[base].if_true[<&a>].if_false[<&7>].if_null[<&a>]>[1] <&7>Base Resistance: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.resistances.base].if_null[Default]> <&nl><player.flag[juggernaut_data.host_data.resistances].equals[projectile].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[2] <&7>Projectile Resistance: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.resistances.projectile].if_null[Default]> <&nl><player.flag[juggernaut_data.host_data.resistances].equals[entity_explosion].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[3] <&7>Entity Explosion Resistance: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.resistances.entity_explosion].if_null[Default]> <&nl><player.flag[juggernaut_data.host_data.resistances].equals[entity_attack].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[4] <&7>Entity Attack Resistance: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.resistances.entity_attack].if_null[Default]> "
+    - define list:->:<[item]>
+    - if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> == 0 && <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size> >= <proc[jug_config_read].context[mininum_players]>:
         - define item <item[lime_dye]>
         - adjust def:item flag:juggernaut:start_game
         - adjust def:item display_name:<&a><&l>Start<&sp>Game
         - adjust def:item "lore:<&7>Click here to start the game"
-        - narrate <[item]>
         - define list:->:<[item]>
     - else if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> == 0:
         - define item <item[gray_dye]>
         - adjust def:item flag:juggernaut:start_game
         - adjust def:item display_name:<&7><&l>Start<&sp>Game
         - adjust def:item "lore:<&7>Click here to start the game <&nl><&c>Not enough players! Mininum: <&l><proc[jug_config_read].context[mininum_players]>"
-        - narrate <[item]>
         - define list:->:<[item]>
     - determine <[list]>
   slots:
-    - [g] [g] [g] [g] [g] [g] [g] [g] [g]
+    - [g] [] [] [] [] [] [g] [g] [g]
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
@@ -2131,10 +2151,131 @@ jug_hosting_click:
         on player clicks item_flagged:juggernaut in jug_hosting_main_inv:
         - define flag <context.item.flag[juggernaut]>
         - define map <player.flag[juggernaut_data.map]>
-        - narrate <context.item.flag[juggernaut]>
-        - choose flag:
+        - choose <[flag]>:
             - case start_game:
-                - if <server.flag[juggernaut_maps.<[map]>.game_data.players]> >= <proc[jug_config_read].context[mininum_players]>:
+                - if <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size> >= <proc[jug_config_read].context[mininum_players]>:
                     - run jug_start_task def:<[map]>|5
                 - else:
                     - narrate "<&c>Not enough players to start!"
+            - case respawn_timer:
+                - if !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer].exists>:
+                    - flag server juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer:<proc[jug_config_read].context[respawn_timer|<[map]>].round>
+                - choose <context.click>:
+                    - case left:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer:+:1
+                    - case right:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer:-:1
+                    - case shift_left:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer:+:5
+                    - case shift_right:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer:-:5
+                    - case middle:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer:!
+                - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer]> < 0:
+                    - flag server juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer:0
+            - case points:
+                - if !<player.flag[juggernaut_data.host_data.points].exists> && <context.click> != number_key:
+                    - flag <player> juggernaut_data.host_data.points:kill_juggernaut_points
+                - define point_type:<player.flag[juggernaut_data.host_data.points]>
+                - if !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>].exists> && <context.click> != number_key:
+                    - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>:<proc[jug_config_read].context[<[point_type]>|<[map]>].round>
+                - choose <context.click>:
+                    - case left:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>:+:1
+                    - case right:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>:-:1
+                    - case shift_left:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>:+:5
+                    - case shift_right:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>:-:5
+                    - case middle:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>:!
+                    - case number_key:
+                        - choose <context.hotbar_button>:
+                            - case 1:
+                                - flag <player> juggernaut_data.host_data.points:kill_juggernaut_points
+                            - case 2:
+                                - flag <player> juggernaut_data.host_data.points:juggernaut_kill_points
+                - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>]> < 0:
+                    - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>:0
+            - case spawn_protection:
+                - if !<player.flag[juggernaut_data.host_data.spawn_protection].exists> && <context.click> != number_key:
+                    - flag <player> juggernaut_data.host_data.spawn_protection:spawn_protection_duration
+                - define protection_type:<player.flag[juggernaut_data.host_data.spawn_protection]>
+                - if !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.<[protection_type]>].exists> && <context.click> != number_key:
+                    - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[protection_type]>:<proc[jug_config_read].context[<[protection_type]>|<[map]>].round>
+                - choose <context.click>:
+                    - case left:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[protection_type]>:+:1
+                    - case right:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[protection_type]>:-:1
+                    - case shift_left:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[protection_type]>:+:5
+                    - case shift_right:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[protection_type]>:-:5
+                    - case middle:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[protection_type]>:!
+                    - case number_key:
+                        - choose <context.hotbar_button>:
+                            - case 1:
+                                - flag <player> juggernaut_data.host_data.spawn_protection:spawn_protection_duration
+                            - case 2:
+                                - flag <player> juggernaut_data.host_data.spawn_protection:spawn_protection_level
+                - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.<[protection_type]>]> < 0:
+                    - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[protection_type]>:0
+                - else if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.spawn_protection_level]> > 5:
+                    - flag server juggernaut_maps.<[map]>.host_data.host_settings.spawn_protection_level:5
+            - case victory_condition:
+                - if !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions].exists>:
+                    - flag server juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions:<proc[jug_config_read].context[victory_conditions|<[map]>].round>
+                - choose <context.click>:
+                    - case left:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions:+:1
+                    - case right:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions:-:1
+                    - case shift_left:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions:+:5
+                    - case shift_right:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions:-:5
+                    - case middle:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions:!
+                - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions]> < 0:
+                    - flag server juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions:0
+            - case resistances:
+                - if !<player.flag[juggernaut_data.host_data.resistances].exists> && <context.click> != number_key:
+                    - flag <player> juggernaut_data.host_data.resistances:base
+                - define resistance_type:<player.flag[juggernaut_data.host_data.resistances]>
+                - if !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.resistances.<[resistance_type]>].exists> && <context.click> != number_key:
+                    - flag server juggernaut_maps.<[map]>.host_data.host_settings.resistances.<[resistance_type]>:1
+                - choose <context.click>:
+                    - case left:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.resistances.<[resistance_type]>:+:0.01
+                    - case right:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.resistances.<[resistance_type]>:-:0.01
+                    - case shift_left:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.resistances.<[resistance_type]>:+:0.1
+                    - case shift_right:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.resistances.<[resistance_type]>:-:0.1
+                    - case middle:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.resistances.<[resistance_type]>:!
+                    - case number_key:
+                        - choose <context.hotbar_button>:
+                            - case 1:
+                                - flag <player> juggernaut_data.host_data.resistances:base
+                            - case 2:
+                                - flag <player> juggernaut_data.host_data.resistances:projectile
+                            - case 3:
+                                - flag <player> juggernaut_data.host_data.resistances:entity_explosion
+                            - case 4:
+                                - flag <player> juggernaut_data.host_data.resistances:entity_attack
+                - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.<[resistance_type]>]> < 0:
+                    - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[resistance_type]>:0
+        - inventory open d:jug_hosting_main_inv
+        on player right clicks block with:jug_host_settings_item:
+        - inventory open d:jug_hosting_main_inv
+jug_host_settings_item:
+    type: item
+    material: DIAMOND
+    display name: <&e>Host Settings
+    lore:
+    - <&7>Right click this item to open the host settings.
