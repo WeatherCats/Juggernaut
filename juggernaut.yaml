@@ -1,0 +1,344 @@
+# Sets the mininum players required to start a game. Default: 2
+mininum_players: 1
+#########################################################################################################################################################
+# Ready spam limits the amount of times a player can spam ready/unready. By default, they can ready/unready a maximum of 3 times in 8 seconds. If       # # exceeded, the player must wait until it has been 8 seconds since they first clicked ready/unready.                                                    #
+#########################################################################################################################################################
+# Sets the amount of times a player can ready or unready in a set amount of time (defined by rate). Default: 3
+ready_spam_limit: 3
+# Sets the amount of time checked by the ready spam limit in seconds. Default: 8
+ready_spam_rate: 8
+#########################################################################################################################################################
+# Leave spam limits the amount of times a player can attempt to exit the map boundaries. By default, they can attempt to exit a maximum of 5 times in a #
+# 5 second period, otherwise they get teleported to their map's spawn.                                                                                  #
+#########################################################################################################################################################
+# Sets the amount of times a player can attempt to exit the map boundaries in a set amount of time (defined by rate). Default: 5
+leave_spam_limit: 5
+# Sets the amount of time checked by the exit spam limit in seconds. Default: 5
+leave_spam_rate: 5
+# Sets the amount of players listed in the sidebar. Default: 5
+sidebar_size: 5
+# Sets the amount of time players must wait before respawning in seconds. Default: 10
+respawn_timer: 10
+spawn_protection_duration: 5
+spawn_protection_level: 3
+juggernaut_kill_points: 1
+kill_juggernaut_points: 3
+chat_prefix: '&4[&cJuggernaut&4]'
+victory_conditions:
+ 15: 7
+ 10: 9
+ 7: 11
+ 5: 13
+ 1: 15
+juggernaut_settings:
+ resistances:
+  min_players: 4
+  base:
+   per_player: 0.07
+   max_res: 0.7
+  projectile:
+   per_player: 0.05
+   max_res: 0.5
+ speed_reduction: 0.01
+kits:
+ tank:
+  chestplate_type: netherite_chestplate
+  primary_color: 8888aa
+  secondary_color: 555555
+  gui_item: netherite_chestplate
+  display_name: Tank
+  description: Tank has very high defense and good damage, but not a lot of speed. Tank's ability makes you invulnerable for a few seconds.
+  armor: 15
+  armor_toughness: 2
+  speed: 0.0925
+  inventory:
+   1:
+    type: DIAMOND_AXE
+    display_type: axe
+    attack_damage: 7.85
+    attack_speed: 0.8
+    ability:
+     type: tank
+     click_type: right
+     display_name: Invulnerability
+     description: Gives you invulnerability for a few seconds.
+     description_stats:
+      Cooldown: cooldown
+      Duration: duration
+     cooldown: 30
+     duration:
+      player: 3
+      juggernaut: 5
+ sharpshooter:
+  chestplate_type: leather_chestplate
+  primary_color: 552200
+  secondary_color: 884400
+  gui_item: arrow
+  display_name: Sharpshooter
+  description: Sharpshooter is a bow kit with high damage and good speed, but low defense. Sharpshooter's ability makes your next shot do increased damage from further away.
+  armor: 7
+  armor_toughness: 0
+  speed: 0.115
+  inventory:
+   1:
+    type: BOW
+    display_type: bow
+    projectile_damage: 2.8
+    ability:
+     type: sharpshooter
+     click_type: left
+     display_name: 'Sniper'
+     description: Makes the next shot you take deal extra damage the further away you are from your opponent.
+     description_stats:
+      Cooldown: cooldown
+      Minimum Damage Multiplier: min_damage_multiplier
+      Maximum Damage Multiplier: max_damage_multiplier
+      Maximum Distance: max_distance
+     cooldown: 20
+     min_damage_multiplier: 1
+     max_damage_multiplier:
+      player: 2.25
+      juggernaut: 3
+     max_distance: 70
+   9:
+    type: ARROW
+ archer:
+  chestplate_type: chainmail_chestplate
+  primary_color: 884400
+  secondary_color: aa6600
+  gui_item: bow
+  display_name: Archer
+  description: Archer is a bow kit with decent armor, decent damage, and average speed, not to mention an okay sword. Archer's ability automatically shoots out a very fast arrow.
+  armor: 11
+  armor_toughness: 0
+  speed: 0.1
+  inventory:
+   1:
+    type: BOW
+    display_type: bow
+    projectile_damage: 2.5
+    ability:
+     type: archer
+     click_type: left
+     display_name: 'Sharp Shot'
+     description: Automatically shoots an arrow in the direction you are looking.
+     description_stats:
+      Cooldown: cooldown
+      Arrow Speed: arrow_speed
+      Arrow Damage: arrow_damage
+     cooldown: 20
+     arrow_speed: 5
+     arrow_damage:
+      player: 2.45
+      juggernaut: 3.25
+   2:
+    type: GOLDEN_SWORD
+    display_type: sword
+    attack_damage: 4
+    attack_speed: 1
+   9:
+    type: ARROW
+ healer:
+  chestplate_type: chainmail_chestplate
+  primary_color: dd77dd
+  secondary_color: dd44dd
+  gui_item: golden_hoe
+  display_name: Healer
+  description: Healer has good defense and both an okay bow and a fast melee weapon. Healer's ability heals you.
+  armor: 10
+  armor_toughness: 0
+  speed: 0.1
+  inventory:
+   1:
+    type: BOW
+    display_type: bow
+    projectile_damage: 2.25
+    ability:
+     type: healer
+     click_type: left
+     display_name: 'Heal'
+     description: Heals you.
+     description_stats:
+      Cooldown: cooldown
+      Health Gained: heal_amount
+     cooldown: 20
+     heal_amount:
+      player: 6
+      juggernaut: 11
+   2:
+    type: GOLDEN_HOE
+    display_type: sword
+    attack_damage: 3
+    attack_speed: 2
+   9:
+    type: ARROW
+ assassin:
+  chestplate_type: leather_chestplate
+  primary_color: ffffff
+  secondary_color: ff5555
+  gui_item: diamond_sword
+  display_name: Assassin
+  description: Assassin is a very fast kit with great damage, but no defense. Assassin's ability quickly moves you in the direction you are looking.
+  armor: 0
+  armor_toughness: 0
+  speed: 0.13
+  inventory:
+   1:
+    type: DIAMOND_SWORD
+    display_type: sword
+    attack_damage: 5.75
+    attack_speed: 1.6
+    ability:
+     type: assassin
+     click_type: right
+     display_name: Blink
+     description: Quickly moves you forward in the direction you are looking.
+     description_stats:
+      Cooldown: cooldown
+      Velocity: blink_velocity
+      Duration: blink_duration
+     cooldown: 20
+     blink_velocity:
+      player: 1
+      juggernaut: 1.5
+     blink_duration: 0.75
+ ninja:
+  chestplate_type: leather_chestplate
+  primary_color: 333333
+  secondary_color: 666666
+  gui_item: black_dye
+  display_name: Ninja
+  description: Ninja has decent damage, decent speed, and low armor. Ninja's ability makes you go invisible to other players, including your armor.
+  armor: 3
+  armor_toughness: 0
+  speed: 0.115
+  inventory:
+   1:
+    type: IRON_SWORD
+    display_type: sword
+    attack_damage: 5
+    attack_speed: 1.6
+    ability:
+     type: ninja
+     click_type: right
+     display_name: Invisibility
+     description: Turns you invisible. This even makes your items, armor, and glowing invisible to other players!
+     description_stats:
+      Cooldown: cooldown
+      Duration: duration
+     cooldown: 25
+     duration:
+      player: 5
+      juggernaut: 8
+ knight:
+  chestplate_type: diamond_chestplate
+  primary_color: cccccc
+  secondary_color: 888888
+  gui_item: shield
+  display_name: Knight
+  description: Knight is a fairly tough kit with good armor, a good weapon, and a shield, but lowered speed. Knight's ability charges forward while holding the shield, dealing damage to nearby opponents along the way.
+  armor: 13
+  armor_toughness: 0
+  speed: 0.0925
+  inventory:
+   1:
+    type: IRON_SWORD
+    display_type: sword
+    attack_damage: 5.25
+    attack_speed: 1.6
+   41:
+    type: SHIELD
+    durability: 30
+    durability_cooldown: 20
+    ability:
+     type: knight
+     click_type: shift_shield
+     display_name: Shield Bash
+     description: Charges forward while your shield is being held, dealing damage to players nearby along the way.
+     description_stats:
+      Cooldown: cooldown
+      Velocity: bash_velocity
+      Duration: bash_duration
+      Damage: bash_damage
+     cooldown: 25
+     bash_velocity:
+      player: 0.65
+      juggernaut: 0.9
+     bash_duration: 2
+     bash_damage:
+      player: 3
+      juggernaut: 5
+ mage:
+  chestplate_type: chainmail_chestplate
+  primary_color: ffff00
+  secondary_color: 999900
+  gui_item: stick
+  display_name: Mage
+  description: Mage is a magic kit, shooting magic whenever you right click its wand. Its ability launches a fireball.
+  armor: 9
+  armor_toughness: 0
+  speed: 0.0975
+  kit_type: magic
+  inventory:
+   1:
+    type: STICK
+    display_type: wand
+    magic_damage: 13
+    magic_range: 7
+    # Time it takes for the magic to go the full range.
+    magic_speed: 0.35
+    magic_particle: VILLAGER_HAPPY
+    ability:
+     type: mage
+     click_type: left
+     display_name: Fireball
+     description: Shoots out fireball
+     description_stats:
+      Mana Cost: mana_cost
+      Fireball Explosion Radius: fireball_radius
+      Fireball Speed: fireball_speed
+     mana_cost: 60
+     fireball_radius:
+      player: 3
+      juggernaut: 4
+     fireball_speed: 0.5
+ frostmancer:
+  chestplate_type: chainmail_chestplate
+  primary_color: aaaaff
+  secondary_color: 7777ff
+  gui_item: snowball
+  display_name: Frostmancer
+  description: Frostmancer is a magic kit with an ability that shoots snowballs that slow and deal knockback.
+  armor: 9
+  armor_toughness: 0
+  speed: 0.0975
+  kit_type: magic
+  inventory:
+   1:
+    type: BONE
+    display_type: wand
+    magic_damage: 10
+    magic_range: 7
+    # Time it takes for the magic to go the full range.
+    magic_speed: 0.35
+    magic_particle: SNOWBALL
+    ability:
+     type: frostmancer
+     click_type: left
+     display_name: Snowball Flurry
+     description: Shoots out several snowballs
+     description_stats:
+      Mana Cost: mana_cost
+      Snowball Amount: snowball_amount
+      Snowball Slow: snowball_slow
+      Snowball Slow Duration: snowball_slow_duration
+      Snowball Knockback: snowball_knockback
+      Snowball Speed: snowball_speed
+     mana_cost: 25
+     snowball_amount:
+      player: 2
+      juggernaut: 3
+     snowball_slow: -0.02
+     snowball_slow_duration: 2
+     snowball_knockback: 1
+     snowball_speed: 2
