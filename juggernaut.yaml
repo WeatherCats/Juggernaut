@@ -66,6 +66,7 @@ kits:
       Cooldown: cooldown
       Duration: duration
      cooldown: 30
+     mininum_cooldown: 8
      duration:
       player: 3
       juggernaut: 5
@@ -127,6 +128,7 @@ kits:
       Arrow Speed: arrow_speed
       Arrow Damage: arrow_damage
      cooldown: 20
+     mininum_cooldown: 2
      arrow_speed: 5
      arrow_damage:
       player: 2.45
@@ -162,6 +164,7 @@ kits:
       Cooldown: cooldown
       Health Gained: heal_amount
      cooldown: 20
+     mininum_cooldown: 5
      heal_amount:
       player: 6
       juggernaut: 11
@@ -198,6 +201,7 @@ kits:
       Velocity: blink_velocity
       Duration: blink_duration
      cooldown: 20
+     mininum_cooldown: 2
      blink_velocity:
       player: 1
       juggernaut: 1.5
@@ -227,6 +231,7 @@ kits:
       Cooldown: cooldown
       Duration: duration
      cooldown: 25
+     mininum_cooldown: 9
      duration:
       player: 5
       juggernaut: 8
@@ -261,6 +266,7 @@ kits:
       Duration: bash_duration
       Damage: bash_damage
      cooldown: 25
+     mininum_cooldown: 3
      bash_velocity:
       player: 0.65
       juggernaut: 0.9
@@ -318,7 +324,7 @@ kits:
     type: BONE
     display_type: wand
     magic_damage: 10
-    magic_range: 7
+    magic_range: 11
     # Time it takes for the magic to go the full range.
     magic_speed: 0.35
     magic_particle: SNOWBALL
@@ -342,3 +348,34 @@ kits:
      snowball_slow_duration: 2
      snowball_knockback: 1
      snowball_speed: 2
+ berserker:
+  chestplate_type: leather_chestplate
+  primary_color: ff0000
+  secondary_color: 8888aa
+  gui_item: netherite_sword
+  display_name: Berserker
+  description: Berserker has amazing damage, with the drawback on no armor and mediocre speed. Its ability grantes strength for a few seconds.
+  armor: 0
+  armor_toughness: 0
+  speed: 0.095
+  inventory:
+   1:
+    type: NETHERITE_SWORD
+    display_type: sword
+    attack_damage: 10
+    attack_speed: 1
+    ability:
+     type: berserker
+     click_type: right
+     display_name: Strength
+     description: Gives you strength for a few seconds.
+     description_stats:
+      Cooldown: cooldown
+      Duration: duration
+      Level: level
+     cooldown: 30
+     mininum_cooldown: 8
+     duration:
+      player: 3
+      juggernaut: 5
+     level: 2
