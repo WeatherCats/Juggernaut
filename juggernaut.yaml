@@ -49,7 +49,7 @@ kits:
   display_name: Tank
   description: Tank has very high defense and good damage, but not a lot of speed. Tank's ability makes you invulnerable for a few seconds.
   armor: 15
-  armor_toughness: 2
+  armor_toughness: 1
   speed: 0.0925
   inventory:
    1:
@@ -65,11 +65,15 @@ kits:
      description_stats:
       Cooldown: cooldown
       Duration: duration
+      Damage Multiplier: damage_multiplier
+      Bonus Speed: bonus_speed
      cooldown: 30
      mininum_cooldown: 8
      duration:
       player: 3
       juggernaut: 5
+     damage_multiplier: 0.25
+     bonus_speed: 0.0075
  sharpshooter:
   chestplate_type: leather_chestplate
   primary_color: 552200
@@ -79,7 +83,7 @@ kits:
   description: Sharpshooter is a bow kit with high damage and good speed, but low defense. Sharpshooter's ability makes your next shot do increased damage from further away.
   armor: 7
   armor_toughness: 0
-  speed: 0.115
+  speed: 0.105
   inventory:
    1:
     type: BOW
@@ -154,7 +158,7 @@ kits:
    1:
     type: BOW
     display_type: bow
-    projectile_damage: 2.25
+    projectile_damage: 2.35
     ability:
      type: healer
      click_type: left
@@ -203,8 +207,8 @@ kits:
      cooldown: 20
      mininum_cooldown: 2
      blink_velocity:
-      player: 1
-      juggernaut: 1.5
+      player: 0.85
+      juggernaut: 1.25
      blink_duration: 0.75
  ninja:
   chestplate_type: leather_chestplate
@@ -244,7 +248,7 @@ kits:
   description: Knight is a fairly tough kit with good armor, a good weapon, and a shield, but lowered speed. Knight's ability charges forward while holding the shield, dealing damage to nearby opponents along the way.
   armor: 13
   armor_toughness: 0
-  speed: 0.0925
+  speed: 0.095
   inventory:
    1:
     type: IRON_SWORD
@@ -307,7 +311,7 @@ kits:
      fireball_radius:
       player: 3
       juggernaut: 4
-     fireball_speed: 0.5
+     fireball_speed: 0.35
  frostmancer:
   chestplate_type: chainmail_chestplate
   primary_color: aaaaff
@@ -344,9 +348,9 @@ kits:
      snowball_amount:
       player: 2
       juggernaut: 3
-     snowball_slow: -0.02
-     snowball_slow_duration: 2
-     snowball_knockback: 1
+     snowball_slow: -0.03
+     snowball_slow_duration: 3
+     snowball_knockback: 0.5
      snowball_speed: 2
  berserker:
   chestplate_type: leather_chestplate

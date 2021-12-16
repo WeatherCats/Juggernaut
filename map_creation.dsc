@@ -779,7 +779,6 @@ jug_start_task:
                 - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[juggernaut]>
                 - flag <[juggernaut]> juggernaut_data.is_juggernaut:true
                 - title 'title:<&c>You are the Juggernaut!' player:<[juggernaut]>
-                - cast glowing duration:10000s <[juggernaut]> no_icon no_particles
                 - teleport <[juggernaut]> to:<server.flag[juggernaut_maps.<[map]>.jug_spawn]>
                 - flag server juggernaut_maps.<[map]>.game_data.countdown:!
                 - flag server juggernaut_maps.<[map]>.game_data.saved_countdown:!
@@ -791,6 +790,8 @@ jug_start_task:
                     - run jug_give_kit player:<[value]>
                     - run jug_mana_start player:<[value]>
                     - adjust <[value]> invulnerable:false
+                    - if <server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.max_health]>:
+                        - adjust <[value]> health_data:<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.max_health]>/<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.max_health]>
                     - flag <[value]> juggernaut_data.life_id:<util.random.uuid>
                 - if <server.flag[juggernaut_maps.<[map]>.game_data.spectators].exists>:
                     - foreach <server.flag[juggernaut_maps.<[map]>.game_data.spectators]>:
@@ -835,6 +836,8 @@ jug_rejoin_task:
     - adjust <player> can_fly:true
     - adjust <player> invulnerable:true
     - adjust <player> clear_body_arrows
+    - if <server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.max_health]>:
+        - adjust <player> health_data:<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.max_health]>/<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.max_health]>
     - inventory clear d:<player.inventory>
     - flag <player> gui_page:1
     - inventory open d:JUG_KIT_SELECTION_GUI
@@ -872,6 +875,8 @@ jug_kill_script:
                         - define maxDam <[ability.max_damage_multiplier.<[player_type]>].if_null[<[ability.max_damage_multiplier]>]>
                         - define damageMultiplier <context.projectile.flag[shot_origin].distance[<context.entity.location>].div[<[maxDis].div[<[maxDam].sub[<[minDam]>]>]>].add[<[minDam]>].min[<[maxDam]>]>
                         - narrate "<&7>You dealt <&a><&l><[damageMultiplier].round_to_precision[0.01].substring[1,<[damageMultiplier].round_to_precision[0.01].index_of[.].add[2]>]>x <&7>more damage!"
+                    - if <context.final_damage> <= 0:
+                        - stop
                     - if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
                         - determine <context.final_damage.mul[<[damageMultiplier].if_null[1]>].mul[<proc[jug_jug_res_proc].context[<player.flag[juggernaut_data.map]>|<context.cause>]>]>
                     - else:
@@ -906,6 +911,10 @@ jug_kill_script:
         - inventory adjust d:<player> slot:37 remove_attribute_modifiers:<list[<[attributes.generic_movement_speed.1.id]>]>
         on player flagged:juggernaut_data.in_game changes food level:
         - determine 20
+        on player flagged:juggernaut_data.in_game heals because SATIATED:
+        - define map <player.flag[juggernaut_data.map]>
+        - if <server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.regen_disabled]>:
+            - determine passively cancelled
         on player flagged:juggernaut_data.in_game dies:
         - if <context.entity.has_flag[juggernaut_data.dead]> || <context.entity.has_flag[juggernaut_data.spectator]>:
             - determine passively cancelled
@@ -928,8 +937,10 @@ jug_kill_script:
                 - flag <context.entity> juggernaut_data.is_juggernaut:!
                 - flag <context.damager> juggernaut_data.is_juggernaut:true
                 - cast glowing remove <context.entity>
-                - if !<context.damager.has_flag[juggernaut_data.invis]>:
+                - if !<context.damager.has_flag[juggernaut_data.invis]> && !<server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.glowing_disabled]> && !<context.damager.has_flag[juggernaut_data.dead]>:
                     - cast glowing duration:10000s <context.damager> no_icon no_particles
+                - if !<context.damager.has_flag[juggernaut_data.dead]>:
+                    - inventory set d:<context.damager.inventory> o:player_head[skull_skin=69a4ed90-c7d1-4236-9f39-b8fb6e599c70|eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTU5NTNkNjMxMjlmNTIwNWJjZGE5NmM5MWMwNzBjYjFkMzlkMTU1NWQ1ZGZjNDM4MThkNzM3ODg3YzNkMSJ9fX0] slot:40
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><context.entity.name> <&7>was killed by <&e><context.damager.name>" targets:<proc[jug_viewers].context[<[map]>]>
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><context.damager.name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<context.damager>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
                 - title 'title:<&c>You are now the Juggernaut!' targets:<context.damager>
@@ -943,8 +954,10 @@ jug_kill_script:
                 - flag <context.entity> juggernaut_data.is_juggernaut:!
                 - flag <[killer]> juggernaut_data.is_juggernaut:true
                 - cast glowing remove <context.entity>
-                - if !<[killer].has_flag[juggernaut_data.invis]>:
+                - if !<[killer].has_flag[juggernaut_data.invis]> && !<server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.glowing_disabled]> && !<[killer].has_flag[juggernaut_data.dead]>:
                     - cast glowing duration:10000s <[killer]> no_icon no_particles
+                - if !<[killer].has_flag[juggernaut_data.dead]>:
+                    - inventory set d:<[killer].inventory> o:player_head[skull_skin=69a4ed90-c7d1-4236-9f39-b8fb6e599c70|eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTU5NTNkNjMxMjlmNTIwNWJjZGE5NmM5MWMwNzBjYjFkMzlkMTU1NWQ1ZGZjNDM4MThkNzM3ODg3YzNkMSJ9fX0] slot:40
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><context.entity.name> <&7>was killed by <&e><[killer].name>" targets:<proc[jug_viewers].context[<[map]>]>
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
                 - title 'title:<&c>You are now the Juggernaut!' targets:<[killer]>
@@ -957,8 +970,10 @@ jug_kill_script:
                 - flag <context.entity> juggernaut_data.is_juggernaut:!
                 - flag <[killer]> juggernaut_data.is_juggernaut:true
                 - cast glowing remove <context.entity>
-                - if !<[killer].has_flag[juggernaut_data.invis]>:
+                - if !<[killer].has_flag[juggernaut_data.invis]> && !<server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.glowing_disabled]> && !<[killer].has_flag[juggernaut_data.dead]>:
                     - cast glowing duration:10000s <[killer]> no_icon no_particles
+                - if !<[killer].has_flag[juggernaut_data.dead]>:
+                    - inventory set d:<[killer].inventory> o:player_head[skull_skin=69a4ed90-c7d1-4236-9f39-b8fb6e599c70|eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTU5NTNkNjMxMjlmNTIwNWJjZGE5NmM5MWMwNzBjYjFkMzlkMTU1NWQ1ZGZjNDM4MThkNzM3ODg3YzNkMSJ9fX0] slot:40
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><context.entity.name> <&7>died!" targets:<proc[jug_viewers].context[<[map]>]>
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
                 - title 'title:<&c>You are now the Juggernaut!' targets:<[killer]>
@@ -1039,26 +1054,26 @@ jug_mana_regen:
     type: task
     debug: false
     script:
-    - define count <player.flag[juggernaut_data.mana_list].first>
     - define life_id:<player.flag[juggernaut_data.life_id]>
-    - flag <player> juggernaut_data.mana_list:<-:<[count]>
+    - define map <player.flag[juggernaut_data.map]>
     - flag <player> juggernaut_data.mana_regen:true
-    - repeat <[count]>:
-        - wait 0.4s
-        - if <player.flag[juggernaut_data.life_id]> == <[life_id]>:
-            - run jug_mana_restore player:<player>
-        - else:
-            - stop
-    - flag <player> juggernaut_data.mana_regen:!
-    - if <player.flag[juggernaut_data.mana_list].size> > 0:
+    - wait <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.mana_multiplier].mul[0.3].if_null[0.3]>s
+    - if <player.flag[juggernaut_data.life_id]> == <[life_id]>:
+        - flag <player> juggernaut_data.mana_recharge:-:1
+        - run jug_mana_restore player:<player>
+    - else:
+        - stop
+    - if <player.flag[juggernaut_data.mana_recharge]> > 0:
         - run jug_mana_regen player:<player>
+    - else:
+        - flag <player> juggernaut_data.mana_regen:!
 jug_mana_use:
     type: task
     debug: false
     definitions: amount
     script:
     - flag <player> juggernaut_data.mana:-:<[amount]>
-    - flag <player> juggernaut_data.mana_list:->:<[amount]>
+    - flag <player> juggernaut_data.mana_recharge:+:<[amount]>
     - run jug_mana_update player:<player>
     - if !<player.flag[juggernaut_data.mana_regen].exists>:
         - run jug_mana_regen player:<player>
@@ -1079,7 +1094,7 @@ jug_mana_start:
     script:
     - if <proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.kit_type]> == magic:
         - flag <player> juggernaut_data.mana:100
-        - flag <player> juggernaut_data.mana_list:<list>
+        - flag <player> juggernaut_data.mana_recharge:0
         - run jug_mana_update player:<player>
 jug_mana_end:
     type: task
@@ -1087,7 +1102,7 @@ jug_mana_end:
     script:
     - if <proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.kit_type]> == magic:
         - flag <player> juggernaut_data.mana:!
-        - flag <player> juggernaut_data.mana_list:!
+        - flag <player> juggernaut_data.mana_recharge:!
         - flag <player> juggernaut_data.mana_regen:!
         - adjust <player> fake_experience
 jug_leave_lobby:
@@ -1264,8 +1279,10 @@ jug_remove_player:
             - flag <player> juggernaut_data.is_juggernaut:!
             - flag <[killer]> juggernaut_data.is_juggernaut:true
             - cast glowing remove <player>
-            - if !<[killer].has_flag[juggernaut_data.invis]>:
+            - if !<[killer].has_flag[juggernaut_data.invis]> && !<server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.glowing_disabled]> && !<[killer].has_flag[juggernaut_data.dead]>:
                 - cast glowing duration:10000s <[killer]> no_icon no_particles
+            - if !<[killer].has_flag[juggernaut_data.dead]>:
+                - inventory set d:<[killer].inventory> o:player_head[skull_skin=69a4ed90-c7d1-4236-9f39-b8fb6e599c70|eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTU5NTNkNjMxMjlmNTIwNWJjZGE5NmM5MWMwNzBjYjFkMzlkMTU1NWQ1ZGZjNDM4MThkNzM3ODg3YzNkMSJ9fX0] slot:40
             - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
             - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
             - title 'title:<&c>You are now the Juggernaut!' targets:<[killer]>
@@ -1278,8 +1295,10 @@ jug_remove_player:
             - flag <player> juggernaut_data.is_juggernaut:!
             - flag <[killer]> juggernaut_data.is_juggernaut:true
             - cast glowing remove <player>
-            - if !<[killer].has_flag[juggernaut_data.invis]>:
+            - if !<[killer].has_flag[juggernaut_data.invis]> && !<server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.glowing_disabled]> && !<[killer].has_flag[juggernaut_data.dead]>:
                 - cast glowing duration:10000s <[killer]> no_icon no_particles
+            - if !<[killer].has_flag[juggernaut_data.dead]>:
+                - inventory set d:<[killer].inventory> o:player_head[skull_skin=69a4ed90-c7d1-4236-9f39-b8fb6e599c70|eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTU5NTNkNjMxMjlmNTIwNWJjZGE5NmM5MWMwNzBjYjFkMzlkMTU1NWQ1ZGZjNDM4MThkNzM3ODg3YzNkMSJ9fX0] slot:40
             - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
             - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
             - title 'title:<&c>You are now the Juggernaut!' targets:<[killer]>
@@ -1292,8 +1311,10 @@ jug_remove_player:
             - flag <player> juggernaut_data.is_juggernaut:!
             - flag <[killer]> juggernaut_data.is_juggernaut:true
             - cast glowing remove <player>
-            - if !<[killer].has_flag[juggernaut_data.invis]>:
+            - if !<[killer].has_flag[juggernaut_data.invis]> && !<server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.glowing_disabled]> && !<[killer].has_flag[juggernaut_data.dead]>:
                 - cast glowing duration:10000s <[killer]> no_icon no_particles
+            - if !<[killer].has_flag[juggernaut_data.dead]>:
+                - inventory set d:<[killer].inventory> o:player_head[skull_skin=69a4ed90-c7d1-4236-9f39-b8fb6e599c70|eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTU5NTNkNjMxMjlmNTIwNWJjZGE5NmM5MWMwNzBjYjFkMzlkMTU1NWQ1ZGZjNDM4MThkNzM3ODg3YzNkMSJ9fX0] slot:40
             - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
             - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
             - title 'title:<&c>You are now the Juggernaut!' targets:<[killer]>
@@ -1308,6 +1329,7 @@ jug_remove_player:
     - adjust <player> show_to_players:<player.flag[juggernaut_data.hidden_from]>
     - adjust <player> can_fly:false
     - adjust <player> invulnerable:false
+    - adjust <player> max_health:20
     - define ready_spam <player.flag[juggernaut_data.ready_spam]>
     - flag <player> juggernaut_data:!
     - if <[type]> == setspectate:
@@ -1338,10 +1360,6 @@ jug_stop_game:
     type: task
     definitions: map|win
     script:
-    - if <server.flag[juggernaut_maps.<[map]>.host_data].exists>:
-        - run jug_stop_hosting def:<[map]>
-        - stop
-    - flag server juggernaut_maps.<[map]>.game_data.phase:0
     - if <[win].exists>:
         - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys> as:player:
             - define list <list[]>
@@ -1362,6 +1380,10 @@ jug_stop_game:
                     - define playercolor <&7>
                 - define list:->:<element[<[place]><[playercolor]><[value].name>:<&sp><&a><&l><server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]>]>
             - narrate <[list].separated_by[<&nl>]> targets:<[player]>
+    - if <server.flag[juggernaut_maps.<[map]>.host_data].exists>:
+        - run jug_stop_hosting def:<[map]>
+        - stop
+    - flag server juggernaut_maps.<[map]>.game_data.phase:0
     - run jug_update_sidebar def:<[map]>|off
     - flag server juggernaut_maps.<[map]>.host_data:!
     - foreach <proc[jug_viewers].context[<[map]>]>:
@@ -1737,6 +1759,12 @@ jug_give_kit:
         - flag <player> juggernaut_data.kit:<proc[jug_config_read].context[kits].keys.exclude[<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.banned_kits]>].random>
     - define kit_root <proc[jug_config_read].context[kits].get[<player.flag[juggernaut_data.kit]>]>
     - inventory clear d:<player.inventory>
+    - if !<player.has_flag[juggernaut_data.is_juggernaut]>:
+        - inventory set d:<player.inventory> o:player_head[skull_skin=e2859b82-edf0-4893-b358-fb44074d40fd|eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOGMyNGE2MTZkZmZhZTg2MmNmYjllYTczMzlkODlmMjA0MDliOWE4ZTM4NTEzODU2YmIxNDE0MjAxNmZmMTZjZSJ9fX0] slot:40
+    - else:
+        - inventory set d:<player.inventory> o:player_head[skull_skin=69a4ed90-c7d1-4236-9f39-b8fb6e599c70|eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTU5NTNkNjMxMjlmNTIwNWJjZGE5NmM5MWMwNzBjYjFkMzlkMTU1NWQ1ZGZjNDM4MThkNzM3ODg3YzNkMSJ9fX0] slot:40
+        - if !<server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.glowing_disabled]>:
+            - cast glowing duration:10000s <player> no_icon no_particles
     - inventory set d:<player.inventory> o:leather_boots[color=#<[kit_root].get[secondary_color]>;attribute_modifiers=<map.with[GENERIC_armor].as[<list[<map.with[operation].as[ADD_NUMBER].with[amount].as[0].with[slot].as[FEET]>]>]>;hides=ALL;unbreakable=true] slot:37
     - inventory set d:<player.inventory> o:leather_leggings[color=#<[kit_root].get[primary_color]>;attribute_modifiers=<map.with[GENERIC_armor].as[<list[<map.with[operation].as[ADD_NUMBER].with[amount].as[0].with[slot].as[LEGS]>]>]>;hides=ALL;unbreakable=true] slot:38
     - inventory set d:<player.inventory> o:<[kit_root].get[chestplate_type]>[attribute_modifiers=<map.with[GENERIC_armor].as[<list[<map.with[operation].as[ADD_NUMBER].with[amount].as[<[kit_root.armor]>].with[slot].as[CHEST]>]>].with[GENERIC_ARMOR_TOUGHNESS].as[<list[<map.with[operation].as[ADD_NUMBER].with[amount].as[<[kit_root.armor_toughness]>].with[slot].as[CHEST]>]>].with[GENERIC_KNOCKBACK_RESISTANCE].as[<list[<map.with[operation].as[ADD_NUMBER].with[amount].as[0].with[slot].as[CHEST]>]>].with[GENERIC_MOVEMENT_SPEED].as[<list[<map.with[operation].as[ADD_NUMBER].with[amount].as[<[kit_root.speed].sub[0.1]>].with[slot].as[CHEST]>]>]>;hides=ALL;unbreakable=true] slot:39
@@ -1760,7 +1788,8 @@ jug_give_kit:
         - else:
             - adjust def:item durability:<[item].max_durability.sub[<[value.durability]>]>
         - inventory set d:<player.inventory> o:<[item]> slot:<[key]>
-    - give compass[display_name=<&c>Juggernaut<&sp>Tracker]
+    - if !<server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.compass_disabled]>:
+        - give compass[display_name=<&c>Juggernaut<&sp>Tracker]
 jug_abilities:
     type: world
     events:
@@ -1780,12 +1809,27 @@ jug_abilities:
             - define player_type player
         - define map <player.flag[juggernaut_data.map]>
         - if ( <util.time_now.duration_since[<context.item.flag[last_used]>].in_seconds> >= <proc[jug_ability_cooldown_proc].context[<[player_type]>|<[map]>|<[ability]>]> || !<context.item.flag[last_used].exists> ) && <[ability.cooldown].exists>:
+            - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.abilities_disabled].exists>:
+                - narrate "<&c>Sorry, due to the host's settings abilities are disabled!"
+                - stop
             - inventory adjust slot:<player.held_item_slot> flag:last_used:<util.time_now>
             - run jug_ability_actionbar def:<context.item.flag[kit_item]>|<util.time_now>|<[ability]>|<[player_type]>|
             - choose <[ability.type]>:
                 - case tank:
                     - cast damage_resistance duration:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]> amplifier:9
                     - define enchant_armor true
+                    - definemap attributes:
+                        generic_movement_speed:
+                            1:
+                                operation: ADD_NUMBER
+                                amount: <[ability.bonus_speed.<[player_type]>].if_null[<[ability.bonus_speed]>]>
+                                id: <util.random.uuid>
+                        generic_attack_damage:
+                            1:
+                                operation: MULTIPLY_SCALAR_1
+                                amount: <[ability.damage_multiplier.<[player_type]>].if_null[<[ability.damage_multiplier]>].sub[1]>
+                                id: <util.random.uuid>
+                    - inventory adjust d:<player> slot:37 add_attribute_modifiers:<[attributes]>
                 - case berserker:
                     - cast increase_damage duration:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]> amplifier:<[ability.level.<[player_type]>].if_null[<[ability.level]>].sub[1]>
                     - define enchant_armor true
@@ -1826,7 +1870,12 @@ jug_abilities:
                 - wait <[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>s
                 - if <player.flag[juggernaut_data.life_id]> == <[life_id]>:
                     - inventory adjust slot:39 remove_enchantments:<list[].include[luck]>
+                    - if <[ability.type]> == tank:
+                        - inventory adjust d:<player> slot:37 remove_attribute_modifiers:<list[<[attributes.generic_movement_speed.1.id]>|<[attributes.generic_attack_damage.1.id]>]>
         - else if <[ability.mana_cost].exists> && <player.flag[juggernaut_data.mana]> >= <[ability.mana_cost]>:
+            - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.abilities_disabled].exists>:
+                - narrate "<&c>Sorry, due to the host's settings abilities are disabled!"
+                - stop
             - run jug_mana_use def:<[ability.mana_cost]> player:<player>
             - ratelimit <player> 1s
             - choose <[ability.type]>:
@@ -1885,6 +1934,9 @@ jug_abilities:
                 - define player_type player
             - define map <player.flag[juggernaut_data.map]>
             - if <util.time_now.duration_since[<[item].flag[last_used]>].in_seconds> >= <proc[jug_ability_cooldown_proc].context[<[player_type]>|<[map]>|<[ability]>]> || !<[item].flag[last_used].exists>:
+                - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.abilities_disabled].exists>:
+                    - narrate "<&c>Sorry, due to the host's settings abilities are disabled!"
+                    - stop
                 - inventory adjust slot:<[slot]> flag:last_used:<util.time_now>
                 - run jug_ability_actionbar def:<[item].flag[kit_item]>|<util.time_now>|<[ability]>|<[player_type]>|
                 - choose <[ability.type]>:
@@ -1933,6 +1985,7 @@ jug_ninja_ability:
     script:
         - cast remove glowing
         - define life_id <player.flag[juggernaut_data.life_id]>
+        - define map <player.flag[juggernaut_data.map]>
         - flag <player> juggernaut_data.invis:true
         - narrate <server.flag[juggernaut_maps.<player.flag[juggernaut_data.map]>.game_data.players]>
         - fakeequip <player> for:<server.flag[juggernaut_maps.<player.flag[juggernaut_data.map]>.game_data.players].keys.exclude[<player>]> duration:<[duration]>s hand:air head:air chest:air legs:air boots:air
@@ -1944,7 +1997,7 @@ jug_ninja_ability:
                 - wait 0.2s
         - if <player.has_flag[juggernaut_data.in_game]>:
             - flag <player> juggernaut_data.invis:!
-        - if <player.has_flag[juggernaut_data.is_juggernaut]>:
+        - if <player.has_flag[juggernaut_data.is_juggernaut]> && !<server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.glowing_disabled]> && <player.flag[juggernaut_data.life_id]> == <[life_id]>:
             - cast glowing duration:10000s <player> no_icon no_particles
         - if <player.flag[juggernaut_data.life_id]> == <[life_id]>:
             - playeffect at:<player.location.add[0,0.5,0]> effect:SMOKE quantity:500 data:0.1
@@ -1959,6 +2012,7 @@ jug_ability_actionbar:
     - define map <player.flag[juggernaut_data.map]>
     - define wait_time <proc[jug_ability_cooldown_proc].context[<[player_type]>|<[map]>|<[ability]>].div[15]>
     - define life_id:<player.flag[juggernaut_data.life_id]>
+    - narrate "Wait Value: <[wait_time]>"
     - if <[wait_time]> > 1.5:
         - define multiplier <[wait_time].div[1.5].round_up>
         - define wait_time:/:<[multiplier]>
@@ -1973,8 +2027,8 @@ jug_ability_actionbar:
     - actionbar "<&e><[ability.display_name]> (<[type_display]>) <&7><&l><element[|].repeat[15]>"
     - repeat <[multiplier].mul[15].if_null[15]>:
         - if !<player.has_flag[juggernaut_data.dead]> && <player.has_flag[juggernaut_data.in_game]> && <player.flag[juggernaut_data.life_id]> == <[life_id]>:
-            - if !<[value].exists> || !<[wait_time].exists>:
-                - narrate "<&c>ERROR CODE 71: Invalid Wait."
+            - if !<[value].is_decimal> || !<[wait_time].is_decimal>:
+                - narrate "<&c>ERROR CODE 71: Invalid Wait. <&nl>Value: <[value]> <&nl>Wait Time: <[wait_time]>"
                 - stop
             - waituntil <[wait_time].mul[<[value]>]> <= <util.time_now.duration_since[<[use_time]>].in_seconds>
             - if !<player.has_flag[juggernaut_data.dead]> && <player.has_flag[juggernaut_data.in_game]> && <player.flag[juggernaut_data.life_id]> == <[life_id]>:
@@ -2167,6 +2221,21 @@ jug_hosting_main_inv:
     - adjust def:item display_name:<&e><&l>Kit<&sp>Choices
     - adjust def:item "lore:<&7>Restrict possible kits, or make it random only <&nl><&nl><&7>Disabled Kits: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.banned_kits].parse_tag[<proc[jug_config_read].context[kits.<[parse_value]>.display_name]>].comma_separated.if_null[None]> <&nl><&7>Random Kit Only: <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.random_only].exists.if_true[<&a>On].if_false[<&c>Off]>"
     - define list:->:<[item]>
+    - define item <item[light_blue_dye]>
+    - adjust def:item flag:juggernaut:abilities
+    - adjust def:item display_name:<&e><&l>Abilities
+    - adjust def:item "lore:<&7>Ability related options. <&nl><&nl><player.flag[juggernaut_data.host_data.abilities].equals[cooldown_multiplier].if_true[<&a>].if_false[<&7>].if_null[<&a>]>[1] <&7>Cooldown Multiplier: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.cooldown_multiplier].if_null[Default<&sp>(1)]> <&nl><player.flag[juggernaut_data.host_data.abilities].equals[mana_multiplier].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[2] <&7>Mana Regen Multiplier: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.mana_multiplier].if_null[Default<&sp>(1)]> <&nl><player.flag[juggernaut_data.host_data.abilities].equals[abilities_disabled].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[3] <&7>Abilities: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.abilities_disabled].exists.if_true[<&c>Disabled].if_false[<&a>Enabled]>"
+    - define list:->:<[item]>
+    - define item <item[compass]>
+    - adjust def:item flag:juggernaut:tracking
+    - adjust def:item display_name:<&e><&l>Tracking
+    - adjust def:item "lore:<&7>Lets you disable the juggernaut tracker or the glowing. <&nl><&nl><player.flag[juggernaut_data.host_data.tracking].equals[compass_disabled].if_true[<&a>].if_false[<&7>].if_null[<&a>]>[1] <&7>Juggernaut Tracker: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.compass_disabled].exists.if_true[<&c>Disabled].if_false[<&a>Enabled]> <&nl><player.flag[juggernaut_data.host_data.tracking].equals[glowing_disabled].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[2] <&7>Juggernaut Glowing: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.glowing_disabled].exists.if_true[<&c>Disabled].if_false[<&a>Enabled]>"
+    - define list:->:<[item]>
+    - define item <item[golden_apple]>
+    - adjust def:item flag:juggernaut:health
+    - adjust def:item display_name:<&e><&l>Healing
+    - adjust def:item "lore:<&7>Change max health, or disable natural regeneration. <&nl><&nl><player.flag[juggernaut_data.host_data.health].equals[max_health].if_true[<&a>].if_false[<&7>].if_null[<&a>]>[1] <&7>Maximum Health: <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.max_health].if_null[Default<&sp>(20)]> <&nl><player.flag[juggernaut_data.host_data.health].equals[regen_disabled].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[2] <&7>Natural Regeneration: <&e><server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.regen_disabled].if_true[<&c>Disabled].if_false[<&a>Enabled]>"
+    - define list:->:<[item]>
     - if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> == 0 && <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size> >= <proc[jug_config_read].context[mininum_players]>:
         - define item <item[lime_dye]>
         - adjust def:item flag:juggernaut:start_game
@@ -2179,6 +2248,9 @@ jug_hosting_main_inv:
         - adjust def:item display_name:<&7><&l>Start<&sp>Game
         - adjust def:item "lore:<&7>Click here to start the game <&nl><&c>Not enough players! Mininum: <&l><proc[jug_config_read].context[mininum_players]>"
         - define list:->:<[item]>
+    - else:
+        - define item <item[air]>
+        - define list:->:<[item]>
     - define item <item[repeater]>
     - adjust def:item flag:juggernaut:saves
     - adjust def:item display_name:<&e><&l>Saves
@@ -2189,9 +2261,9 @@ jug_hosting_main_inv:
     - define list:->:<[item]>
     - determine <[list]>
   slots:
-    - [g] [] [] [] [] [] [] [g] [g]
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
-    - [g] [g] [g] [g] [g] [g] [g] [g] [g]
+    - [g] [] [] [] [] [] [] [] [g]
+    - [g] [] [] [g] [g] [g] [g] [g] [g]
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
     - [g] [g] [g] [g] [] [g] [g] [] [g]
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
@@ -2364,6 +2436,106 @@ jug_hosting_click:
                         - flag player juggernaut_host_saves.<[save_slot]>:!
                     - case number_key:
                         - flag <player> juggernaut_data.host_data.save_slot:<context.hotbar_button>
+            - case abilities:
+                - if !<player.flag[juggernaut_data.host_data.abilities].exists> && <context.click> != number_key:
+                    - flag <player> juggernaut_data.host_data.abilities:cooldown_multiplier
+                - define ability_type:<player.flag[juggernaut_data.host_data.abilities]>
+                - if !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>].exists> && <context.click> != number_key:
+                    - if <[ability_type]> != abilities_disabled:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>:1
+                - if <[ability_type]> != abilities_disabled:
+                    - choose <context.click>:
+                        - case left:
+                            - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>:+:0.01
+                        - case right:
+                            - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>:-:0.01
+                        - case shift_left:
+                            - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>:+:0.1
+                        - case shift_right:
+                            - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>:-:0.1
+                        - case middle:
+                            - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>:!
+                        - case number_key:
+                            - choose <context.hotbar_button>:
+                                - case 1:
+                                    - flag <player> juggernaut_data.host_data.abilities:cooldown_multiplier
+                                - case 2:
+                                    - flag <player> juggernaut_data.host_data.abilities:mana_multiplier
+                                - case 3:
+                                    - flag <player> juggernaut_data.host_data.abilities:abilities_disabled
+                - else:
+                    - choose <context.click>:
+                        - case left || right:
+                            - if !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>].exists>:
+                                - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>:true
+                            - else:
+                                - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>:!
+                        - case number_key:
+                            - choose <context.hotbar_button>:
+                                - case 1:
+                                    - flag <player> juggernaut_data.host_data.abilities:cooldown_multiplier
+                                - case 2:
+                                    - flag <player> juggernaut_data.host_data.abilities:mana_multiplier
+                                - case 3:
+                                    - flag <player> juggernaut_data.host_data.abilities:abilities_disabled
+                - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>]> < 0:
+                    - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>:0
+            - case tracking:
+                - if !<player.flag[juggernaut_data.host_data.tracking].exists> && <context.click> != number_key:
+                    - flag <player> juggernaut_data.host_data.tracking:compass_disabled
+                - define tracking_type:<player.flag[juggernaut_data.host_data.tracking]>
+                - choose <context.click>:
+                    - case left || right:
+                        - if !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.<[tracking_type]>].exists>:
+                            - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[tracking_type]>:true
+                        - else:
+                            - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[tracking_type]>:!
+                    - case number_key:
+                        - choose <context.hotbar_button>:
+                            - case 1:
+                                - flag <player> juggernaut_data.host_data.tracking:compass_disabled
+                            - case 2:
+                                - flag <player> juggernaut_data.host_data.tracking:glowing_disabled
+            - case health:
+                - if !<player.flag[juggernaut_data.host_data.health].exists> && <context.click> != number_key:
+                    - flag <player> juggernaut_data.host_data.health:max_health
+                - define health_type:<player.flag[juggernaut_data.host_data.health]>
+                - if !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.<[health_type]>].exists> && <context.click> != number_key:
+                    - if <[health_type]> == max_health:
+                        - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[health_type]>:20
+                - if <[health_type]> == max_health:
+                    - choose <context.click>:
+                        - case left:
+                            - flag server juggernaut_maps.<[map]>.host_data.host_settings.max_health:+:1
+                        - case right:
+                            - flag server juggernaut_maps.<[map]>.host_data.host_settings.max_health:-:1
+                        - case shift_left:
+                            - flag server juggernaut_maps.<[map]>.host_data.host_settings.max_health:+:10
+                        - case shift_right:
+                            - flag server juggernaut_maps.<[map]>.host_data.host_settings.max_health:-:10
+                        - case middle:
+                            - flag server juggernaut_maps.<[map]>.host_data.host_settings.max_health:!
+                        - case number_key:
+                            - choose <context.hotbar_button>:
+                                - case 1:
+                                    - flag <player> juggernaut_data.host_data.health:max_health
+                                - case 2:
+                                    - flag <player> juggernaut_data.host_data.health:regen_disabled
+                - else if <[health_type]> == regen_disabled:
+                    - choose <context.click>:
+                        - case left || right:
+                            - if !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.regen_disabled].exists>:
+                                - flag server juggernaut_maps.<[map]>.host_data.host_settings.regen_disabled:true
+                            - else:
+                                - flag server juggernaut_maps.<[map]>.host_data.host_settings.regen_disabled:!
+                        - case number_key:
+                            - choose <context.hotbar_button>:
+                                - case 1:
+                                    - flag <player> juggernaut_data.host_data.health:max_health
+                                - case 2:
+                                    - flag <player> juggernaut_data.host_data.health:regen_disabled
+                - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.max_health]> < 1:
+                    - flag server juggernaut_maps.<[map]>.host_data.host_settings.max_health:1
         - if !<[null_open].exists>:
             - inventory open d:jug_hosting_main_inv
         on player right clicks block with:jug_host_settings_item:
@@ -2476,4 +2648,3 @@ jug_ability_cooldown_proc:
         - determine <[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>].mul[<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.cooldown_multiplier].if_null[1]>].max[<[ability.mininum_cooldown]>]>
     - else:
         - determine <[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>].mul[<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.cooldown_multiplier].if_null[1]>]>
-#proc[jug_ability_cooldown_proc].context[<[player_type]>|<[map]>|<[ability]>]
