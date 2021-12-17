@@ -206,6 +206,9 @@ juggernaut_command:
         - case setup:
             - define perm cubeville.juggernaut.setup
             - inject jug_perms
+            - if !<context.args.get[2].exists>:
+                - narrate "<&c>No input found!"
+                - stop
             - run jug_setup_task def:<context.args.get[2].to[last].space_separated>
         - case debug:
             - choose <[args].get[2]>:
@@ -419,6 +422,8 @@ jug_setup_task:
     definitions: message
     script:
     - if <player.has_flag[jug_setup]> && <[message]> == cancel:
+        - if <player.has_flag[juggernaut_data.is_host]> && ( <player.flag[jug_setup]> == host_save || <player.flag[jug_setup]> == host_save_remove ):
+            - inventory open d:jug_hosting_main_inv
         - flag <player> jug_setup:!
         - flag <player> current_map_setup_map:!
         - flag <player> current_map_setup_name:!
@@ -426,6 +431,7 @@ jug_setup_task:
         - flag <player> remove_map:!
         - flag <player> save_map:!
         - flag <player> load_map:!
+        - flag <player> jug_setup_save_slot:!
         - narrate <&a>Cancelled!
         - stop
     - if <player.flag[jug_setup]> == 1:
@@ -560,6 +566,29 @@ jug_setup_task:
             - stop
         - flag <player> jug_setup:!
         - flag <player> save_map:!
+    - else if <player.flag[jug_setup]> == host_save:
+        - flag server juggernaut_maps.<player.flag[juggernaut_data.map]>.host_data.host_settings.save_name:<[message]>
+        - flag player juggernaut_host_saves.<player.flag[jug_setup_save_slot]>:<server.flag[juggernaut_maps.<player.flag[juggernaut_data.map]>.host_data.host_settings]>
+        - narrate "<&7>Save <&a><[message]> <&7>saved to slot <&a><player.flag[jug_setup_save_slot]><&7>!" targets:<player>
+        - if <player.has_flag[juggernaut_data.is_host]>:
+            - inventory open d:jug_hosting_main_inv
+        - flag <player> jug_setup:!
+        - flag <player> jug_setup_save_slot:!
+    - else if <player.flag[jug_setup]> == host_save_remove:
+        - if <[message]> == confirm:
+            - define save_slot:<player.flag[jug_setup_save_slot]>
+            - if <player.flag[juggernaut_host_saves.<[save_slot]>.save_name].exists>:
+                - narrate "<&7>Save <&a><player.flag[juggernaut_host_saves.<[save_slot]>.save_name]> <&7>in slot <&a><player.flag[jug_setup_save_slot]> <&7>removed!" targets:<player>
+            - else:
+                - narrate "<&7>Save slot <&a><player.flag[jug_setup_save_slot]> <&7>removed!" targets:<player>
+            - flag player juggernaut_host_saves.<[save_slot]>:!
+            - if <player.has_flag[juggernaut_data.is_host]>:
+                - inventory open d:jug_hosting_main_inv
+            - flag <player> jug_setup:!
+            - flag <player> jug_setup_save_slot:!
+        - else:
+            - narrate "<&c>Invalid choice!"
+            - stop
 jug_setup_event:
     type: world
     events:
@@ -915,6 +944,8 @@ jug_kill_script:
         - define map <player.flag[juggernaut_data.map]>
         - if <server.has_flag[juggernaut_maps.<[map]>.host_data.host_settings.regen_disabled]>:
             - determine passively cancelled
+        on player flagged:juggernaut_data.no_jump jumps:
+        - determine passively cancelled
         on player flagged:juggernaut_data.in_game dies:
         - if <context.entity.has_flag[juggernaut_data.dead]> || <context.entity.has_flag[juggernaut_data.spectator]>:
             - determine passively cancelled
@@ -1864,7 +1895,23 @@ jug_abilities:
                     - cast invisibility duration:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>
                     - playeffect at:<player.location.add[0,0.5,0]> effect:SMOKE_LARGE quantity:500
                     - run jug_ninja_ability def:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>
-            - if <[enchant_armor]>:
+                - case demolitionist:
+                    - definemap attributes:
+                        generic_movement_speed:
+                            1:
+                                operation: ADD_NUMBER
+                                amount: -100
+                                id: <util.random.uuid>
+                    - inventory adjust d:<player> slot:37 add_attribute_modifiers:<[attributes]>
+                    - flag <player> juggernaut_data.no_jump:true
+                    - repeat 3:
+                        - playeffect effect:smoke at:<player.location> quantity:<[value].mul[100]> offset:0.5,1,0.5
+                        - wait <[ability.countdown.<[player_type]>].if_null[<[ability.countdown]>].div[3]>s
+                    - inventory adjust d:<player> slot:37 remove_attribute_modifiers:<list[<[attributes.generic_movement_speed.1.id]>]>
+                    - flag <player> juggernaut_data.no_jump:!
+                    - define y <player.eye_location.backward.sub[<player.location>].y.mul[<[ability.launch_velocity.<[player_type]>].if_null[<[ability.launch_velocity]>]>].div[20]>
+                    - explode power:<[ability.explosion_radius.<[player_type]>].if_null[<[ability.explosion_radius]>]> <player.eye_location.forward> source:<player>
+                    - adjust <player> velocity:<player.location.backward.sub[<player.location>].with_y[<[y]>].mul[<[ability.launch_velocity.<[player_type]>].if_null[<[ability.launch_velocity]>]>]>
                 - inventory adjust slot:39 enchantments:<map[].with[luck].as[1]>
                 - define life_id:<player.flag[juggernaut_data.life_id]>
                 - wait <[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>s
@@ -2256,7 +2303,7 @@ jug_hosting_main_inv:
     - adjust def:item display_name:<&e><&l>Saves
     - define lore <list>
     - repeat 9:
-        - define "lore:->:<player.flag[juggernaut_data.host_data.save_slot].equals[<[value]>].if_true[<&a>].if_false[<&7>].if_null[<[value].equals[1].if_true[<&a>].if_false[<&7>]>]>[<[value]>] <&7>Slot <[value]>: <&e><player.flag[juggernaut_host_saves.<[value]>].exists.if_true[<&a>Used].if_false[<&c>Empty]>"
+        - define "lore:->:<player.flag[juggernaut_data.host_data.save_slot].equals[<[value]>].if_true[<&a>].if_false[<&7>].if_null[<[value].equals[1].if_true[<&a>].if_false[<&7>]>]>[<[value]>] <&7>Slot <[value]>: <&e><player.flag[juggernaut_host_saves.<[value]>].exists.if_true[<player.flag[juggernaut_host_saves.<[value]>.save_name].exists.if_true[<&a><player.flag[juggernaut_host_saves.<[value]>.save_name]>].if_false[<&a>Used <&c>(Unnamed!)]>].if_false[<&c>Empty]>"
     - adjust def:item "lore:<&7>Save slots for host settings <&nl><[lore].separated_by[<&nl>]>"
     - define list:->:<[item]>
     - determine <[list]>
@@ -2405,7 +2452,19 @@ jug_hosting_click:
                 - define save_slot:<player.flag[juggernaut_data.host_data.save_slot]>
                 - choose <context.click>:
                     - case right:
-                        - flag player juggernaut_host_saves.<[save_slot]>:<server.flag[juggernaut_maps.<[map]>.host_data.host_settings]>
+                        - if <player.has_flag[jug_setup]>:
+                            - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
+                            - stop
+                        - if <player.has_flag[juggernaut_host_saves.<[save_slot]>]>:
+                            - if <player.has_flag[juggernaut_host_saves.<[save_slot]>.save_name]>:
+                                - define overwrite_warning "<&c>You are about to overwrite the save slot <&a><[save_slot]> <&c>named <&a><player.flag[juggernaut_host_saves.<[save_slot]>.save_name]><&c>! If you don't want to overwrite your save, run <proc[jug_setup_proc].context[cancel|normal]><&c>!<&nl>"
+                            - else:
+                                - define overwrite_warning "<&c>You are about to overwrite save slot <&a><[save_slot]><&c>! If you don't want to overwrite your save, run <proc[jug_setup_proc].context[cancel|normal]><&c>!<&nl>"
+                        - narrate "<[overwrite_warning].if_null[]><&7>Please type in <proc[jug_setup_proc].context[<&lt>save<&sp>name<&gt>|input]> <&7>to set the name of the save, or type <proc[jug_setup_proc].context[cancel|normal]> <&7>to cancel saving." targets:<player>
+                        - flag <player> jug_setup:host_save
+                        - flag <player> jug_setup_save_slot:<[save_slot]>
+                        - inventory close
+                        - define null_open:true
                     - case left:
                         - define new_settings:<player.flag[juggernaut_host_saves.<[save_slot]>]>
                         - define random_status:<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.random_only].exists>
@@ -2433,7 +2492,20 @@ jug_hosting_click:
                             - else:
                                 - inventory set d:<[value].inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random] slot:5
                     - case middle:
-                        - flag player juggernaut_host_saves.<[save_slot]>:!
+                        - if <player.has_flag[jug_setup]>:
+                            - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
+                            - stop
+                        - if <player.has_flag[juggernaut_host_saves.<[save_slot]>]>:
+                            - if <player.has_flag[juggernaut_host_saves.<[save_slot]>.save_name]>:
+                                - define overwrite_warning "<&c>You are about to remove the save slot <&a><[save_slot]> <&c>named <&a><player.flag[juggernaut_host_saves.<[save_slot]>.save_name]><&c>! If you don't want to remove your save, run <proc[jug_setup_proc].context[cancel|normal]><&c>!<&nl>"
+                            - else:
+                                - define overwrite_warning "<&c>You are about to remove save slot <&a><[save_slot]><&c>! If you don't want to remove your save, run <proc[jug_setup_proc].context[cancel|normal]><&c>!<&nl>"
+                        - narrate "<[overwrite_warning].if_null[]><&7>Please type in <proc[jug_setup_proc].context[confirm|normal]> <&7>to remove the save slot, or type <proc[jug_setup_proc].context[cancel|normal]> <&7>to cancel removing the save slot." targets:<player>
+                        - flag <player> jug_setup:host_save_remove
+                        - flag <player> jug_setup_save_slot:<[save_slot]>
+                        - inventory close
+                        - define null_open:true
+                        #- flag player juggernaut_host_saves.<[save_slot]>:!
                     - case number_key:
                         - flag <player> juggernaut_data.host_data.save_slot:<context.hotbar_button>
             - case abilities:

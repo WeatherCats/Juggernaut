@@ -383,3 +383,35 @@ kits:
       player: 3
       juggernaut: 5
      level: 2
+ demolitionist:
+  chestplate_type: chainmail_chestplate
+  primary_color: db2f1a
+  secondary_color: ddd9d9
+  gui_item: tnt
+  display_name: Demolitionist
+  description: Demolitist has a decent balance of stats, plus an explosive ability to send you flying!
+  armor: 7
+  armor_toughness: 0
+  speed: 0.1
+  inventory:
+   1:
+    type: IRON_SWORD
+    display_type: sword
+    attack_damage: 5
+    attack_speed: 1.6
+    ability:
+     type: demolitionist
+     click_type: right
+     display_name: Explosive Pulse
+     description: Creates an explosion in front of you after a small wait, and launches you backward.
+     description_stats:
+      Cooldown: cooldown
+      Countdown: countdown
+      Explosion Radius: explosion_radius
+     cooldown: 25
+     mininum_cooldown: 3
+     countdown: 1
+     explosion_radius:
+      player: 2.75
+      juggernaut: 3.5
+     launch_velocity: 3
