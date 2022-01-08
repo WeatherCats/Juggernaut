@@ -307,7 +307,7 @@ kits:
       Mana Cost: mana_cost
       Fireball Explosion Radius: fireball_radius
       Fireball Speed: fireball_speed
-     mana_cost: 60
+     mana_cost: 75
      fireball_radius:
       player: 3
       juggernaut: 4
@@ -344,7 +344,7 @@ kits:
       Snowball Slow Duration: snowball_slow_duration
       Snowball Knockback: snowball_knockback
       Snowball Speed: snowball_speed
-     mana_cost: 25
+     mana_cost: 35
      snowball_amount:
       player: 2
       juggernaut: 3
@@ -376,13 +376,13 @@ kits:
      description_stats:
       Cooldown: cooldown
       Duration: duration
-      Level: level
+      Bonus Damage: bonus_damage
      cooldown: 30
      mininum_cooldown: 8
      duration:
       player: 3
       juggernaut: 5
-     level: 2
+     bonus_damage: 4
  demolitionist:
   chestplate_type: chainmail_chestplate
   primary_color: db2f1a
@@ -415,3 +415,50 @@ kits:
       player: 2.75
       juggernaut: 3.5
      launch_velocity: 3
+ trapper:
+  chestplate_type: chainmail_chestplate
+  primary_color: fff1e7
+  secondary_color: 552200
+  gui_item: crossbow
+  display_name: Trapper
+  description: Trapper is a crossbow kit with an ability that lays traps to stun your opponents.
+  armor: 7
+  armor_toughness: 0
+  speed: 0.1
+  inventory:
+   1:
+    type: CROSSBOW
+    display_type: bow
+    projectile_damage: 2.5
+    ability:
+     type: trapper
+     click_type: left
+     display_name: Trap
+     description: Shoots out a snowball that creates a circular trap on the ground. When a player walks into it, they get stunned for an amount of time. If a player is hit by the snowball, they are momentarily slowed.
+     description_stats:
+      Cooldown: cooldown
+      Throw Velocity: throw_velocity
+      Trap Radius: trap_radius
+      Trap Windup Duration: trap_windup_duration
+      Trap Active Duration: trap_active_duration
+      Trap Stun Duration: trap_stun_duration
+      Hit Stune Amount: hit_stun_amount
+     cooldown: 25
+     mininum_cooldown: 3
+     throw_velocity: 2
+     trap_radius: 3
+     trap_windup_duration: 2
+     trap_active_duration: 5
+     trap_stun_duration:
+      player: 3
+      juggernaut: 4
+     hit_stun_amount:
+      player: 0.05
+      juggernaut: 0.065
+   2:
+    type: GOLDEN_SWORD
+    display_type: sword
+    attack_damage: 4
+    attack_speed: 1
+   9:
+    type: ARROW
