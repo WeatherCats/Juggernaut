@@ -1029,23 +1029,20 @@ jug_kill_script:
                 - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score:+:<proc[jug_config_read].context[juggernaut_kill_points|<[map]>]>
                 - flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score_time:<util.time_now>
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&e><context.entity.name> <&7>was killed by <&c><context.damager.name>" targets:<[jug_viewers]>
-                - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><context.damager.name> <&7>now has <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<context.damager>.score]> <&7>points" targets:<[jug_viewers]>
+                - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><context.damager.name> <&7>now has <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<context.damager>.score]> <&7>point(s)" targets:<[jug_viewers]>
                 - run jug_update_sidebar def:<[map]>|on|<context.damager>
             - else if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
-                - ~run jug_new_juggernaut_task def:<context.damager>|<[map]> player:<context.entity>
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><context.entity.name> <&7>was killed by <&e><context.damager.name>" targets:<[jug_viewers]>
-                - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><context.damager.name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<context.damager>.score]> <&7>points" targets:<[jug_viewers]>
+                - ~run jug_new_juggernaut_task def:<context.damager>|<[map]> player:<context.entity>
         - else if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
             - if <context.entity.flag[juggernaut_data.last_damager].exists> && <context.entity.flag[juggernaut_data.last_damager]> != <context.entity> && <context.entity.flag[juggernaut_data.last_damager].is_player>:
                 - define killer <context.entity.flag[juggernaut_data.last_damager]>
-                - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><context.entity.name> <&7>was killed by <&e><[killer].name>" targets:<[jug_viewers]>
-                - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<[jug_viewers]>
+                - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
             - else if <context.entity.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<context.entity>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first.exists>:
                 - define killer <context.entity.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<context.entity>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first>
-                - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><context.entity.name> <&7>died!" targets:<[jug_viewers]>
-                - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<[jug_viewers]>
+                - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
             - else:
                 - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><context.entity.name> <&7>died!" targets:<proc[jug_viewers].context[<[map]>]>
         - else:
@@ -1327,8 +1324,11 @@ jug_remove_player:
     script:
     - if !<player.is_online>:
         - flag <player> jug_login_tp:true
-    - else if <player.has_flag[juggernaut_data.is_host]>:
+    - else if <player.has_flag[juggernaut_data.is_host]> && <server.flag[juggernaut_maps].deep_get[<[map]>.game_data.players].keys.exclude[<player>].size> >= <proc[jug_config_read].context[mininum_players]>:
         - narrate "<&c>You must stop the hosted game before you can leave!"
+        - stop
+    - else if <player.has_flag[juggernaut_data.is_host]>:
+        - run jug_stop_hosting def:<[map]>
         - stop
     - if  <[type]> == late_host_rejoin:
         - goto late_host_rejoin1
@@ -1349,19 +1349,16 @@ jug_remove_player:
         - define jug_viewers <proc[jug_viewers].context[<[map]>]>
         - if <player.flag[juggernaut_data.last_damager].exists> && <player.flag[juggernaut_data.last_damager]> != <player> && <player.flag[juggernaut_data.last_damager].is_player>:
             - define killer <player.flag[juggernaut_data.last_damager]>
-            - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
             - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><player.name> <&7>left the match!" targets:<[jug_viewers]>
-            - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<[jug_viewers]>
+            - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
         - else if <player.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<player>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first.exists>:
             - define killer <player.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<player>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first>
-            - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
             - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><player.name> <&7>left the match!" targets:<[jug_viewers]>
-            - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<[jug_viewers]>
+            - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
         - else if <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.exclude[<player>].exists>:
             - define killer <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.exclude[<player>].random>
-            - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
             - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><player.name> <&7>left the match!" targets:<[jug_viewers]>
-            - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>points" targets:<[jug_viewers]>
+            - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
         - else:
             - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><player.name> <&7>left the match!" targets:<proc[jug_viewers].context[<[map]>]>
             - run jug_update_sidebar def:<[map]>|on
@@ -1410,13 +1407,13 @@ jug_stop_game:
             - define sidebarlist <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.sort[jug_sort_players]>
             - foreach <[sidebarlist]>:
                 - if <[loop_index]> == 1:
-                    - define place <element[<&e><&l>1st<&sp>]>
+                    - define place <element[<proc[jug_gradient].context[1st|#ffaa00/#ffff00|bold]><&sp>]>
                 - else if <[loop_index]> == 2:
-                    - define place <element[<&f><&l>2nd<&sp>]>
+                    - define place <element[<proc[jug_gradient].context[2nd|#aaaaaa/#dddddd|bold]><&sp>]>
                 - else if <[loop_index]> == 3:
-                    - define place <element[<&color[#aa5500]><&l>3rd<&sp>]>
+                    - define place <element[<proc[jug_gradient].context[3rd|#884400/#aa5500|bold]><&sp>]>
                 - else:
-                    - define place <element[<&7><[loop_index]>th<&sp>]>
+                    - define place <element[<proc[jug_gradient].context[<[loop_index]>th|#888888/#aaaaaa]><&sp>]>
                 - if <[value]> == <[player]>:
                     - define playercolor <&6>
                 - else:
@@ -1580,7 +1577,7 @@ jug_sidebar_display:
     - define list <list[]>
     - define map <player.flag[juggernaut_data.map]>
     - define list:->:<element[<&4>Juggernaut:<&sp><&c><server.flag[juggernaut_maps.<[map]>.game_data.juggernaut].name>]>
-    - define list:->:<element[<&c><&l>---------GOAL:<&sp><server.flag[juggernaut_maps.<[map]>.game_data.victory_condition]>---------]>
+    - define "list:->:<proc[jug_gradient].context[---------|#990000/#ff0000|bold]> <&color[#ff3333]><&l>GOAL: <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition]> <proc[jug_gradient].context[---------|#ff0000/#990000|bold]>"
     - if <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size> > <proc[jug_config_read].context[sidebar_size]>:
         - define sidebarlist <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.sort[jug_sort_players].get[1].to[<proc[jug_config_read].context[sidebar_size]>]>
         - if <[sidebarlist].contains[<player>]>:
@@ -1589,26 +1586,26 @@ jug_sidebar_display:
             - if !<player.has_flag[juggernaut_data.spectator]>:
                 - define playerplace <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.sort[jug_sort_players].find[<player>]>
                 - if <[playerplace]> == 1:
-                    - define place <element[<&e><&l>1st<&sp>]>
+                    - define place <element[<proc[jug_gradient].context[1st|#ffaa00/#ffff00|bold]><&sp>]>
                 - else if <[playerplace]> == 2:
-                    - define place <element[<&f><&l>2nd<&sp>]>
+                    - define place <element[<proc[jug_gradient].context[2nd|#aaaaaa/#dddddd|bold]><&sp>]>
                 - else if <[playerplace]> == 3:
-                    - define place <element[<&color[#aa5500]><&l>3rd<&sp>]>
+                    - define place <element[<proc[jug_gradient].context[3rd|#884400/#aa5500|bold]><&sp>]>
                 - else:
-                    - define place <element[<&7><[playerplace]>th<&sp>]>
+                    - define place <element[<proc[jug_gradient].context[<[playerplace]>th|#888888/#aaaaaa]><&sp>]>
                 - define sidebarextra <element[<&7>...]>
                 - define sidebarextraplayer <element[<[place]><&6><&l>YOU<&sp><player.name>:<&sp><&a><&l><server.flag[juggernaut_maps.<[map]>.game_data.players.<player>.score]>]>
     - else:
         - define sidebarlist <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.sort[jug_sort_players]>
     - foreach <[sidebarlist]>:
         - if <[loop_index]> == 1:
-            - define place <element[<&e><&l>1st<&sp>]>
+            - define place <element[<proc[jug_gradient].context[1st|#ffaa00/#ffff00|bold]><&sp>]>
         - else if <[loop_index]> == 2:
-            - define place <element[<&f><&l>2nd<&sp>]>
+            - define place <element[<proc[jug_gradient].context[2nd|#aaaaaa/#dddddd|bold]><&sp>]>
         - else if <[loop_index]> == 3:
-            - define place <element[<&color[#aa5500]><&l>3rd<&sp>]>
+            - define place <element[<proc[jug_gradient].context[3rd|#884400/#aa5500|bold]><&sp>]>
         - else:
-            - define place <element[<&7><[loop_index]>th<&sp>]>
+            - define place <element[<proc[jug_gradient].context[<[loop_index]>th|#888888/#aaaaaa]><&sp>]>
         - if <[value]> == <player>:
             - define playerextra <&6><&l>YOU<&sp>
         - else:
@@ -1624,7 +1621,7 @@ jug_sidebar_display:
         - define list:->:<[sidebarextra]>
     - if <[sidebarextraplayer].exists>:
         - define list:->:<[sidebarextraplayer]>
-    - sidebar title:<element[JUGGERNAUT].color_gradient[from=#ff0000;to=#aa0000].parse_color.bold> values:<[list]>
+    - sidebar title:<proc[jug_gradient].context[JUGGERNAUT|#990000/#ff0000|bold]> values:<[list]>
 jug_sort_players:
     type: procedure
     definitions: player1|player2
@@ -2392,7 +2389,7 @@ jug_hosting_click:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer:+:5
                     - case shift_right:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer:-:5
-                    - case middle:
+                    - case drop:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer:!
                 - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer]> < 0:
                     - flag server juggernaut_maps.<[map]>.host_data.host_settings.respawn_timer:0
@@ -2425,7 +2422,7 @@ jug_hosting_click:
                                 - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>:-:10
                             - else:
                                 - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>:-:5
-                        - case middle:
+                        - case drop:
                             - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>:!
                         - case number_key:
                             - choose <context.hotbar_button>:
@@ -2448,7 +2445,7 @@ jug_hosting_click:
                                     - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>:interval
                                 - case interval:
                                     - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>:kill
-                        - case middle:
+                        - case drop:
                             - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[point_type]>:!
                         - case number_key:
                             - choose <context.hotbar_button>:
@@ -2476,7 +2473,7 @@ jug_hosting_click:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[protection_type]>:+:5
                     - case shift_right:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[protection_type]>:-:5
-                    - case middle:
+                    - case drop:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[protection_type]>:!
                     - case number_key:
                         - choose <context.hotbar_button>:
@@ -2500,7 +2497,7 @@ jug_hosting_click:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions:+:5
                     - case shift_right:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions:-:5
-                    - case middle:
+                    - case drop:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions:!
                 - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions]> < 1:
                     - flag server juggernaut_maps.<[map]>.host_data.host_settings.victory_conditions:1
@@ -2519,7 +2516,7 @@ jug_hosting_click:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.resistances.<[resistance_type]>:+:0.1
                     - case shift_right:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.resistances.<[resistance_type]>:-:0.1
-                    - case middle:
+                    - case drop:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.resistances.<[resistance_type]>:!
                     - case number_key:
                         - choose <context.hotbar_button>:
@@ -2585,7 +2582,7 @@ jug_hosting_click:
                                 - inventory set d:<[value].inventory> o:<proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.display_name]>] slot:5
                             - else:
                                 - inventory set d:<[value].inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random] slot:5
-                    - case middle:
+                    - case drop:
                         - if <player.has_flag[jug_setup]>:
                             - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
                             - stop
@@ -2619,7 +2616,7 @@ jug_hosting_click:
                             - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>:+:0.1
                         - case shift_right:
                             - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>:-:0.1
-                        - case middle:
+                        - case drop:
                             - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[ability_type]>:!
                         - case number_key:
                             - choose <context.hotbar_button>:
@@ -2679,7 +2676,7 @@ jug_hosting_click:
                             - flag server juggernaut_maps.<[map]>.host_data.host_settings.max_health:+:10
                         - case shift_right:
                             - flag server juggernaut_maps.<[map]>.host_data.host_settings.max_health:-:10
-                        - case middle:
+                        - case drop:
                             - flag server juggernaut_maps.<[map]>.host_data.host_settings.max_health:!
                         - case number_key:
                             - choose <context.hotbar_button>:
@@ -2722,7 +2719,7 @@ jug_hosting_click:
                                 - flag server juggernaut_maps.<[map]>.host_data.host_settings.juggernaut_spawning:start
                             - case never:
                                 - flag server juggernaut_maps.<[map]>.host_data.host_settings.juggernaut_spawning:always
-                    - case middle:
+                    - case drop:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.juggernaut_spawning:!
             - case pvp:
                 - if !<player.flag[juggernaut_data.host_data.pvp].exists> && <context.click> != number_key:
@@ -2743,7 +2740,7 @@ jug_hosting_click:
                                 - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[pvp_type]>:1.9
                             - case 1.9:
                                 - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[pvp_type]>:1.8
-                    - case middle:
+                    - case drop:
                         - flag server juggernaut_maps.<[map]>.host_data.host_settings.<[pvp_type]>:!
                     - case number_key:
                         - choose <context.hotbar_button>:
@@ -2877,6 +2874,7 @@ jug_new_juggernaut_task:
     - if !<[killer].has_flag[juggernaut_data.dead]>:
         - inventory set d:<[killer].inventory> o:player_head[skull_skin=69a4ed90-c7d1-4236-9f39-b8fb6e599c70|eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYTU5NTNkNjMxMjlmNTIwNWJjZGE5NmM5MWMwNzBjYjFkMzlkMTU1NWQ1ZGZjNDM4MThkNzM3ODg3YzNkMSJ9fX0] slot:40
     - title 'title:<&c>You are now the Juggernaut!' targets:<[killer]>
+    - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><[killer].name> <&7>is now the juggernaut! They now have <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<[killer]>.score]> <&7>point(s)" targets:<proc[jug_viewers].context[<[map]>]>
     - run jug_update_sidebar def:<[map]>|on|<[killer]>
     - if <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.juggernaut_spawning]> == always:
         - teleport <[killer]> to:<server.flag[juggernaut_maps.<[map]>.jug_spawn]>
@@ -3127,7 +3125,7 @@ jug_juggernaut_interval_task:
         - flag server juggernaut_maps.<[map]>.game_data.players.<player>.score:+:<proc[jug_config_read].context[juggernaut_kill_points|<[map]>]>
         - flag server juggernaut_maps.<[map]>.game_data.players.<player>.score_time:<util.time_now>
         - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><player.name> <&7>has survived <&e><server.flag[juggernaut_maps.<[map]>.host_data.host_settings.jug_interval_time]>s <&7>as the juggernaut!" targets:<proc[jug_viewers].context[<[map]>]>
-        - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><player.name> <&7>now has <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<player>.score]> <&7>points" targets:<proc[jug_viewers].context[<[map]>]>
+        - narrate "<proc[jug_config_read].context[chat_prefix].parse_color> <&c><player.name> <&7>now has <&a><server.flag[juggernaut_maps.<[map]>.game_data.players.<player>.score]> <&7>point(s)" targets:<proc[jug_viewers].context[<[map]>]>
         - run jug_update_sidebar def:<[map]>|on|<player>
         - run jug_juggernaut_interval_task def:<[map]> player:<player>
 jug_grappling_hook:
@@ -3175,3 +3173,32 @@ jug_backup_grappling_hook:
             - wait 0.05s
             - define count:+:1
             - define wait_time:-:0.05
+jug_gradient:
+    type: procedure
+    definitions: text|colors|modifiers
+    script:
+    - define cols <[colors].split[/].parse_tag[<color[<[parse_value]>]>]>
+    - define mods <[modifiers].split[/]>
+    - define test <list>
+    - define r <[cols].get[1].red>
+    - define g <[cols].get[1].green>
+    - define b <[cols].get[1].blue>
+    - define rd <[r].sub[<[cols].get[2].red>].div[<[text].length>]>
+    - define gd <[g].sub[<[cols].get[2].green>].div[<[text].length>]>
+    - define bd <[b].sub[<[cols].get[2].blue>].div[<[text].length>]>
+    - repeat <[text].length>:
+        - define color <color[#000000].with_red[<[r].sub[<[rd].mul[<[value]>]>].round>].with_green[<[g].sub[<[gd].mul[<[value]>]>].round>].with_blue[<[b].sub[<[bd].mul[<[value]>]>].round>]>
+        - define char <[text].substring[<[value]>,<[value]>].color[<[color]>]>
+        - foreach <[mods]>:
+            - if <[value]> == bold:
+                - define char <[char].bold>
+            - else if <[value]> == italic:
+                - define char <[char].italicize>
+            - else if <[value]> == obfuscate:
+                - define char <[char].obfuscate>
+            - else if <[value]> == underline:
+                - define char <[char].underline>
+            - else if <[value]> == strikethrough:
+                - define char <[char].strikethrough>
+        - define test:->:<[char]>
+    - determine <[test].separated_by[]>
