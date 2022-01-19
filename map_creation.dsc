@@ -380,9 +380,6 @@ jug_help_proc:
         - if <player.has_permission[cubeville.juggernaut.setspawn]>:
             - define msg "<&a>/juggernaut setspawn <&7>- Sets the location players spawn after leaving a game"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.setup]>:
-            - define msg "<&a>/juggernaut setup <&7>- Used whenever chat-style inputs are required"
-            - define list:->:<[msg]>
     - else if <[type]> == map:
         - define list:->:<&e><&l>Help<&sp>for<&sp>Juggernaut<&sp>maps<&co>
         - if <player.has_permission[cubeville.juggernaut.map.create]>:
@@ -491,7 +488,7 @@ jug_edit_map_task:
             - else:
                 - narrate "<&c>Invalid input! Valid Inputs: <&a>save <&c>to save current WorldEdit selection."
         - default:
-            - narrate "<&c>Invalid operation! Valid Operations: <&a>display_name, waiting_spawn, spawn, juggernaut_spawn, region<&c>."
+            - narrate "<&c>Invalid operation! Valid Operations: <&6>display_name, waiting_spawn, spawn, juggernaut_spawn, region<&c>."
 jug_setup_task:
     type: task
     definitions: message
@@ -564,7 +561,6 @@ jug_setup_task:
         - else:
             - flag <player> jug_setup.skip_backup:!
         - flag <player> jug_setup:!
-        - narrate <server.flag[juggernaut_maps]>
     - else if <player.flag[jug_setup.type]> == spawn:
         - if <[message]> == save:
             - define location <player.location.round_down.add[0.5,0.5,0.5].with_yaw[<player.location.yaw.round_to_precision[45]>].with_pitch[0]>
@@ -613,7 +609,6 @@ jug_setup_task:
             - if <player.has_flag[auto_close]>:
                 - flag server juggernaut_maps.<player.flag[jug_setup.load_map]>.closed:true
                 - flag <player> auto_close:!
-            - narrate <server.flag[juggernaut_backup_maps.<player.flag[jug_setup.load_map]>]>
             - narrate "<&a><player.flag[jug_setup.load_map]> <&7>map successfully loaded."
         - else:
             - narrate "<&c>Invalid choice!"
@@ -688,8 +683,6 @@ jug_deny_map_leave:
             - else:
                 - narrate "<&c>Teleported to map spawn!"
                 - teleport <player> to:<server.flag[juggernaut_maps].deep_get[<player.flag[juggernaut_data.map]>.spawn]>
-        on arrow exits jug_classic:
-        - narrate <context.entity> targets:<server.online_ops>
 jug_map_selection_gui:
   type: inventory
   inventory: CHEST
@@ -729,13 +722,14 @@ jug_map_selection_gui:
             - define hidden <&nl><&c>*<&sp><&4>Hidden<&sp><&c>*
         - else:
             - define hidden:!
-        - if <server.flag[juggernaut_maps.<[value]>.game_data.phase]> == 0 || <server.flag[juggernaut_maps.<[value]>.game_data.phase]> == 1:
-            - define click_type <&nl><&nl><&e>Left<&sp>Click:<&sp><&7>Join<&sp>Game
+        - define click_type <list>
+        - define click_type:->:<&nl>
+        - if <server.flag[juggernaut_maps.<[value]>.game_data.phase]> == 0 || <server.flag[juggernaut_maps.<[value]>.game_data.phase]> == 1 || <player.flag[juggernaut_rejoin.id]> == <server.flag[juggernaut_maps.<[value]>.game_data.id]>:
+            - define click_type:->:<&e>Left<&sp>Click:<&sp><&7>Join<&sp>Game
         - if <server.flag[juggernaut_maps.<[value]>.game_data.phase]> == 2:
-            - if <player.flag[juggernaut_rejoin.id]> == <server.flag[juggernaut_maps.<[value]>.game_data.id]>:
-                - define click_type <&nl><&nl><&e>Left<&sp>Click:<&sp><&7>Rejoin<&sp>Game<&nl><&e>Right<&sp>Click:<&sp><&7>Spectate<&sp>Game
-            - else:
-                - define click_type <&nl><&nl><&e>Right<&sp>Click:<&sp><&7>Spectate<&sp>Game
+            - define click_type:->:<&e>Right<&sp>Click:<&sp><&7>Spectate<&sp>Game
+        - if <player.has_permission[cubeville.juggernaut.host]> && <server.flag[juggernaut_maps.<[value]>.game_data.players].keys.size.if_null[0]> <= 0 && !<server.flag[juggernaut_maps.<[value]>.host_data.host].exists>:
+            - define click_type:->:<&e>Shift<&sp>Left<&sp>Click:<&sp><&7>Host<&sp>Game
         - if <server.flag[juggernaut_maps.<[value]>.game_data.players].keys.size.if_null[0]> != 1:
             - define players <&7><server.flag[juggernaut_maps.<[value]>.game_data.players].keys.size.if_null[0]><&sp>Players<&nl>
         - else:
@@ -747,7 +741,7 @@ jug_map_selection_gui:
                 - define phase <&c>Closed
                 - define click_type:!
                 - define players:!
-        - adjust def:item "lore:<[players].if_null[]><[hosted].if_null[]><[phase]><[hidden].if_null[]><[click_type].if_null[]><&nl><&nl><&7>Games Played: <server.flag[juggernaut_maps.<[value]>.games_played].if_null[0]>"
+        - adjust def:item "lore:<[players].if_null[]><[hosted].if_null[]><[phase]><[hidden].if_null[]><[click_type].separated_by[<&nl>].if_null[]><&nl><&nl><&7>Games Played: <server.flag[juggernaut_maps.<[value]>.games_played].if_null[0]>"
         - define list <[list].include[<[item]>]>
         - define click_type:!
         - define players:!
@@ -769,11 +763,6 @@ jug_map_selection_gui:
     - [g] [] [] [] [] [] [] [] [g]
     - [g] [] [] [] [] [] [] [] [g]
     - [] [g] [g] [g] [t] [g] [g] [g] []
-jug_page_proc:
-    type: procedure
-    definitions: size
-    script:
-    - narrate <[size]>
 jug_inv_click:
     type: world
     events:
@@ -803,6 +792,35 @@ jug_inv_click:
                 - run jug_start_task def:<[map]>
         - else if <player.flag[juggernaut_rejoin.id]> == <server.flag[juggernaut_maps.<[map]>.game_data.id]> && <server.flag[juggernaut_maps.<[map]>.game_data.id].exists>:
             - run jug_rejoin_task def:<[map]>
+        on player shift_left clicks item_flagged:map in jug_map_selection_gui:
+        - if !<player.has_permission[cubeville.juggernaut.host]>:
+            - stop
+        - define map <context.item.flag[map]>
+        - if !<server.flag[juggernaut_maps.<[map]>].exists>:
+            - narrate "<&c>Invalid map!"
+            - stop
+        - if <proc[jug_viewers].context[<[map]>].size.if_null[0]> > 0:
+            - narrate "<&c>In order to host, there must be no players currently in the map."
+            - stop
+        - if <player.has_flag[juggernaut_data.in_game]>:
+            - narrate "<&c>You cannot host if you are already in a game!"
+            - stop
+        - if <server.flag[juggernaut_maps.<[map]>.closed].exists> && !<player.has_permission[cubeville.juggernaut.bypass.closed]>:
+            - narrate "<&c>Sorry, that map is closed!"
+            - stop
+        - flag server juggernaut_maps.<[map]>.host_data.host:<player>
+        - flag server juggernaut_maps.<[map]>.host_data.host_phase:closed
+        - flag server juggernaut_maps.<[map]>.game_data.spectators:->:<player>
+        - flag <player> juggernaut_data:<map[].with[map].as[<[map]>].with[ready_spam].as[0].with[leave_spam].as[0].with[in_game].as[true].with[is_host].as[true].with[spectator].as[true]>
+        - teleport <player> to:<server.flag[juggernaut_maps].deep_get[<[map]>.waiting_spawn]>
+        - inventory clear d:<player.inventory>
+        - heal
+        - feed <player> amount:20
+        - adjust <player> invulnerable:true
+        - inventory set d:<player.inventory> o:jug_waiting_leave slot:9
+        - inventory set d:<player.inventory> o:jug_waiting_unspectate_item slot:8
+        - inventory set d:<player.inventory> o:jug_host_settings_item slot:1
+        - run jug_ready_xp def:<[map]>
         on player right clicks item_flagged:map in jug_map_selection_gui:
         - define map <context.item.flag[map]>
         - if <player.has_flag[juggernaut_data.in_game]>:
@@ -827,7 +845,6 @@ jug_inv_click:
         on player flagged:juggernaut_data.in_game clicks item in player*:
             - determine passively cancelled
         on player flagged:jug_login_tp joins:
-        - narrate test
         - teleport <player> to:<server.flag[juggernaut_spawn]>
         - cast remove glowing
         - cast remove invisibility
@@ -1334,7 +1351,7 @@ jug_remove_player:
     - if !<player.is_online>:
         - flag <player> jug_login_tp:true
     - else if <player.has_flag[juggernaut_data.is_host]> && <server.flag[juggernaut_maps].deep_get[<[map]>.game_data.players].keys.exclude[<player>].size> >= <proc[jug_config_read].context[mininum_players]>:
-        - narrate "<&c>You must stop the hosted game before you can leave!"
+        - narrate "<&c>You must stop the hosted game before you can leave! <&nl>Command: <element[<&6>/juggernaut host classic -s].on_click[/juggernaut host classic -s].type[SUGGEST_COMMAND]> <&nl><&4><&l>(!!!) <&c>Stopping a hosted game completely ends the current game!"
         - stop
     - else if <player.has_flag[juggernaut_data.is_host]>:
         - run jug_stop_hosting def:<[map]>
@@ -1410,7 +1427,7 @@ jug_stop_game:
     definitions: map|win
     script:
     - if <[win].exists>:
-        - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys> as:player:
+        - foreach <proc[jug_viewers].context[<[map]>]> as:player:
             - define list <list[]>
             - define list:->:<element[<&a>Final<&sp>scores:]>
             - define sidebarlist <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.sort[jug_sort_players]>
@@ -1424,7 +1441,7 @@ jug_stop_game:
                 - else:
                     - define place <element[<proc[jug_gradient].context[<[loop_index]>th|#888888/#aaaaaa]><&sp>]>
                 - if <[value]> == <[player]>:
-                    - define playercolor <&6>
+                    - define playercolor <&6><&l>YOU<&sp><&7>
                 - else:
                     - define playercolor <&7>
                 - define list:->:<element[<[place]><[playercolor]><[value].name>:<&sp><&a><&l><server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]>].on_hover[<proc[jug_score_history_proc].context[<[map]>|<[value]>].if_null[<&7>N/A]>]>
@@ -1506,12 +1523,13 @@ jug_player_compass_gui:
     - define page <proc[jug_active_players].context[<player.flag[juggernaut_data.map]>].alphanumeric.get[<[pageMin]>].to[<[pageMax]>]>
     - define list <list>
 # Fills empty slots with player heads, with page number allowing those later im the list access
-    - foreach <[page]>:
-        - define item <item[player_head]>
-        - adjust def:item skull_skin:<[value].uuid>
-        - adjust def:item display_name:<&e><[value].name>
-        - adjust def:item flag:player:<[value]>
-        - define list <[list].include[<[item]>]>
+    - if <[page].size> > 0:
+        - foreach <[page]>:
+            - define item <item[player_head]>
+            - adjust def:item skull_skin:<[value].uuid>
+            - adjust def:item display_name:<&e><[value].name>
+            - adjust def:item flag:player:<[value]>
+            - define list <[list].include[<[item]>]>
     - repeat <[size].sub[<[page].size>]>:
         - define list:->:air
     - if <player.flag[gui_page]> > 1:
@@ -1710,7 +1728,7 @@ jug_kit_preview_gui:
   debug: false
   definitions:
     g: black_stained_glass_pane[display_name=<&sp>]
-    b: jug_exit_menu_item[flag=menu:jug_kit_selection_gui;display_name=test]
+    b: jug_exit_menu_item[flag=menu:jug_kit_selection_gui;display_name=<&7><&lt><&sp>Back<&sp>To<&sp>Kits]
   procedural items:
     - define list <list>
     - define kit_root <proc[jug_config_read].context[kits].get[<player.flag[juggernaut_data.preview_kit]>]>
@@ -1792,7 +1810,6 @@ jug_kit_inv_click:
                     - run jug_respawn_script player:<player>
             - inventory close o:<player.inventory>
         on player clicks item_flagged:menu in jug_*:
-        - narrate <context.item.flag[page]>
         - if <context.item.has_flag[page]>:
             - flag <player> gui_page:+:<context.item.flag[page]>
         - inventory open d:<context.item.flag[menu]>
@@ -1800,6 +1817,10 @@ jug_kit_inv_click:
         - wait 1t
         - if <player.open_inventory> == <player.inventory>:
             - inventory open d:JUG_KIT_SELECTION_GUI
+        after player flagged:juggernaut_data.kit_selection closes jug_kit_preview_gui:
+        - wait 1t
+        - if <player.open_inventory> == <player.inventory>:
+            - inventory open d:JUG_KIT_PREVIEW_GUI
 jug_give_kit:
     type: task
     script:
@@ -2047,7 +2068,6 @@ jug_abilities:
                 - define slot 41
             - inventory adjust slot:<[slot]> flag:ability_active:!
         on player breaks held shield:
-            - narrate <context.slot>
             - define item <context.item>
             - define slot <context.slot>
             - adjust def:item durability:<[item].max_durability.sub[<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.inventory.<[item].flag[kit_item]>.durability]>]>
@@ -2071,7 +2091,6 @@ jug_ninja_ability:
         - define life_id <player.flag[juggernaut_data.life_id]>
         - define map <player.flag[juggernaut_data.map]>
         - flag <player> juggernaut_data.invis:true
-        - narrate <server.flag[juggernaut_maps.<player.flag[juggernaut_data.map]>.game_data.players]>
         - fakeequip <player> for:<server.flag[juggernaut_maps.<player.flag[juggernaut_data.map]>.game_data.players].keys.exclude[<player>]> duration:<[duration]>s hand:air head:air chest:air legs:air boots:air
         - adjust <player> clear_body_arrows
         - repeat <[duration].mul[5]>:
@@ -2096,7 +2115,6 @@ jug_ability_actionbar:
     - define map <player.flag[juggernaut_data.map]>
     - define wait_time <proc[jug_ability_cooldown_proc].context[<[player_type]>|<[map]>|<[ability]>].div[15]>
     - define life_id:<player.flag[juggernaut_data.life_id]>
-    - narrate "Wait Value: <[wait_time]>"
     - if <[wait_time]> > 1.5:
         - define multiplier <[wait_time].div[1.5].round_up>
         - define wait_time:/:<[multiplier]>
@@ -3147,7 +3165,6 @@ jug_trap_particles:
             - define angle:+:4
             - if <[loc].find.players.within[<[rad]>].exclude[<server.online_players.exclude[<proc[jug_opponents_proc].context[alive]>]>].size> > 0:
                 - define trapped <[loc].find.players.within[3].exclude[<player>].first>
-                - narrate test targets:<[trapped]>
                 - repeat 90:
                     - playeffect effect:REDSTONE special_data:2|red at:<[loc].with_yaw[<[angle]>].with_pitch[0].add[0,0.5,0].forward[3]> amount:1 offset:0,0,0
                     - define angle:+:4
@@ -3268,27 +3285,6 @@ jug_grappling_hook:
                 - adjust <player> velocity:<[loc].sub[<player.location>].normalize.mul[<[launch_speed]>]>
                 - adjust <player> fall_distance:0
                 - wait 1t
-            - narrate <queue.time_ran>
-            - stop
-        - define wait_time:+:0.01
-        - if <[wait_time]> >= 0.05:
-            - wait 0.05s
-            - define count:+:1
-            - define wait_time:-:0.05
-jug_backup_grappling_hook:
-    type: task
-    script:
-    - define vector:<player.eye_location>
-    - repeat 100:
-        - define loc <[vector].forward[<[value].mul[0.5]>]>
-        - playeffect effect:crit at:<[loc]> offset:0,0,0 visibility:200
-        - if <[loc].material.name> != air:
-            - define origin <player.location>
-            - repeat <[value].div[5].round>:
-                - adjust <player> velocity:<[loc].sub[<player.location>].normalize.mul[2]>
-                - adjust <player> fall_distance:0
-                - wait 1t
-            - narrate <queue.time_ran>
             - stop
         - define wait_time:+:0.01
         - if <[wait_time]> >= 0.05:
@@ -3361,3 +3357,11 @@ jug_score_history_proc:
             - define sec <[value.time].in_seconds.sub[<[min].mul[60]>].round_down>
         - define "text:->:<&e><[value.time].formatted> - <&a>(+<[value.amount]>) <[cause]>"
     - determine <[text].separated_by[<&nl>]>
+jug_interact_deny:
+    type: world
+    events:
+        on player flagged:juggernaut_data.in_game right clicks block:
+        - if <context.location.material.vanilla_tags.contains[trapdoors]>:
+            - determine passively cancelled
+        - if <context.location.material.vanilla_tags.contains[doors]> && <player.has_flag[juggernaut_data.spectator]>:
+            - determine passively cancelled
