@@ -3,6 +3,7 @@ juggernaut_command:
     name: juggernaut
     description: Juggernaut command.
     usage: /juggernaut
+    debug: false
     script:
     - if <context.source_type> != PLAYER:
         - narrate "<&c>Command must be run by a player!"
@@ -18,7 +19,7 @@ juggernaut_command:
                 - define skipBackup true
             - choose <[args].get[2]>:
                 - case create:
-                    - define perm cubeville.juggernaut.map.create
+                    - define perm juggernaut.map.create
                     - inject jug_perms
                     - if <player.has_flag[jug_setup]>:
                         - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
@@ -44,7 +45,7 @@ juggernaut_command:
                         - define prop_com "/juggernaut map create <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
                 - case edit:
-                    - define perm cubeville.juggernaut.map.edit
+                    - define perm juggernaut.map.edit
                     - inject jug_perms
                     - if <[args].get[5].exists>:
                         - run JUG_EDIT_MAP_TASK def:<[args].get[3]>|<[args].get[4]>|<[args].get[5].to[last].space_separated.escaped>
@@ -59,7 +60,7 @@ juggernaut_command:
                             - define prop_com "/juggernaut map edit <&lt>map<&gt> <&lt>operation<&gt> <&lt>input<&gt>"
                             - narrate <proc[jug_mis_arg].context[map|<[prop_com]>]>
                 - case remove:
-                    - define perm cubeville.juggernaut.map.remove
+                    - define perm juggernaut.map.remove
                     - inject jug_perms
                     - if <player.has_flag[jug_setup]>:
                         - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
@@ -77,7 +78,7 @@ juggernaut_command:
                         - define prop_com "/juggernaut map remove <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
                 - case end:
-                    - define perm cubeville.juggernaut.map.end
+                    - define perm juggernaut.map.end
                     - inject jug_perms
                     - if <[args].get[3].exists>:
                         - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
@@ -91,7 +92,7 @@ juggernaut_command:
                         - define prop_com "/juggernaut map end <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
                 - case close:
-                    - define perm cubeville.juggernaut.map.close
+                    - define perm juggernaut.map.close
                     - inject jug_perms
                     - if <[args].get[3].exists>:
                         - if <server.flag[juggernaut_maps.<[args].get[3]>.game_data.players].keys.size.if_null[0]> != 0:
@@ -106,7 +107,7 @@ juggernaut_command:
                         - define prop_com "/juggernaut map close <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
                 - case open:
-                    - define perm cubeville.juggernaut.map.open
+                    - define perm juggernaut.map.open
                     - inject jug_perms
                     - if <[args].get[3].exists>:
                         - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
@@ -118,7 +119,7 @@ juggernaut_command:
                         - define prop_com "/juggernaut map open <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
                 - case hide:
-                    - define perm cubeville.juggernaut.map.hide
+                    - define perm juggernaut.map.hide
                     - inject jug_perms
                     - if <[args].get[3].exists>:
                         - if <server.flag[juggernaut_maps.<[args].get[3]>.game_data.players].keys.size.if_null[0]> != 0:
@@ -133,7 +134,7 @@ juggernaut_command:
                         - define prop_com "/juggernaut map hide <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
                 - case show:
-                    - define perm cubeville.juggernaut.map.show
+                    - define perm juggernaut.map.show
                     - inject jug_perms
                     - if <[args].get[3].exists>:
                         - if <server.flag[juggernaut_maps].keys.contains[<[args].get[3]>]>:
@@ -145,20 +146,20 @@ juggernaut_command:
                         - define prop_com "/juggernaut map show <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
                 - case list:
-                    - define perm cubeville.juggernaut.map.list
+                    - define perm juggernaut.map.list
                     - inject jug_perms
                     - narrate <server.flag[juggernaut_maps].keys.separated_by[,<&sp>]>
                 - case help:
-                    - define perm cubeville.juggernaut.map.help
+                    - define perm juggernaut.map.help
                     - inject jug_perms
                     - narrate <proc[jug_help_proc].context[map]>
                 - default:
-                    - define perm cubeville.juggernaut.map.help
+                    - define perm juggernaut.map.help
                     - inject jug_perms
                     - define prop_com "/juggernaut map help"
                     - narrate <proc[jug_help_arg].context[<[prop_com]>]>
         - case open:
-            - define perm cubeville.juggernaut.open
+            - define perm juggernaut.open
             - inject jug_perms
             - flag <player> gui_page:1
             - inventory open d:jug_map_selection_gui
@@ -166,7 +167,7 @@ juggernaut_command:
                 - inventory open d:jug_map_selection_gui
                 - wait 1s
         - case host:
-            - define perm cubeville.juggernaut.host
+            - define perm juggernaut.host
             - inject jug_perms
             - define map <[args].get[2]>
             - if !<server.flag[juggernaut_maps.<[map]>].exists>:
@@ -184,7 +185,7 @@ juggernaut_command:
             - if <player.has_flag[juggernaut_data.in_game]>:
                 - narrate "<&c>You cannot host if you are already in a game!"
                 - stop
-            - if <server.flag[juggernaut_maps.<[map]>.closed].exists> && !<player.has_permission[cubeville.juggernaut.bypass.closed]>:
+            - if <server.flag[juggernaut_maps.<[map]>.closed].exists> && !<player.has_permission[juggernaut.bypass.closed]>:
                 - narrate "<&c>Sorry, that map is closed!"
                 - stop
             - flag server juggernaut_maps.<[map]>.host_data.host:<player>
@@ -201,19 +202,19 @@ juggernaut_command:
             - inventory set d:<player.inventory> o:jug_host_settings_item slot:1
             - run jug_ready_xp def:<[map]>
         - case reload:
-            - define perm cubeville.juggernaut.reload
+            - define perm juggernaut.reload
             - inject jug_perms
             - yaml load:scripts/Juggernaut/juggernaut.yaml id:juggernaut
             - narrate "<&a>Juggernaut config reloaded!"
         - case leave:
-            - define perm cubeville.juggernaut.leave
+            - define perm juggernaut.leave
             - inject jug_perms
             - if <player.has_flag[juggernaut_data.in_game]>:
                 - run jug_remove_player def:<player.flag[juggernaut_data].get[map]>
             - else:
                 - narrate "<&c>You aren't in a game!"
         - case setspawn:
-            - define perm cubeville.juggernaut.setspawn
+            - define perm juggernaut.setspawn
             - inject jug_perms
             - if <player.has_flag[jug_setup]>:
                     - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
@@ -221,11 +222,11 @@ juggernaut_command:
             - flag <player> jug_setup.type:spawn
             - narrate "<&7>Please stand where the Juggernaut lobby's spawn should be and type in one of the following: <&nl><proc[jug_setup_proc].context[save|normal]><&7>: Save an auto-corrected location <&nl><proc[jug_setup_proc].context[exact|normal]><&7>: Save your exact location <&nl><proc[jug_setup_proc].context[cancel|normal]><&7>: Cancel setting the spawn." targets:<player>
         - case help:
-            - define perm cubeville.juggernaut.help
+            - define perm juggernaut.help
             - inject jug_perms
             - narrate <proc[jug_help_proc].context[general]>
         - case setup:
-            - define perm cubeville.juggernaut.setup
+            - define perm juggernaut.setup
             - inject jug_perms
             - if !<context.args.get[2].exists>:
                 - narrate "<&c>No input found!"
@@ -238,7 +239,7 @@ juggernaut_command:
         - case debug:
             - choose <[args].get[2]>:
                 - case map:
-                    - define perm cubeville.juggernaut.debug.map
+                    - define perm juggernaut.debug.map
                     - inject jug_perms
                     - if !<server.flag[juggernaut_maps.<[args].get[3]>].exists> && <[args].get[3].exists>:
                         - narrate "<&c>That map doesn't exist!"
@@ -248,7 +249,7 @@ juggernaut_command:
                     - else:
                         - narrate <server.flag[juggernaut_maps]>
                 - case player:
-                    - define perm cubeville.juggernaut.debug.player
+                    - define perm juggernaut.debug.player
                     - inject jug_perms
                     - if !<[args].get[3].exists>:
                         - define prop_com "/juggernaut debug player <&lt>name<&gt>"
@@ -259,18 +260,18 @@ juggernaut_command:
                         - stop
                     - narrate <server.match_offline_player[<[args].get[3]>].flag[juggernaut_data]>
                 - case help:
-                    - define perm cubeville.juggernaut.debug.help
+                    - define perm juggernaut.debug.help
                     - inject jug_perms
                     - narrate <proc[jug_help_proc].context[debug]>
                 - default:
-                    - define perm cubeville.juggernaut.debug.help
+                    - define perm juggernaut.debug.help
                     - inject jug_perms
                     - define prop_com "/juggernaut debug help"
                     - narrate <proc[jug_help_arg].context[<[prop_com]>]>
         - case backup:
             - choose <[args].get[2]>:
                 - case load:
-                    - define perm cubeville.juggernaut.backup.load
+                    - define perm juggernaut.backup.load
                     - inject jug_perms
                     - if <player.has_flag[jug_setup]>:
                         - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
@@ -293,7 +294,7 @@ juggernaut_command:
                         - define prop_com "/juggernaut backup load <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
                 - case remove:
-                    - define perm cubeville.juggernaut.backup.remove
+                    - define perm juggernaut.backup.remove
                     - inject jug_perms
                     - if <player.has_flag[jug_setup]>:
                         - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
@@ -309,7 +310,7 @@ juggernaut_command:
                         - define prop_com "/juggernaut backup remove <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
                 - case save:
-                    - define perm cubeville.juggernaut.backup.save
+                    - define perm juggernaut.backup.save
                     - inject jug_perms
                     - if <player.has_flag[jug_setup]>:
                         - narrate "<&c>You already have another chat selection active. If this is unintentional type <proc[jug_setup_proc].context[cancel|normal]><&c>!"
@@ -328,26 +329,27 @@ juggernaut_command:
                         - define prop_com "/juggernaut backup save <&lt>name<&gt>"
                         - narrate <proc[jug_mis_arg].context[name|<[prop_com]>]>
                 - case list:
-                    - define perm cubeville.juggernaut.backup.list
+                    - define perm juggernaut.backup.list
                     - inject jug_perms
                     - narrate <server.flag[juggernaut_backup_maps].keys.separated_by[,<&sp>]>
                 - case help:
-                    - define perm cubeville.juggernaut.backup.help
+                    - define perm juggernaut.backup.help
                     - inject jug_perms
                     - narrate <proc[jug_help_proc].context[backup]>
                 - default:
-                    - define perm cubeville.juggernaut.backup.help
+                    - define perm juggernaut.backup.help
                     - inject jug_perms
                     - define prop_com "/juggernaut backup help"
                     - narrate <proc[jug_help_arg].context[<[prop_com]>]>
         - default:
-            - define perm cubeville.juggernaut.help
+            - define perm juggernaut.help
             - inject jug_perms
             - define prop_com "/juggernaut help"
             - narrate <proc[jug_help_arg].context[<[prop_com]>]>
 jug_perms:
     type: task
     definitions: perm
+    debug: false
     script:
     - if !<player.has_permission[<[perm]>]>:
         - narrate "<&c>No permission!"
@@ -355,93 +357,97 @@ jug_perms:
 jug_help_proc:
     type: procedure
     definitions: type
+    debug: false
     script:
     - define list <list[]>
     - if <[type]> == general:
         - define list:->:<&e><&l>Help<&sp>for<&sp>Juggernaut<&co>
-        - if <player.has_permission[cubeville.juggernaut.map.help]>:
+        - if <player.has_permission[juggernaut.map.help]>:
             - define msg "<&a>/juggernaut map <&c><&l><element[^].on_click[/juggernaut<&sp>map<&sp>help].on_hover[<&7>Click<&sp>here<&sp>for<&sp>map<&sp>help.]> <&7>- Commands involving the management of maps"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.debug.help]>:
+        - if <player.has_permission[juggernaut.debug.help]>:
             - define msg "<&a>/juggernaut debug <&c><&l><element[^].on_click[/juggernaut<&sp>debug<&sp>help].on_hover[<&7>Click<&sp>here<&sp>for<&sp>debug<&sp>help.]> <&7>- Commands to assist with debugging"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.backup.help]>:
+        - if <player.has_permission[juggernaut.backup.help]>:
             - define msg "<&a>/juggernaut backup <&c><&l><element[^].on_click[/juggernaut<&sp>backup<&sp>help].on_hover[<&7>Click<&sp>here<&sp>for<&sp>backup<&sp>help.]> <&7>- Commands to interact with map backups"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.open]>:
+        - if <player.has_permission[juggernaut.open]>:
             - define msg "<&a>/juggernaut open <&7>- Opens the map selection menu"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.reload]>:
+        - if <player.has_permission[juggernaut.reload]>:
             - define msg "<&a>/juggernaut reload <&7>- Reloads the Juggernaut config files"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.leave]>:
+        - if <player.has_permission[juggernaut.leave]>:
             - define msg "<&a>/juggernaut leave <&7>- Leaves the game you are currently in"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.setspawn]>:
+        - if <player.has_permission[juggernaut.setspawn]>:
             - define msg "<&a>/juggernaut setspawn <&7>- Sets the location players spawn after leaving a game"
             - define list:->:<[msg]>
     - else if <[type]> == map:
         - define list:->:<&e><&l>Help<&sp>for<&sp>Juggernaut<&sp>maps<&co>
-        - if <player.has_permission[cubeville.juggernaut.map.create]>:
+        - if <player.has_permission[juggernaut.map.create]>:
             - define msg "<&a>/juggernaut map create <&lt>name<&gt> <element[<&e>[-b]].on_hover[<&7>Prevent<&sp>saving<&sp>changes<&sp>to<&sp>backup]> <element[<&e>[-c]].on_hover[<&7>Automatically<&sp>closes<&sp>map]> <element[<&e>[-h]].on_hover[<&7>Automatically<&sp>hides<&sp>map]> <&7>- Starts setup process for a new map"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.map.remove]>:
+        - if <player.has_permission[juggernaut.map.remove]>:
             - define msg "<&a>/juggernaut map remove <&lt>name<&gt> <element[<&e>[-b]].on_hover[<&7>Prevent<&sp>saving<&sp>changes<&sp>to<&sp>backup]> <&7>- Removes a map"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.map.end]>:
+        - if <player.has_permission[juggernaut.map.end]>:
             - define msg "<&a>/juggernaut map end <&lt>name<&gt> <&7>- Ends the current game running on this map"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.map.close]>:
+        - if <player.has_permission[juggernaut.map.close]>:
             - define msg "<&a>/juggernaut map close <&lt>name<&gt> <&7>- Closes this map, meaning nobody can enter"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.map.open]>:
+        - if <player.has_permission[juggernaut.map.open]>:
             - define msg "<&a>/juggernaut map open <&lt>name<&gt> <&7>- Opens this map, allowing players to enter"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.map.hide]>:
+        - if <player.has_permission[juggernaut.map.hide]>:
             - define msg "<&a>/juggernaut map hide <&lt>name<&gt> <&7>- Hides this map, meaning nobody can see it"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.map.show]>:
+        - if <player.has_permission[juggernaut.map.show]>:
             - define msg "<&a>/juggernaut map show <&lt>name<&gt> <&7>- Shows this map, allowing players to see it"
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.map.list]>:
+        - if <player.has_permission[juggernaut.map.list]>:
             - define msg "<&a>/juggernaut map list <&7>- Lists the names of all current maps."
             - define list:->:<[msg]>
     - else if <[type]> == debug:
         - define list:->:<&e><&l>Help<&sp>for<&sp>debug<&sp>commands<&co>
-        - if <player.has_permission[cubeville.juggernaut.debug.map]>:
+        - if <player.has_permission[juggernaut.debug.map]>:
             - define msg "<&a>/juggernaut debug map [name] <&7>- Shows juggernaut data for a map. If no map is specified, shows juggernaut data for all maps."
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.debug.player]>:
+        - if <player.has_permission[juggernaut.debug.player]>:
             - define msg "<&a>/juggernaut debug player <&lt>name<&gt> <&7>- Shows juggernaut data for a player"
             - define list:->:<[msg]>
     - else if <[type]> == backup:
         - define list:->:<&e><&l>Help<&sp>for<&sp>backup<&sp>commands<&co>
-        - if <player.has_permission[cubeville.juggernaut.backup.save]>:
+        - if <player.has_permission[juggernaut.backup.save]>:
             - define msg "<&a>/juggernaut backup save <&lt>name<&gt> <&7>- Saves the current form of the map to a backup. This replaces any current backup of this map."
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.backup.load]>:
+        - if <player.has_permission[juggernaut.backup.load]>:
             - define msg "<&a>/juggernaut backup load <&lt>name<&gt> <element[<&e>[-h]].on_hover[<&7>Automatically<&sp>hides<&sp>map]> <&7>- Loads the backup of a map to be the current map. This replaces any current version of this map."
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.backup.remove]>:
+        - if <player.has_permission[juggernaut.backup.remove]>:
             - define msg "<&a>/juggernaut backup remove <&lt>name<&gt> <&7>- Removes the backup of a map."
             - define list:->:<[msg]>
-        - if <player.has_permission[cubeville.juggernaut.backup.list]>:
+        - if <player.has_permission[juggernaut.backup.list]>:
             - define msg "<&a>/juggernaut backup list <&7>- Lists the names of all current backup maps."
             - define list:->:<[msg]>
     - determine <[list].separated_by[<&nl>]>
 jug_mis_arg:
     type: procedure
     definitions: arg|command
+    debug: false
     script:
     - determine "<&c>Missing argument for <&e><&lt><&6><[arg]><&e><&gt><&c>. <&nl><&c>Usage: <&6><[command].replace_text[<&gt>].with[<&e><&gt><&6>].replace_text[<&lt>].with[<&e><&lt><&6>]>"
 jug_help_arg:
     type: procedure
     definitions: command
+    debug: false
     script:
     - determine "<&c>Missing or invalid arguments. <&nl><&c>Help: <&6><[command].replace_text[<&gt>].with[<&e><&gt><&6>].replace_text[<&lt>].with[<&e><&lt><&6>]>"
 jug_edit_map_task:
     type: task
     definitions: map|type|input
+    debug: false
     script:
     - if !<server.flag[juggernaut_maps.<[map]>].exists>:
         - narrate "<&c>Invalid map!"
@@ -492,6 +498,7 @@ jug_edit_map_task:
 jug_setup_task:
     type: task
     definitions: message
+    debug: false
     script:
     - if <player.has_flag[jug_setup]> && <[message]> == cancel:
         - if <player.has_flag[juggernaut_data.is_host]> && ( <player.flag[jug_setup.type]> == host_save || <player.flag[jug_setup.type]> == host_save_remove ):
@@ -649,6 +656,7 @@ jug_setup_task:
             - stop
 jug_setup_event:
     type: world
+    debug: false
     events:
         on player flagged:jug_setup clicks in player*:
         - if <player.flag[jug_setup.type]> == 2:
@@ -662,6 +670,7 @@ jug_setup_event:
 jug_setup_proc:
     type: procedure
     definitions: arg|type
+    debug: false
     script:
     - if <[type]> == normal:
         - determine <&a><element[/juggernaut<&sp>setup<&sp><[arg]>].on_click[/juggernaut<&sp>setup<&sp><[arg]>].type[SUGGEST_COMMAND].on_hover[<&7>Click<&sp>to<&sp>put<&sp>command<&sp>in<&sp>your<&sp>chat<&sp>bar.]>
@@ -669,6 +678,7 @@ jug_setup_proc:
         - determine <&a><element[/juggernaut<&sp>setup<&sp><[arg]>].on_click[/juggernaut<&sp>setup].type[SUGGEST_COMMAND].on_hover[<&7>Click<&sp>to<&sp>put<&sp>command<&sp>in<&sp>your<&sp>chat<&sp>bar.]>
 jug_deny_map_leave:
     type: world
+    debug: false
     events:
         on player exits jug_*:
         - if <player.flag[juggernaut_data].get[map]> == <context.area.note_name.after[jug_]>:
@@ -697,7 +707,7 @@ jug_map_selection_gui:
     - define size 28
     - define pageMin <[size].mul[<player.flag[gui_page].sub[1]>].add[1]>
     - define pageMax <[size].mul[<player.flag[gui_page]>]>
-    - if <player.has_permission[cubeville.juggernaut.bypass.hidden]>:
+    - if <player.has_permission[juggernaut.bypass.hidden]>:
         - define page <server.flag[juggernaut_maps].keys.get[<[pageMin]>].to[<[pageMax]>]>
     - else:
         - define page <server.flag[juggernaut_maps].keys.filter_tag[<server.flag[juggernaut_maps.<[filter_value]>.hidden].exists.not>].get[<[pageMin]>].to[<[pageMax]>]>
@@ -728,14 +738,14 @@ jug_map_selection_gui:
             - define click_type:->:<&e>Left<&sp>Click:<&sp><&7>Join<&sp>Game
         - if <server.flag[juggernaut_maps.<[value]>.game_data.phase]> == 2:
             - define click_type:->:<&e>Right<&sp>Click:<&sp><&7>Spectate<&sp>Game
-        - if <player.has_permission[cubeville.juggernaut.host]> && <server.flag[juggernaut_maps.<[value]>.game_data.players].keys.size.if_null[0]> <= 0 && !<server.flag[juggernaut_maps.<[value]>.host_data.host].exists>:
+        - if <player.has_permission[juggernaut.host]> && <server.flag[juggernaut_maps.<[value]>.game_data.players].keys.size.if_null[0]> <= 0 && !<server.flag[juggernaut_maps.<[value]>.host_data.host].exists>:
             - define click_type:->:<&e>Shift<&sp>Left<&sp>Click:<&sp><&7>Host<&sp>Game
         - if <server.flag[juggernaut_maps.<[value]>.game_data.players].keys.size.if_null[0]> != 1:
             - define players <&7><server.flag[juggernaut_maps.<[value]>.game_data.players].keys.size.if_null[0]><&sp>Players<&nl>
         - else:
             - define players <&7><server.flag[juggernaut_maps.<[value]>.game_data.players].keys.size.if_null[0]><&sp>Player<&nl>
         - if <server.flag[juggernaut_maps.<[value]>.closed].exists>:
-            - if <player.has_permission[cubeville.juggernaut.bypass.closed]>:
+            - if <player.has_permission[juggernaut.bypass.closed]>:
                 - define phase <&c>Closed<&sp><&7>(<[phase]><&7>)
             - else:
                 - define phase <&c>Closed
@@ -765,13 +775,14 @@ jug_map_selection_gui:
     - [] [g] [g] [g] [t] [g] [g] [g] []
 jug_inv_click:
     type: world
+    debug: false
     events:
         on player left clicks item_flagged:map in jug_map_selection_gui:
         - define map <context.item.flag[map]>
         - if <player.has_flag[juggernaut_data.in_game]>:
             - narrate "<&c>You are already in a game!"
             - stop
-        - if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> <= 1 && ( !<server.flag[juggernaut_maps.<[map]>.closed].exists> || <player.has_permission[cubeville.juggernaut.bypass.closed]> ):
+        - if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> <= 1 && ( !<server.flag[juggernaut_maps.<[map]>.closed].exists> || <player.has_permission[juggernaut.bypass.closed]> ):
             - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_with[<[map]>.game_data.players.<player>].as[<map[].with[score].as[0].with[score_time].as[<util.time_now>]>]>
             - flag <player> juggernaut_data:<map[].with[map].as[<[map]>].with[ready_spam].as[0].with[leave_spam].as[0].with[in_game].as[true]>
             - teleport <player> to:<server.flag[juggernaut_maps].deep_get[<[map]>.waiting_spawn]>
@@ -793,7 +804,7 @@ jug_inv_click:
         - else if <player.flag[juggernaut_rejoin.id]> == <server.flag[juggernaut_maps.<[map]>.game_data.id]> && <server.flag[juggernaut_maps.<[map]>.game_data.id].exists>:
             - run jug_rejoin_task def:<[map]>
         on player shift_left clicks item_flagged:map in jug_map_selection_gui:
-        - if !<player.has_permission[cubeville.juggernaut.host]>:
+        - if !<player.has_permission[juggernaut.host]>:
             - stop
         - define map <context.item.flag[map]>
         - if !<server.flag[juggernaut_maps.<[map]>].exists>:
@@ -805,7 +816,7 @@ jug_inv_click:
         - if <player.has_flag[juggernaut_data.in_game]>:
             - narrate "<&c>You cannot host if you are already in a game!"
             - stop
-        - if <server.flag[juggernaut_maps.<[map]>.closed].exists> && !<player.has_permission[cubeville.juggernaut.bypass.closed]>:
+        - if <server.flag[juggernaut_maps.<[map]>.closed].exists> && !<player.has_permission[juggernaut.bypass.closed]>:
             - narrate "<&c>Sorry, that map is closed!"
             - stop
         - flag server juggernaut_maps.<[map]>.host_data.host:<player>
@@ -826,7 +837,7 @@ jug_inv_click:
         - if <player.has_flag[juggernaut_data.in_game]>:
             - narrate "<&c>You are already in a game!"
             - stop
-        - if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> == 2 && ( !<server.flag[juggernaut_maps.<[map]>.closed].exists> || <player.has_permission[cubeville.juggernaut.bypass.closed]> ):
+        - if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> == 2 && ( !<server.flag[juggernaut_maps.<[map]>.closed].exists> || <player.has_permission[juggernaut.bypass.closed]> ):
             - flag server juggernaut_maps.<[map]>.game_data.spectators:->:<player>
             - flag <player> juggernaut_data:<map[].with[map].as[<[map]>].with[spectator].as[true].with[in_game].as[true]>
             - flag <player> juggernaut_data.hidden_from:<server.flag[juggernaut_maps.<[map]>.game_data.players].keys>
@@ -863,6 +874,7 @@ jug_inv_click:
 jug_start_task:
     type: task
     definitions: map|countdown
+    debug: false
     script:
     - if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> != 0:
         - stop
@@ -929,6 +941,7 @@ jug_start_task:
 jug_rejoin_task:
     type: task
     definitions: map
+    debug: false
     script:
     - if <player.flag[juggernaut_rejoin.id]> != <server.flag[juggernaut_maps.<[map]>.game_data.id]> && <server.flag[juggernaut_maps.<[map]>.game_data.id].exists>:
         - narrate "<&c>The match you left ended!"
@@ -976,6 +989,7 @@ jug_rejoin_task:
             - run jug_respawn_script player:<player>
 jug_kill_script:
     type: world
+    debug: false
     events:
         on player flagged:juggernaut_data.in_game damaged:
         - if <context.damager.exists>:
@@ -1108,6 +1122,7 @@ jug_kill_script:
                     - run jug_respawn_script player:<context.entity>
 jug_respawn_script:
     type: task
+    debug: false
     script:
     - define map <player.flag[juggernaut_data.map]>
     - flag <player> juggernaut_data.dead:!
@@ -1126,6 +1141,7 @@ jug_respawn_script:
     - cast damage_resistance duration:<proc[jug_config_read].context[spawn_protection_duration|<[map]>]> amplifier:<proc[jug_config_read].context[spawn_protection_level|<[map]>].sub[1]>
 jug_magic_event:
     type: world
+    debug: false
     events:
         on player flagged:juggernaut_data.in_game right clicks block with:item_flagged:magic_damage:
         - if <player.flag[juggernaut_data.mana]> >= 15:
@@ -1200,6 +1216,7 @@ jug_mana_end:
         - adjust <player> fake_experience
 jug_leave_lobby:
     type: world
+    debug: false
     events:
         on player right clicks block with:jug_waiting_leave:
         - run jug_remove_player def:<player.flag[juggernaut_data].get[map]>
@@ -1347,6 +1364,7 @@ jug_leave_lobby:
 jug_remove_player:
     type: task
     definitions: map|type
+    debug: false
     script:
     - if !<player.is_online>:
         - flag <player> jug_login_tp:true
@@ -1425,6 +1443,7 @@ jug_remove_player:
 jug_stop_game:
     type: task
     definitions: map|win
+    debug: false
     script:
     - if <[win].exists>:
         - foreach <proc[jug_viewers].context[<[map]>]> as:player:
@@ -1460,6 +1479,7 @@ jug_stop_game:
 jug_ready_xp:
     type: task
     definitions: map
+    debug: false
     script:
     - define players <proc[jug_viewers].context[<[map]>]>
     - foreach <[players]>:
@@ -1550,6 +1570,7 @@ jug_player_compass_gui:
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
 jug_player_compass_click:
     type: world
+    debug: false
     events:
         on player clicks item_flagged:player in jug_player_compass_gui:
         - if <context.item.flag[player].has_flag[juggernaut_data.in_game]>:
@@ -1589,6 +1610,7 @@ jug_waiting_unready:
 jug_update_sidebar:
     type: task
     definitions: map|mode|player
+    debug: false
     script:
     - if <[mode]> == on:
         - foreach <proc[jug_viewers].context[<[map]>]>:
@@ -1600,6 +1622,7 @@ jug_update_sidebar:
         - run jug_stop_game def:<[map]>|true
 jug_sidebar_display:
     type: task
+    debug: false
     script:
     - define list <list[]>
     - define map <player.flag[juggernaut_data.map]>
@@ -1652,6 +1675,7 @@ jug_sidebar_display:
 jug_sort_players:
     type: procedure
     definitions: player1|player2
+    debug: false
     script:
     - define map <[player1].flag[juggernaut_data.map]>
     - define p1point <server.flag[juggernaut_maps.<[map]>.game_data.players.<[player1]>.score]>
@@ -1823,6 +1847,7 @@ jug_kit_inv_click:
             - inventory open d:JUG_KIT_PREVIEW_GUI
 jug_give_kit:
     type: task
+    debug: false
     script:
     - define map <player.flag[juggernaut_data.map]>
     - if !<player.has_flag[juggernaut_data.kit]>:
@@ -1865,6 +1890,7 @@ jug_give_kit:
         - give compass[display_name=<&c>Juggernaut<&sp>Tracker]
 jug_abilities:
     type: world
+    debug: false
     events:
         on player flagged:juggernaut_data.in_game clicks block with:item_flagged:kit_item:
         - define ability <proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.inventory.<context.item.flag[kit_item]>.ability]>
@@ -2086,6 +2112,7 @@ jug_abilities:
 jug_ninja_ability:
     type: task
     definitions: duration
+    debug: false
     script:
         - cast remove glowing
         - define life_id <player.flag[juggernaut_data.life_id]>
@@ -2142,6 +2169,7 @@ jug_ability_actionbar:
     - narrate "<&e><[ability.display_name]> <&a>is ready!"
 jug_load_config:
     type: world
+    debug: false
     events:
         on server start:
         - yaml load:scripts/Juggernaut/juggernaut.yaml id:juggernaut
@@ -2150,6 +2178,7 @@ jug_load_config:
 jug_viewers:
     type: procedure
     definitions: map
+    debug: false
     script:
     - define list <list>
     - if <server.flag[juggernaut_maps.<[map]>.game_data.players].exists>:
@@ -2160,30 +2189,35 @@ jug_viewers:
 jug_active_players:
     type: procedure
     definitions: map
+    debug: false
     script:
     - determine <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.filter_tag[<[filter_value].has_flag[juggernaut_data.dead].not>].filter_tag[<[filter_value].has_flag[juggernaut_data.spectator].not>]>
 jug_map_assignment:
 ## When assigning, do '/npc assign --set jug_map_assignment'
     type: assignment
+    debug: false
     actions:
         on assignment:
         - narrate "NPC assigned to Juggernaut maps"
+        - trigger name:click state:true
     interact scripts:
     - jug_map_interact
 jug_map_interact:
     type: interact
+    debug: false
     steps:
         1:
             click trigger:
                 script:
                 - flag <player> gui_page:1
                 - inventory open d:jug_map_selection_gui
-                - while <player.open_inventory.script.name> == jug_map_selection_gui:
+                - while <player.open_inventory.script.name.if_null[null]> == jug_map_selection_gui:
                     - inventory open d:jug_map_selection_gui
-                    - wait 1s
+                    - wait 3s
 jug_tutorial:
     type: task
     definitions: stage
+    debug: false
     script:
     - choose <[stage]>:
         - case intro:
@@ -2206,6 +2240,7 @@ jug_tutorial:
             - narrate "<&c>I'm sorry, that page doesn't exist."
 jug_protections:
     type: world
+    debug: false
     events:
         on player flagged:juggernaut_data.in_game breaks block:
         - determine passively cancelled
@@ -2244,6 +2279,7 @@ jug_jug_tracker_update:
 jug_jug_res_proc:
     type: procedure
     definitions: map|cause
+    debug: false
     script:
     - if !<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.resistances.base].exists>:
         - define minPlayers <proc[jug_config_read].context[juggernaut_settings.resistances.min_players]>
@@ -2268,6 +2304,7 @@ jug_jug_res_proc:
 jug_config_read:
     type: procedure
     definitions: path|map
+    debug: false
     script:
     - define result <yaml[juggernaut].read[<[path]>]>
     - choose <[path]>:
@@ -2282,6 +2319,7 @@ jug_config_read:
 jug_stop_hosting:
     type: task
     definitions: map
+    debug: false
     script:
     - define host <server.flag[juggernaut_maps.<[map]>.host_data.host]>
     - flag <[host]> juggernaut_data.is_host:!
@@ -2410,6 +2448,7 @@ jug_hosting_main_inv:
     - [] [g] [g] [g] [g] [g] [g] [g] [g]
 jug_hosting_click:
     type: world
+    debug: false
     events:
         on player clicks item_flagged:juggernaut in jug_hosting_main_inv:
         - define flag <context.item.flag[juggernaut]>
@@ -2887,6 +2926,7 @@ jug_kit_host_settings_gui:
     - [] [g] [g] [g] [] [g] [g] [g] []
 jug_kit_host_settings_click:
     type: world
+    debug: false
     events:
         on player clicks item_flagged:kit in jug_kit_host_settings_gui:
         - define kit <context.item.flag[kit]>
@@ -2933,6 +2973,7 @@ jug_kit_host_settings_click:
 jug_ability_cooldown_proc:
     type: procedure
     definitions: player_type|map|ability
+    debug: false
     script:
     - if <[ability.mininum_cooldown].exists>:
         - determine <[ability.cooldown.<[player_type]>].if_null[<[ability.cooldown]>].mul[<server.flag[juggernaut_maps.<[map]>.host_data.host_settings.cooldown_multiplier].if_null[1]>].max[<[ability.mininum_cooldown]>]>
@@ -2941,6 +2982,7 @@ jug_ability_cooldown_proc:
 jug_new_juggernaut_task:
     type: task
     definitions: killer|map
+    debug: false
     script:
     - run JUG_GIVE_POINTS_TASK def:<[map]>|kill_juggernaut|<player> player:<[killer]>
     #- flag server juggernaut_maps.<[map]>.game_data.players.<[killer]>.score:+:<proc[jug_config_read].context[kill_juggernaut_points|<[map]>]>
@@ -2963,6 +3005,7 @@ jug_new_juggernaut_task:
 jug_settings_value_proc:
     type: procedure
     definitions: source_type|source|value_type
+    debug: false
     script:
     # Figure out how to get this to work with player's settings to. Granted, lots of problems will come when players can do settings
     - if <[source_type]> == map:
@@ -3124,6 +3167,7 @@ jug_settings_value_proc:
 jug_settings_list_proc:
     type: procedure
     definitions: source_type|source
+    debug: false
     script:
     - define list:<list>
     - define "list:->:<&e><&l>Custom Settings:"
@@ -3184,6 +3228,7 @@ jug_trap_particles:
         - wait 1t
 jug_trap_event:
     type: world
+    debug: false
     events:
         on entity_flagged:jug_trap_snowball hits block:
         - run jug_trap_particles def:<context.location.add[<context.hit_face>]>|<context.projectile.flag[abilities]> player:<context.shooter>
@@ -3212,12 +3257,14 @@ jug_trap_event:
 jug_give_nojump:
     type: task
     definitions: sec
+    debug: false
     script:
     - flag <player> juggernaut_data.no_jump_time:+:<[sec]>
     - if <script[jug_count_nojump].queues.size> == 0:
         - run jug_count_nojump player:<player>
 jug_count_nojump:
     type: task
+    debug: false
     script:
     - define sec <player.flag[juggernaut_data.no_jump_time]>
     - flag <player> juggernaut_data.no_jump:true
@@ -3230,6 +3277,7 @@ jug_count_nojump:
 jug_opponents_proc:
     type: procedure
     definitions: state
+    debug: false
     script:
     - define map <player.flag[juggernaut_data.map]>
     - define players <list>
@@ -3247,6 +3295,7 @@ jug_opponents_proc:
             - determine <[players].if_null[<list>]>
 jug_allies_proc:
     type: procedure
+    debug: false
     script:
     - define map <player.flag[juggernaut_data.map]>
     - if <player.has_flag[juggernaut_data.is_juggernaut]>:
@@ -3256,6 +3305,7 @@ jug_allies_proc:
 jug_juggernaut_interval_task:
     type: task
     definitions: map
+    debug: false
     script:
     - define life_id <player.flag[juggernaut_data.life_id]>
     - wait <server.flag[juggernaut_maps.<[map]>.host_data.host_settings.jug_interval_time]>s
@@ -3270,6 +3320,7 @@ jug_juggernaut_interval_task:
 jug_grappling_hook:
     type: task
     definitions: player_type|ability
+    debug: false
     script:
     - define vector:<player.eye_location>
     - define distance:<[ability.distance.<[player_type]>].if_null[<[ability.distance]>]>
@@ -3294,6 +3345,7 @@ jug_grappling_hook:
 jug_gradient:
     type: procedure
     definitions: text|colors|modifiers
+    debug: false
     script:
     - define cols <[colors].split[/].parse_tag[<color[<[parse_value]>]>]>
     - define mods <[modifiers].split[/]>
@@ -3323,6 +3375,7 @@ jug_gradient:
 jug_give_points_task:
     type: task
     definitions: map|type|victim
+    debug: false
     script:
     - choose <[type]>:
         - case kill_juggernaut:
@@ -3343,6 +3396,7 @@ jug_give_points_task:
 jug_score_history_proc:
     type: procedure
     definitions: map|player
+    debug: false
     script:
     - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players.<[player]>.score_history]>:
         - choose <[value.type]>:
@@ -3359,6 +3413,7 @@ jug_score_history_proc:
     - determine <[text].separated_by[<&nl>]>
 jug_interact_deny:
     type: world
+    debug: false
     events:
         on player flagged:juggernaut_data.in_game right clicks block:
         - if <context.location.material.vanilla_tags.contains[trapdoors]>:
