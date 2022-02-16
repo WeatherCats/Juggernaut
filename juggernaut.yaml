@@ -48,32 +48,34 @@ kits:
   gui_item: netherite_chestplate
   display_name: Tank
   description: Tank has very high defense and good damage, but not a lot of speed. Tank's ability makes you invulnerable for a few seconds.
-  armor: 15
-  armor_toughness: 1
+  armor: 12
+  armor_toughness: 0
   speed: 0.0925
   inventory:
    1:
     type: DIAMOND_AXE
     display_type: axe
-    attack_damage: 7.85
+    attack_damage: 7.5
     attack_speed: 0.8
     ability:
      type: tank
      click_type: right
-     display_name: Invulnerability
-     description: Gives you invulnerability for a few seconds.
+     display_name: Toughen
+     description: Gives you additional armor toughness for a few seconds.
      description_stats:
       Cooldown: cooldown
       Duration: duration
       Damage Multiplier: damage_multiplier
       Bonus Speed: bonus_speed
+      Bonus Armor Toughness: armor_toughness
      cooldown: 30
      mininum_cooldown: 8
      duration:
-      player: 3
+      player: 4
       juggernaut: 5
-     damage_multiplier: 0.25
-     bonus_speed: 0.0075
+     damage_multiplier: 0.5
+     bonus_speed: 0.01
+     armor_toughness: 4
  sharpshooter:
   chestplate_type: leather_chestplate
   primary_color: 552200
@@ -81,14 +83,14 @@ kits:
   gui_item: arrow
   display_name: Sharpshooter
   description: Sharpshooter is a bow kit with high damage and good speed, but low defense. Sharpshooter's ability makes your next shot do increased damage from further away.
-  armor: 7
+  armor: 3
   armor_toughness: 0
   speed: 0.105
   inventory:
    1:
     type: BOW
     display_type: bow
-    projectile_damage: 2.8
+    projectile_damage: 2.7
     ability:
      type: sharpshooter
      click_type: left
@@ -114,7 +116,7 @@ kits:
   gui_item: bow
   display_name: Archer
   description: Archer is a bow kit with decent armor, decent damage, and average speed, not to mention an okay sword. Archer's ability automatically shoots out a very fast arrow.
-  armor: 11
+  armor: 8
   armor_toughness: 0
   speed: 0.1
   inventory:
@@ -135,8 +137,8 @@ kits:
      mininum_cooldown: 2
      arrow_speed: 5
      arrow_damage:
-      player: 2.45
-      juggernaut: 3.25
+      player: 2.65
+      juggernaut: 3.4
    2:
     type: GOLDEN_SWORD
     display_type: sword
@@ -151,14 +153,14 @@ kits:
   gui_item: golden_hoe
   display_name: Healer
   description: Healer has good defense and both an okay bow and a fast melee weapon. Healer's ability heals you.
-  armor: 10
+  armor: 8
   armor_toughness: 0
   speed: 0.1
   inventory:
    1:
     type: BOW
     display_type: bow
-    projectile_damage: 2.35
+    projectile_damage: 2.4
     ability:
      type: healer
      click_type: left
@@ -171,11 +173,11 @@ kits:
      mininum_cooldown: 5
      heal_amount:
       player: 6
-      juggernaut: 11
+      juggernaut: 10
    2:
     type: GOLDEN_HOE
     display_type: sword
-    attack_damage: 3
+    attack_damage: 3.5
     attack_speed: 2
    9:
     type: ARROW
@@ -198,7 +200,7 @@ kits:
     ability:
      type: assassin
      click_type: right
-     display_name: Blink
+     display_name: Dash
      description: Quickly moves you forward in the direction you are looking.
      description_stats:
       Cooldown: cooldown
@@ -217,9 +219,9 @@ kits:
   gui_item: black_dye
   display_name: Ninja
   description: Ninja has decent damage, decent speed, and low armor. Ninja's ability makes you go invisible to other players, including your armor.
-  armor: 3
+  armor: 1
   armor_toughness: 0
-  speed: 0.115
+  speed: 0.11
   inventory:
    1:
     type: IRON_SWORD
@@ -246,7 +248,7 @@ kits:
   gui_item: shield
   display_name: Knight
   description: Knight is a fairly tough kit with good armor, a good weapon, and a shield, but lowered speed. Knight's ability charges forward while holding the shield, dealing damage to nearby opponents along the way.
-  armor: 13
+  armor: 9
   armor_toughness: 0
   speed: 0.095
   inventory:
@@ -258,7 +260,7 @@ kits:
    41:
     type: SHIELD
     durability: 30
-    durability_cooldown: 20
+    durability_cooldown: 30
     ability:
      type: knight
      click_type: shift_shield
@@ -285,7 +287,7 @@ kits:
   gui_item: stick
   display_name: Mage
   description: Mage is a magic kit, shooting magic whenever you right click its wand. Its ability launches a fireball.
-  armor: 9
+  armor: 5
   armor_toughness: 0
   speed: 0.0975
   kit_type: magic
@@ -294,7 +296,7 @@ kits:
     type: STICK
     display_type: wand
     magic_damage: 13
-    magic_range: 7
+    magic_range: 10
     # Time it takes for the magic to go the full range.
     magic_speed: 0.35
     magic_particle: VILLAGER_HAPPY
@@ -307,11 +309,13 @@ kits:
       Mana Cost: mana_cost
       Fireball Explosion Radius: fireball_radius
       Fireball Speed: fireball_speed
-     mana_cost: 75
+      Fireball Countdown: countdown
+     mana_cost: 80
      fireball_radius:
-      player: 3
-      juggernaut: 4
-     fireball_speed: 0.35
+      player: 2.75
+      juggernaut: 3.25
+     fireball_speed: 0.3
+     countdown: 1
  frostmancer:
   chestplate_type: chainmail_chestplate
   primary_color: aaaaff
@@ -319,7 +323,7 @@ kits:
   gui_item: snowball
   display_name: Frostmancer
   description: Frostmancer is a magic kit with an ability that shoots snowballs that slow and deal knockback.
-  armor: 9
+  armor: 7
   armor_toughness: 0
   speed: 0.0975
   kit_type: magic
@@ -328,7 +332,7 @@ kits:
     type: BONE
     display_type: wand
     magic_damage: 10
-    magic_range: 11
+    magic_range: 14
     # Time it takes for the magic to go the full range.
     magic_speed: 0.35
     magic_particle: SNOWBALL
@@ -344,6 +348,7 @@ kits:
       Snowball Slow Duration: snowball_slow_duration
       Snowball Knockback: snowball_knockback
       Snowball Speed: snowball_speed
+      Snoowball Damage Bonus: snowball_damage_bonus
      mana_cost: 35
      snowball_amount:
       player: 2
@@ -352,6 +357,7 @@ kits:
      snowball_slow_duration: 3
      snowball_knockback: 0.5
      snowball_speed: 2
+     snowball_damage_bonus: 0.2
  berserker:
   chestplate_type: leather_chestplate
   primary_color: ff0000
@@ -390,14 +396,14 @@ kits:
   gui_item: tnt
   display_name: Demolitionist
   description: Demolitist has a decent balance of stats, plus an explosive ability to send you flying!
-  armor: 7
+  armor: 6
   armor_toughness: 0
   speed: 0.1
   inventory:
    1:
     type: IRON_SWORD
     display_type: sword
-    attack_damage: 5
+    attack_damage: 5.25
     attack_speed: 1.6
     ability:
      type: demolitionist
@@ -412,8 +418,8 @@ kits:
      mininum_cooldown: 2
      countdown: 1
      explosion_radius:
-      player: 2.75
-      juggernaut: 3.5
+      player: 3.25
+      juggernaut: 3.75
      launch_velocity: 3
  trapper:
   chestplate_type: chainmail_chestplate
@@ -422,7 +428,7 @@ kits:
   gui_item: crossbow
   display_name: Trapper
   description: Trapper is a crossbow kit with an ability that lays traps to stun your opponents.
-  armor: 7
+  armor: 5
   armor_toughness: 0
   speed: 0.1
   inventory:
@@ -458,7 +464,7 @@ kits:
    2:
     type: GOLDEN_SWORD
     display_type: sword
-    attack_damage: 4
+    attack_damage: 4.5
     attack_speed: 1
    9:
     type: ARROW
@@ -476,7 +482,7 @@ kits:
    1:
     type: BOW
     display_type: bow
-    projectile_damage: 2.2
+    projectile_damage: 2.35
     ability:
      type: adventurer
      click_type: left
