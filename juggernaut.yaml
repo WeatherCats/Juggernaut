@@ -134,7 +134,7 @@ kits:
       Arrow Speed: arrow_speed
       Arrow Damage: arrow_damage
      cooldown: 20
-     mininum_cooldown: 2
+     mininum_cooldown: 1
      arrow_speed: 5
      arrow_damage:
       player: 2.65
@@ -172,8 +172,11 @@ kits:
      cooldown: 20
      mininum_cooldown: 5
      heal_amount:
-      player: 6
-      juggernaut: 10
+      player: 2
+      juggernaut: 4
+     circle_radius: 3
+     circle_duration: 5
+     circle_frequency: 0.5  
    2:
     type: GOLDEN_HOE
     display_type: sword
@@ -507,3 +510,37 @@ kits:
     attack_speed: 0.8
    9:
     type: ARROW
+ samurai:
+  primary_color: cc3333
+  secondary_color: bbbb22
+  gui_item: red_dye
+  display_name: Samurai
+  description: Samurai is a melee kit with an ability that momentarily reflects damage back at its opponents.
+  armor: 4
+  armor_toughness: 0
+  speed: 0.1
+  inventory:
+   1:
+    type: STONE_SWORD
+    display_type: sword
+    attack_damage: 5.5
+    attack_speed: 1.4
+    ability:
+     type: samurai
+     click_type: right
+     display_name: 'Reflection'
+     description: For a short period, any damage that would be done to you is reflected to the damager.
+     description_stats:
+      Cooldown: cooldown
+      Duration: duration
+      Damage Multiplier: damage_multiplier
+      Knockback: knockback
+     cooldown: 30
+     mininum_cooldown: 4
+     duration: 2
+     damage_multiplier:
+      player: 1.25
+      juggernaut: 1.5
+     knockback:
+      player: 1
+      juggernaut: 1.5
