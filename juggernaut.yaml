@@ -47,7 +47,7 @@ kits:
   secondary_color: 555555
   gui_item: netherite_chestplate
   display_name: Tank
-  description: Tank has very high defense and good damage, but not a lot of speed. Tank's ability makes you invulnerable for a few seconds.
+  description: Tank has very high defense and good damage, but not a lot of speed. Tank's ability makes you take less damage for a few seconds.
   armor: 12
   armor_toughness: 0
   speed: 0.0925
@@ -152,7 +152,7 @@ kits:
   secondary_color: dd44dd
   gui_item: golden_hoe
   display_name: Healer
-  description: Healer has good defense and both an okay bow and a fast melee weapon. Healer's ability heals you.
+  description: Healer has good defense and both an okay bow and a fast melee weapon. Healer's ability slightly heals you plus spawns a healing circle at your location.
   armor: 8
   armor_toughness: 0
   speed: 0.1
@@ -165,7 +165,7 @@ kits:
      type: healer
      click_type: left
      display_name: 'Heal'
-     description: Heals you.
+     description: Heals your for a bit of health, then spawns a healing circle at your locaiton.
      description_stats:
       Cooldown: cooldown
       Health Gained: heal_amount
@@ -325,7 +325,7 @@ kits:
   secondary_color: 7777ff
   gui_item: snowball
   display_name: Frostmancer
-  description: Frostmancer is a magic kit with an ability that shoots snowballs that slow and deal knockback.
+  description: Frostmancer is a magic kit with an ability that shoots snowballs that slow, deal knockback, and make the opponent take more damage from you.
   armor: 7
   armor_toughness: 0
   speed: 0.0975
@@ -343,7 +343,7 @@ kits:
      type: frostmancer
      click_type: left
      display_name: Snowball Flurry
-     description: Shoots out several snowballs
+     description: Shoots out several snowballs that slow, deal knockback, and make the opponent take more damage from you.
      description_stats:
       Mana Cost: mana_cost
       Snowball Amount: snowball_amount
@@ -367,7 +367,7 @@ kits:
   secondary_color: 8888aa
   gui_item: netherite_sword
   display_name: Berserker
-  description: Berserker has amazing damage, with the drawback on no armor and mediocre speed. Its ability grantes strength for a few seconds.
+  description: Berserker has amazing damage, with the drawback of no armor and mediocre speed. Its ability grants strength for a few seconds.
   armor: 0
   armor_toughness: 0
   speed: 0.095

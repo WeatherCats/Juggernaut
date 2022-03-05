@@ -4,6 +4,7 @@ juggernaut_command:
     description: Juggernaut command.
     usage: /juggernaut
     debug: false
+    permission: juggernaut.command
     tab complete:
     - define args <context.args>
     - define mods <list>
@@ -1248,7 +1249,7 @@ jug_kill_script:
             - stop
         - define map <context.entity.flag[juggernaut_data.map]>
         - define jug_viewers <proc[jug_viewers].context[<[map]>]>
-        - if <context.damager.exists> && <context.damager> != <context.entity> && <context.damager.is_player>:
+        - if <context.damager.exists> && <context.damager> != <context.entity> && <context.damager.is_player> && <context.damager.has_flag[juggernaut_data.in_game]>:
             - if <context.damager.has_flag[juggernaut_data.is_juggernaut]>:
                 - run JUG_GIVE_POINTS_TASK def:<[map]>|juggernaut_kill|<context.entity> player:<context.damager>
                 #- flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score:+:<proc[jug_config_read].context[juggernaut_kill_points|<[map]>]>
@@ -1260,7 +1261,7 @@ jug_kill_script:
                 - narrate "<&c><&l>× <&c><context.entity.name> <&7>was killed by <&f><context.damager.name>" targets:<[jug_viewers]>
                 - ~run jug_new_juggernaut_task def:<context.damager>|<[map]> player:<context.entity>
         - else if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
-            - if <context.entity.flag[juggernaut_data.last_damager].exists> && <context.entity.flag[juggernaut_data.last_damager]> != <context.entity> && <context.entity.flag[juggernaut_data.last_damager].is_player>:
+            - if <context.entity.flag[juggernaut_data.last_damager].exists> && <context.entity.flag[juggernaut_data.last_damager]> != <context.entity> && <context.entity.flag[juggernaut_data.last_damager].is_player> && <context.entity.flag[juggernaut_data.last_damager].has_flag[juggernaut_data.in_game]>:
                 - define killer <context.entity.flag[juggernaut_data.last_damager]>
                 - narrate "<&c><&l>× <&c><context.entity.name> <&7>was killed by <&f><[killer].name>" targets:<[jug_viewers]>
                 - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
@@ -2455,33 +2456,30 @@ jug_ability_actionbar:
         - narrate "<&c>ERROR CODE 70: Invalid Ability."
         - stop
     - define map <player.flag[juggernaut_data.map]>
-    - define wait_time <proc[jug_ability_cooldown_proc].context[<[player_type]>|<[map]>|<[ability]>].div[15]>
+    - define cooldown_time <proc[jug_ability_cooldown_proc].context[<[player_type]>|<[map]>|<[ability]>]>
+    - define cooldown_left 0
     - define life_id:<player.flag[juggernaut_data.life_id]>
-    - if <[wait_time]> > 1.5:
-        - define multiplier <[wait_time].div[1.5].round_up>
-        - define wait_time:/:<[multiplier]>
-    - else:
-        - define multiplier 1
     - if <[ability.click_type]> == right:
         - define type_display <element[Right<&sp>Click]>
     - else if <[ability.click_type]> == left:
         - define type_display <element[Left<&sp>Click]>
     - else if <[ability.click_type]> == shift_shield:
         - define type_display <element[Shift<&sp>Shield]>
-    - actionbar "<&e><[ability.display_name]> (<[type_display]>) <&7><&l><element[|].repeat[15]>"
-    - repeat <[multiplier].mul[15].if_null[15]>:
+    - define uuid <util.random_uuid>
+    - bossbar create <[uuid]> players:<player> "title:<&d><[ability.display_name]> <&5>(<[type_display]>)" color:pink style:solid progress:0
+    - while <[cooldown_left]> < <[cooldown_time]>:
+        - wait 0.1s
         - if !<player.has_flag[juggernaut_data.dead]> && <player.has_flag[juggernaut_data.in_game]> && <player.flag[juggernaut_data.life_id]> == <[life_id]>:
-            - if !<[value].is_decimal> || !<[wait_time].is_decimal>:
-                - narrate "<&c>ERROR CODE 71: Invalid Wait. <&nl>Value: <[value]> <&nl>Wait Time: <[wait_time]>"
-                - stop
-            - waituntil <[wait_time].mul[<[value]>]> <= <util.time_now.duration_since[<[use_time]>].in_seconds>
-            - if !<player.has_flag[juggernaut_data.dead]> && <player.has_flag[juggernaut_data.in_game]> && <player.flag[juggernaut_data.life_id]> == <[life_id]>:
-                - define bars <[value].div[<[multiplier]>].round_down.if_null[<[value]>]>
-                - actionbar "<&e><[ability.display_name]> (<[type_display]>) <&c><&l><element[|].repeat[<[bars]>]><&7><&l><element[|].repeat[<[bars].sub[15].abs>]>"
+                - define cooldown_left:+:0.1
+                - define bars <[cooldown_left].div[<[cooldown_time]>].if_null[0]>
+                - bossbar update <[uuid]> "title:<&d><[ability.display_name]> <&5>(<[type_display]>) <&a><&l><[cooldown_time].sub[<[cooldown_left]>]>s" progress:<[bars]>
         - else:
+            - bossbar remove <[uuid]>
             - stop
-    - actionbar "<&e><[ability.display_name]> (<[type_display]>) <&a><&l>READY!"
-    - narrate "<&e><[ability.display_name]> <&a>is ready!"
+    - bossbar update <[uuid]> "title:<&d><[ability.display_name]> <&5>(<[type_display]>) <&a><&l>Ready!" progress:1
+    - narrate "<&d><&l>✦ <&d><[ability.display_name]> <&5>is ready!"
+    - wait 2s
+    - bossbar remove <[uuid]>
 jug_load_config:
     type: world
     debug: false
@@ -3946,6 +3944,7 @@ jug_custom_settings_inv:
     - [g] [g] [g] [g] [] [g] [g] [g] [g]
 jug_custom_settings_click:
     type: world
+    debug: false
     events:
         on player clicks item_flagged:jug_data in jug_custom_settings_inv:
         - define data <context.item.flag[jug_data]>
@@ -4020,6 +4019,7 @@ jug_custom_settings_click:
 jug_update_custom_settings_vote:
     type: task
     definitions: map
+    debug: false
     script:
     - if !<server.flag[juggernaut_maps.<[map]>.game_data.custom_settings_options.<player>].exists>:
         - stop
@@ -4071,7 +4071,10 @@ jug_custom_settings_top_display:
     - if !<server.flag[juggernaut_maps.<[map]>.game_data.custom_settings_set].is_truthy>:
         - define list <proc[jug_custom_settings_top].context[<[map]>]>
         - if <[list].size.exists>:
-            - define players <[list].parse_tag[<server.flag[juggernaut_maps.<[map]>.game_data.custom_settings_options.<[parse_value]>.save_name]>].comma_separated>
+            - if <[list].size> >= 2 && <[length]> == short:
+                - define players <[list].parse_tag[<server.flag[juggernaut_maps.<[map]>.game_data.custom_settings_options.<[parse_value]>.save_name]>].first>,<&sp>...
+            - else:
+                - define players <[list].parse_tag[<server.flag[juggernaut_maps.<[map]>.game_data.custom_settings_options.<[parse_value]>.save_name]>].comma_separated>
         - else:
             - if <[list]> != default && <[list]> != none:
                 - define players <server.flag[juggernaut_maps.<[map]>.game_data.custom_settings_options.<[list]>.save_name]>
@@ -4135,6 +4138,7 @@ jug_apply_custom_settings:
 jug_kit_armor_proc:
     type: procedure
     definitions: amount|type
+    debug: false
     script:
     - if <[amount]> >= 12:
         - determine netherite_<[type]>
@@ -4149,6 +4153,7 @@ jug_kit_armor_proc:
 jug_juggernaut_slowness:
     type: task
     definitions: map
+    debug: false
     script:
     - define life_id <player.flag[juggernaut_data.life_id]>
     - repeat 5:
@@ -4249,6 +4254,7 @@ jug_plural_s:
         - determine <element[]>
 jug_kit_display:
     type: task
+    debug: false
     definitions: action
     script:
     - choose <[action]>:
@@ -4283,6 +4289,7 @@ jug_kit_display:
             - attach <[stand]> to:<player> offset:0,2,0 sync_server
 jug_display_sneak:
     type: world
+    debug: false
     events:
         on player flagged:juggernaut_data.in_game toggles sneaking:
         - if <context.state>:
