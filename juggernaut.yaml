@@ -101,12 +101,14 @@ kits:
       Minimum Damage Multiplier: min_damage_multiplier
       Maximum Damage Multiplier: max_damage_multiplier
       Maximum Distance: max_distance
+      Miss Cooldown Reduction: miss_cooldown_reduction
      cooldown: 20
      min_damage_multiplier: 1
      max_damage_multiplier:
       player: 2.25
       juggernaut: 3
      max_distance: 70
+     miss_cooldown_reduction: 0.5
    9:
     type: ARROW
  archer:
@@ -168,15 +170,16 @@ kits:
      description: Heals your for a bit of health, then spawns a healing circle at your locaiton.
      description_stats:
       Cooldown: cooldown
-      Health Gained: heal_amount
+      Healing Circle Radius: circle_radius
+      Healing Circle Duration: circle_duration
+      Healing Circle Heal Frequency: circle_frequency
      cooldown: 20
-     mininum_cooldown: 5
-     heal_amount:
-      player: 2
-      juggernaut: 4
+     mininum_cooldown: 7
      circle_radius: 3
-     circle_duration: 5
-     circle_frequency: 0.5  
+     circle_duration:
+      player: 5
+      juggernaut: 7
+     circle_frequency: 0.5
    2:
     type: GOLDEN_HOE
     display_type: sword
@@ -496,6 +499,7 @@ kits:
       Distance: distance
       Hook Speed: hook_speed
       Launch Speed: launch_speed
+      Miss Cooldown Reduction: miss_cooldown_reduction
      cooldown: 30
      mininum_cooldown: 3
      distance: 50
@@ -503,6 +507,7 @@ kits:
      launch_speed:
       player: 1.5
       juggernaut: 2
+     miss_cooldown_reduction: 0.5
    2:
     type: WOODEN_SWORD
     display_type: sword
