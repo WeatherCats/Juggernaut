@@ -47,7 +47,7 @@ kits:
   secondary_color: 555555
   gui_item: netherite_chestplate
   display_name: Tank
-  description: Tank has very high defense and good damage, but not a lot of speed. Tank's ability makes you take less damage for a few seconds.
+  description: Tank has very high defense and good damage, but not a lot of speed. Tank's ability charges forward in a straight line, dealing damage to opponents nearby.
   armor: 12
   armor_toughness: 0
   speed: 0.0925
@@ -60,22 +60,22 @@ kits:
     ability:
      type: tank
      click_type: right
-     display_name: Toughen
-     description: Gives you additional armor toughness for a few seconds.
+     display_name: Charge
+     description: Charge forward in a straight line, dealing damage to opponents nearby. If you activate the ability again before it is fully charged, you automatically charge but with less distance.
      description_stats:
       Cooldown: cooldown
-      Duration: duration
-      Damage Multiplier: damage_multiplier
-      Bonus Speed: bonus_speed
-      Bonus Armor Toughness: armor_toughness
+      Max Duration: max_duration
+      Max Charge Time: max_charge_time
+      Velocity: velocity
+      Damage: damage
      cooldown: 30
      mininum_cooldown: 8
-     duration:
-      player: 4
-      juggernaut: 5
-     damage_multiplier: 0.5
-     bonus_speed: 0.01
-     armor_toughness: 4
+     max_duration: 0.5
+     max_charge_time: 1
+     velocity: 2
+     damage:
+      player: 10
+      juggernaut: 15
  sharpshooter:
   chestplate_type: leather_chestplate
   primary_color: 552200
