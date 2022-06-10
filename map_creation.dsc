@@ -1067,7 +1067,7 @@ jug_start_task:
                     - run jug_apply_custom_settings def:<[map]>
             - else if <server.flag[juggernaut_maps.<[map]>.game_data.countdown]> == 0:
                 - playsound <proc[jug_viewers].context[<[map]>]> sound:ENTITY_PLAYER_LEVELUP pitch:1.0
-                - if <server.flag[juggernaut_maps.<[map]>.host_data.host].exists>:
+                - if <server.flag[juggernaut_maps.<[map]>.host_data.host].exists> && <player.flag[juggernaut_custom_settings].exists>:
                     - flag server juggernaut_maps.<[map]>.game_data.custom_settings:<player.flag[juggernaut_custom_settings]>
                 - flag server juggernaut_maps.<[map]>.game_data.phase:2
                 - flag server juggernaut_maps.<[map]>.game_data.id:<util.random_uuid>
@@ -3666,6 +3666,8 @@ jug_settings_list_proc:
         - define input:<server.flag[juggernaut_maps.<[source]>.game_data.custom_settings]>
     - if <[source_type]> == player_vote:
         - define input:<server.flag[juggernaut_maps.<player.flag[juggernaut_data.map]>.game_data.custom_settings_options.<[source]>]>
+    - if !<[input].is_truthy>:
+        - determine <&7>None
     - foreach <[input]>:
         - choose <[key]>:
             - case resistances:
