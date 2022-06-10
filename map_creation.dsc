@@ -858,11 +858,23 @@ jug_map_selection_gui:
     - define size 28
     - define pageMin <[size].mul[<player.flag[gui_page].sub[1]>].add[1]>
     - define pageMax <[size].mul[<player.flag[gui_page]>]>
+    - define list <list>
     - if <player.has_permission[juggernaut.bypass.hidden]>:
+        - if <server.flag[juggernaut_maps].keys.size> <= 0:
+            - repeat 28:
+                - define list:->:air
+            - repeat 2:
+                - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
+            - determine <[list]>
         - define page <server.flag[juggernaut_maps].keys.get[<[pageMin]>].to[<[pageMax]>]>
     - else:
+        - if <server.flag[juggernaut_maps].keys.filter_tag[<server.flag[juggernaut_maps.<[filter_value]>.hidden].exists.not>].size> <= 0:
+            - repeat 28:
+                - define list:->:air
+            - repeat 2:
+                - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
+            - determine <[list]>
         - define page <server.flag[juggernaut_maps].keys.filter_tag[<server.flag[juggernaut_maps.<[filter_value]>.hidden].exists.not>].get[<[pageMin]>].to[<[pageMax]>]>
-    - define list <list>
 # Fills empty slots with player heads, with page number allowing those later im the list access
     - foreach <[page]>:
         - define item <server.flag[juggernaut_maps.<[value]>.display_item]>
