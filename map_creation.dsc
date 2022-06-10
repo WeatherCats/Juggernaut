@@ -1366,7 +1366,7 @@ jug_magic_event:
             - run jug_mana_use def:15 player:<player>
             - repeat <[particleCount]>:
                 - playeffect effect:<context.item.flag[magic_particle]> at:<[vector].forward[<[value].mul[0.2]>]> offset:0,0,0 visibility:200
-                - if <[vector].forward[<[value].mul[0.2]>].material.is_truthy>:
+                - if <[vector].forward[<[value].mul[0.2]>].material.name> != air && <[vector].forward[<[value].mul[0.2]>].material.name> != water:
                     - stop
                 - hurt <context.item.flag[magic_damage]> <[vector].forward[<[value].mul[0.2]>].find_entities[player].within[0.01]> source:<player> cause:ENTITY_ATTACK
                 - define wait_time:+:<context.item.flag[magic_speed].div[<context.item.flag[magic_range]>].mul[0.2]>
@@ -3827,7 +3827,7 @@ jug_grappling_hook:
         - define loc <[vector].forward[<[value].mul[<[hook_speed]>]>]>
         - define totDis <[value].mul[<[hook_speed]>]>
         - playeffect effect:crit at:<[loc]> offset:0,0,0 visibility:200
-        - if <[loc].material.name> != air:
+        - if <[loc].material.name> != air && <[loc].material.name> != water:
             - define origin <player.location>
             - repeat <[totDis].mul[2].div[<[launch_speed].mul[2.5]>].round.max[1]>:
                 - adjust <player> velocity:<[loc].sub[<player.location>].normalize.mul[<[launch_speed]>]>
