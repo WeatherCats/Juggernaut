@@ -2209,7 +2209,6 @@ jug_abilities:
                                 - repeat stop
                             - flag <player> juggernaut_data.tank_charge:+:1
                             - adjust <player> fake_experience:<player.flag[juggernaut_data.tank_charge].div[<[ability.max_charge_time.<[player_type]>].if_null[<[ability.max_charge_time]>].mul[20].round>]>|0
-                            - narrate <player.flag[juggernaut_data.tank_charge].div[<[ability.max_charge_time.<[player_type]>].if_null[<[ability.max_charge_time]>].mul[20].round>]>
                             - wait 1t
                         - else:
                             - adjust <player> fake_experience
