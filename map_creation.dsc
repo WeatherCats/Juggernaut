@@ -4057,7 +4057,10 @@ jug_custom_settings_click:
                     - stop
                 - if <player.flag[juggernaut_data.settings_vote].exists>:
                     - if <player.flag[juggernaut_data.settings_vote]> == <[data.setting]>:
-                        - narrate "<&7>You have removed your vote for <&a><server.flag[juggernaut_maps.<[map]>.game_data.custom_settings_options.<[data.setting]>.save_name]><&7> settings!"
+                        - if <[data.setting]> == default:
+                            - narrate "<&7>You removed your voted for <&e>Default <&7>settings!"
+                        - else:
+                            - narrate "<&7>You have removed your vote for <&a><server.flag[juggernaut_maps.<[map]>.game_data.custom_settings_options.<[data.setting]>.save_name]><&7> settings!"
                         - flag server juggernaut_maps.<[map]>.game_data.custom_settings_votes.<player.flag[juggernaut_data.settings_vote]>:-:1
                         - if <server.flag[juggernaut_maps.<[map]>.game_data.custom_settings_votes.<player.flag[juggernaut_data.settings_vote]>]> <= 0:
                             - flag server juggernaut_maps.<[map]>.game_data.custom_settings_votes.<player.flag[juggernaut_data.settings_vote]>:!
@@ -4224,7 +4227,7 @@ jug_juggernaut_slowness:
     definitions: map
     debug: false
     script:
-    - define life_id <player.flag[juggernaut_data.life_id].if_null[0]>
+    - define life_id <player.flag[juggernaut_data.life_id].if_null[1]>
     - repeat 5:
         - wait 30s
         - if <player.has_flag[juggernaut_data.in_game]> && <[life_id]> == <player.flag[juggernaut_data.life_id].if_null[0]>:
