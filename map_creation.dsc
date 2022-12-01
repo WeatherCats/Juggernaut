@@ -854,6 +854,7 @@ jug_map_selection_gui:
   definitions:
     g: black_stained_glass_pane[display_name=<&sp>]
     t: jug_tutorial_item
+    k: jug_kit_display_item
   procedural items:
     - define size 28
     - define pageMin <[size].mul[<player.flag[gui_page].sub[1]>].add[1]>
@@ -935,7 +936,7 @@ jug_map_selection_gui:
     - [g] [] [] [] [] [] [] [] [g]
     - [g] [] [] [] [] [] [] [] [g]
     - [g] [] [] [] [] [] [] [] [g]
-    - [] [g] [g] [g] [t] [g] [g] [g] []
+    - [] [g] [g] [t] [g] [k] [g] [g] []
 jug_inv_click:
     type: world
     debug: false
@@ -1023,6 +1024,8 @@ jug_inv_click:
         on player clicks jug_tutorial_item in jug_map_selection_gui:
             - run jug_tutorial def:intro
             - inventory close d:<player.inventory>
+        on player clicks jug_kit_display_item in jug_map_selection_gui:
+            - inventory open d:jug_kit_selection_gui
         on player flagged:juggernaut_data.in_game clicks item in player*:
             - determine passively cancelled
         on player flagged:jug_login_tp joins:
@@ -1030,6 +1033,7 @@ jug_inv_click:
         - cast remove glowing
         - cast remove invisibility
         - cast remove damage_resistance
+        - heal <player>
         - flag <player> jug_login_tp:!
         on player flagged:juggernaut_data.is_host joins:
         - define map <player.flag[juggernaut_data.map]>
@@ -1241,6 +1245,8 @@ jug_kill_script:
         - if <context.crossbow.has_flag[projectile_damage]>:
             - determine passively KEEP_ITEM
         on snowball flagged:snowball_slow hits player flagged:juggernaut_data.in_game:
+        - if !<context.shooter.has_flag[juggernaut_data.is_juggernaut]> && !<player.has_flag[juggernaut_data.is_juggernaut]>:
+            - stop
         - adjust <player> velocity:<context.projectile.velocity.normalize.mul[<context.projectile.flag[snowball_knockback]>].with_y[0.4]>
         - define life_id <player.flag[juggernaut_data.life_id]>
         - definemap attributes:
@@ -1365,6 +1371,7 @@ jug_respawn_script:
     - teleport <player> to:<server.flag[juggernaut_maps.<player.flag[juggernaut_data.map]>.spawn]>
     - run jug_give_kit player:<player>
     - run jug_mana_start player:<player>
+    - title "title:<&e>You have respawned!" "subtitle:<&7>Kit: <&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>" fade_in:0.5s stay:2s fade_out:1s
     - cast damage_resistance duration:<proc[jug_config_read].context[spawn_protection_duration|<[map]>]> amplifier:<proc[jug_config_read].context[spawn_protection_level|<[map]>].sub[1]>
 jug_magic_event:
     type: world
@@ -1692,6 +1699,7 @@ jug_remove_player:
     - cast remove glowing
     - cast remove invisibility
     - cast remove damage_resistance
+    - heal <player>
     - wait 1t
     - if <[type]> != setspectate && <player.is_online>:
         - teleport <player> to:<server.flag[juggernaut_spawn]>
@@ -1795,6 +1803,10 @@ jug_tutorial_item:
     mechanisms:
      skull_skin: 937fb91e-562d-4ab3-b495-3c8b183c38bb|eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYmFkYzA0OGE3Y2U3OGY3ZGFkNzJhMDdkYTI3ZDg1YzA5MTY4ODFlNTUyMmVlZWQxZTNkYWYyMTdhMzhjMWEifX19
     display name: <&e>Tutorial
+jug_kit_display_item:
+    type: item
+    material: SLIME_BALL
+    display name: <&e>Kits
 jug_player_compass_gui:
   type: inventory
   inventory: CHEST
@@ -1997,7 +2009,7 @@ jug_kit_selection_gui:
     g: black_stained_glass_pane[display_name=<&sp>]
   procedural items:
     - define size 28
-    - define map <player.flag[juggernaut_data.map]>
+    - define map <player.flag[juggernaut_data.map].if_null[null]>
     - define pageMin <[size].mul[<player.flag[gui_page].sub[1]>].add[1]>
     - define pageMax <[size].mul[<player.flag[gui_page]>]>
     - define pageList <proc[jug_config_read].context[kits].keys.exclude[<server.flag[juggernaut_maps.<[map]>.game_data.custom_settings.banned_kits].if_null[]>].get[<[pageMin]>].to[<[pageMax]>]>
@@ -2077,7 +2089,7 @@ jug_kit_inv_click:
     debug: false
     events:
         on player clicks item_flagged:kit in jug_kit_selection_gui:
-        - define map <player.flag[juggernaut_data.map]>
+        - define map <player.flag[juggernaut_data.map].if_null[null]>
         - if ( <server.flag[juggernaut_maps.<[map]>.game_data.custom_settings.random_only].exists> || <server.flag[juggernaut_maps.<[map]>.host_data.host].flag[juggernaut_custom_settings.random_only].exists> ) && <context.item.flag[kit]> != random:
             - if <context.click> == RIGHT:
                 - flag <player> juggernaut_data.preview_kit:<context.item.flag[kit]>
@@ -2087,7 +2099,7 @@ jug_kit_inv_click:
                 - narrate "<&c>Sorry, but you may only select random kit due to the host's settings!"
                 - stop
         - if <context.item.flag[kit]> != random:
-            - if <context.click> == LEFT:
+            - if <context.click> == LEFT && <player.has_flag[juggernaut_data.in_game]>:
                 - flag <player> juggernaut_data.kit:<context.item.flag[kit]>
                 - flag <player> juggernaut_data.kit_selection:!
                 - inventory set d:<player.inventory> o:<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>] slot:5
@@ -2098,7 +2110,7 @@ jug_kit_inv_click:
             - else if <context.click> == RIGHT:
                 - flag <player> juggernaut_data.preview_kit:<context.item.flag[kit]>
                 - inventory open d:jug_kit_preview_gui
-        - else:
+        - else if <player.has_flag[juggernaut_data.in_game]>:
             - flag <player> juggernaut_data.kit:!
             - flag <player> juggernaut_data.kit_selection:!
             - inventory set d:<player.inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random] slot:5
@@ -2287,10 +2299,22 @@ jug_abilities:
                     - adjust <player> velocity:<player.location.direction.vector.mul[0]>
                     - adjust <player> fake_experience
                 - case ninja:
+                    - definemap attributes:
+                        generic_attack_damage:
+                            1:
+                                operation: ADD_NUMBER
+                                amount: <[ability.damage_reduction.<[player_type]>].if_null[<[ability.damage_reduction]>].mul[-1]>
+                                id: <util.random.uuid>
+                        generic_movement_speed:
+                            1:
+                                operation: ADD_NUMBER
+                                amount: <[ability.speed_reduction.<[player_type]>].if_null[<[ability.speed_reduction]>].mul[-1]>
+                                id: <util.random.uuid>
+                    - inventory adjust slot:37 add_attribute_modifiers:<[attributes]>
                     - cast invisibility duration:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>
                     - run JUG_KIT_DISPLAY def:remove
                     - playeffect at:<player.location.add[0,0.5,0]> effect:SMOKE_LARGE quantity:500 visibility:200
-                    - run jug_ninja_ability def:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>
+                    - run jug_ninja_ability def:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>|<[attributes]>
                 - case demolitionist:
                     - definemap attributes:
                         generic_movement_speed:
@@ -2465,7 +2489,7 @@ jug_abilities:
             # Stop removing here.
 jug_ninja_ability:
     type: task
-    definitions: duration
+    definitions: duration|attributes
     debug: false
     script:
         - cast remove glowing
@@ -2484,6 +2508,7 @@ jug_ninja_ability:
         - if <player.has_flag[juggernaut_data.is_juggernaut]> && !<server.flag[juggernaut_maps.<[map]>.game_data.custom_settings.glowing_disabled].is_truthy> && <player.flag[juggernaut_data.life_id].if_null[0]> == <[life_id]>:
             - cast glowing duration:10000s <player> no_icon hide_particles
         - if <player.flag[juggernaut_data.life_id].if_null[0]> == <[life_id]>:
+            - inventory adjust slot:37 remove_attribute_modifiers:<list[<[attributes.generic_attack_damage.1.id]>|<[attributes.generic_movement_speed.1.id]>]>
             - playeffect at:<player.location.add[0,0.5,0]> effect:SMOKE quantity:500 data:0.1 visibility:200
             - run JUG_KIT_DISPLAY def:create
 jug_ability_actionbar:

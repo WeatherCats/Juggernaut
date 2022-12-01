@@ -242,11 +242,15 @@ kits:
      description_stats:
       Cooldown: cooldown
       Duration: duration
+      Damage Reduction: damage_reduction
+      Speed Reduction: speed_reduction
      cooldown: 25
      mininum_cooldown: 9
      duration:
       player: 5
       juggernaut: 8
+     damage_reduction: 2
+     speed_reduction: 0.05
  knight:
   chestplate_type: diamond_chestplate
   primary_color: cccccc
