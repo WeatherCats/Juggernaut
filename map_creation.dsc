@@ -1895,6 +1895,7 @@ jug_update_sidebar:
     debug: false
     script:
     - if !<server.has_flag[juggernaut_maps.<[map]>.sidebar_lines]>:
+        - execute as_server "sidebar create <&dq>Juggernaut - <[map].to_titlecase><&dq>"
         - flag server juggernaut_maps.<[map]>.sidebar_lines:0
     - if <[mode]> == on:
         - foreach <proc[jug_viewers].context[<[map]>]>:
