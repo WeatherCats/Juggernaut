@@ -1019,7 +1019,7 @@ jug_inv_click:
             - inventory set d:<player.inventory> o:jug_waiting_leave slot:9
             - inventory set d:<player.inventory> o:jug_player_compass slot:1
             - heal
-            - run jug_sidebar_display
+            - run jug_update_sidebar def:<[map]>|on
             - narrate "<&6><&l>+ <&f><player.name> <&7>is now spectating!" targets:<proc[jug_viewers].context[<[map]>]>
         on player clicks jug_tutorial_item in jug_map_selection_gui:
             - run jug_tutorial def:intro
@@ -1634,6 +1634,8 @@ jug_remove_player:
         - else if <server.flag[juggernaut_maps.<[map]>.game_data.ready_players].size.if_null[0]> <= <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size.if_null[0]> && <server.flag[juggernaut_maps.<[map]>.game_data.saved_countdown].if_null[0]> != <server.flag[juggernaut_maps.<[map]>.game_data.countdown].if_null[0]>:
             - flag server juggernaut_maps.<[map]>.game_data.countdown:<server.flag[juggernaut_maps.<[map]>.game_data.saved_countdown].if_null[0]>
             - playsound <proc[jug_viewers].context[<[map]>]> sound:BLOCK_NOTE_BLOCK_PLING pitch:0.0 volume:1
+    - if <[type]> == end_game:
+        - goto late_host_rejoin1
     - if <player.has_flag[juggernaut_data.is_juggernaut]> && <server.flag[juggernaut_maps.<[map]>.game_data.phase].if_null[0]> >= 2 && <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size.if_null[0]> > 0:
         - define jug_viewers <proc[jug_viewers].context[<[map]>]>
         - if <player.flag[juggernaut_data.last_damager].exists> && <player.flag[juggernaut_data.last_damager]> != <player> && <player.flag[juggernaut_data.last_damager].is_player>:
@@ -1671,7 +1673,7 @@ jug_remove_player:
     - if <[type]> == setspectate:
         - flag <player> juggernaut_data.ready_spam:<[ready_spam]>
     - inventory clear d:<player.inventory>
-    - sidebar remove
+    - execute as_server "sidebar hide player:<player.name>"
     - if <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size.if_null[0]> < <proc[jug_config_read].context[mininum_players]>:
         - if !<server.flag[juggernaut_maps.<[map]>.host_data.host].exists> || <server.flag[juggernaut_maps.<[map]>.game_data.phase]> >= 2:
             - if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> <= 1:
@@ -1741,10 +1743,10 @@ jug_stop_game:
     - flag server juggernaut_maps.<[map]>.host_data:!
     - if <[phase]> <= 1:
         - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.if_null[<list>]>:
-            - run jug_remove_player def:<[value].flag[juggernaut_data].get[map]> player:<[value]>
+            - run jug_remove_player def:<[value].flag[juggernaut_data].get[map]>|end_game player:<[value]>
     - else:
         - foreach <proc[jug_viewers].context[<[map]>].if_null[<list>]>:
-            - run jug_remove_player def:<[value].flag[juggernaut_data].get[map]> player:<[value]>
+            - run jug_remove_player def:<[value].flag[juggernaut_data].get[map]>|end_game player:<[value]>
     - flag server juggernaut_maps.<[map]>.game_data:!
     - flag server juggernaut_maps.<[map]>.game_data.phase:0
     - flag server juggernaut_maps.<[map]>.game_data.ready_players:<list[]>
@@ -1892,92 +1894,108 @@ jug_update_sidebar:
     definitions: map|mode|player
     debug: false
     script:
+    - if !<server.has_flag[juggernaut_maps.<[map]>.sidebar_lines]>:
+        - flag server juggernaut_maps.<[map]>.sidebar_lines:0
     - if <[mode]> == on:
         - foreach <proc[jug_viewers].context[<[map]>]>:
-            - run jug_sidebar_display player:<[value]>
+            - execute as_server "sidebar display <&dq>Juggernaut - <[map].to_titlecase><&dq> player:<[value].name>"
+        - run jug_sidebar_display_2 def:<[map]>
     - else:
-        - sidebar remove players:<server.flag[juggernaut_maps.<[map]>.game_data.players].keys.if_null[<list>]>
+        - foreach <proc[jug_viewers].context[<[map]>]>:
+            - execute as_server "sidebar hide <&dq>Juggernaut - <[map].to_titlecase><&dq> player:<[value].name>"
     - if <[player].exists> && <server.flag[juggernaut_maps.<[map]>.game_data.phase]> >= 2:
         - if <server.flag[juggernaut_maps.<[map]>.game_data.players.<[player]>.score].if_null[0]> >= <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition].if_null[1000]>:
             - title title:<&e><&l><[player].name><&sp><&a>Wins! targets:<proc[jug_viewers].context[<[map]>]>
             - run jug_stop_game def:<[map]>|true
-jug_sidebar_display:
+jug_update_sidebar_lines:
     type: task
+    definitions: map|lines
     debug: false
     script:
-    - define list <list[]>
-    - define map <player.flag[juggernaut_data.map]>
-    - if <server.flag[juggernaut_maps.<[map]>.game_data.phase].if_null[0]> >= 2:
-        - define list:->:<element[<&4>Juggernaut:<&sp><&c><server.flag[juggernaut_maps.<[map]>.game_data.juggernaut].name>]>
-        - define "list:->:<proc[jug_gradient].context[---------|#990000/#ff0000|bold]> <&color[#ff3333]><&l>GOAL: <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition]> <proc[jug_gradient].context[---------|#ff0000/#990000|bold]>"
-        - if <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size.if_null[0]> > <proc[jug_config_read].context[sidebar_size]>:
-            - define sidebarlist <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.sort[jug_sort_players].get[1].to[<proc[jug_config_read].context[sidebar_size]>]>
-            - if <[sidebarlist].contains[<player>]>:
-                - define sidebarextra <element[<&7>...]>
-            - else:
-                - if !<player.has_flag[juggernaut_data.spectator]>:
-                    - define playerplace <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.sort[jug_sort_players].find[<player>]>
-                    - if <[playerplace]> == 1:
-                        - define place <element[<proc[jug_gradient].context[1st|#ffaa00/#ffff00|bold]><&sp>]>
-                    - else if <[playerplace]> == 2:
-                        - define place <element[<proc[jug_gradient].context[2nd|#aaaaaa/#dddddd|bold]><&sp>]>
-                    - else if <[playerplace]> == 3:
-                        - define place <element[<proc[jug_gradient].context[3rd|#884400/#aa5500|bold]><&sp>]>
-                    - else:
-                        - define place <element[<proc[jug_gradient].context[<[playerplace]>th|#888888/#aaaaaa]><&sp>]>
-                    - define sidebarextra <element[<&7>...]>
-                    - define sidebarextraplayer <element[<[place]><&6><&l>YOU<&sp><player.name>:<&sp><&a><&l><server.flag[juggernaut_maps.<[map]>.game_data.players.<player>.score]>]>
+    - define oldLines <server.flag[juggernaut_maps.<[map]>.sidebar_lines]>
+    - if <[lines]> != <[oldLines]>:
+        - if <[lines]> > <[oldLines]>:
+            - repeat <[lines].sub[<[oldLines]>]>:
+                - execute as_server "sidebar addrow <&dq>Juggernaut - <[map].to_titlecase><&dq> LOADING<util.random_uuid>"
         - else:
-            - define sidebarlist <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.sort[jug_sort_players]>
+            - repeat <[oldLines].sub[<[lines]>]>:
+                - execute as_server "sidebar removerow <&dq>Juggernaut - <[map].to_titlecase><&dq> <[oldLines].sub[<[value]>]>"
+    - flag server juggernaut_maps.<[map]>.sidebar_lines:<[lines]>
+jug_sidebar_display_2:
+    type: task
+    debug: false
+    definitions: map
+    script:
+    - define list <list[]>
+    - if <server.flag[juggernaut_maps.<[map]>.game_data.phase].if_null[0]> >= 2:
+        - define list:->:<element[&4Juggernaut:<&sp>&c<server.flag[juggernaut_maps.<[map]>.game_data.juggernaut].name>]>
+        - define "list:->:&7--------- &c&lGOAL: <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition]> &7---------"
+        - define ovrPlayers <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.sort[jug_sort_players]>
+        - define sidebarlist <[ovrPlayers].get[1].to[<proc[jug_config_read].context[sidebar_size]>]>
+        # Continue from here. Create and remove a sidebar on start/stop of game. Add lines for the players, then replace some with per-player when needed.
         - foreach <[sidebarlist]>:
-            - if <[loop_index]> == 1:
-                - define place <element[<proc[jug_gradient].context[1st|#ffaa00/#ffff00|bold]><&sp>]>
-            - else if <[loop_index]> == 2:
-                - define place <element[<proc[jug_gradient].context[2nd|#aaaaaa/#dddddd|bold]><&sp>]>
-            - else if <[loop_index]> == 3:
-                - define place <element[<proc[jug_gradient].context[3rd|#884400/#aa5500|bold]><&sp>]>
-            - else:
-                - define place <element[<proc[jug_gradient].context[<[loop_index]>th|#888888/#aaaaaa]><&sp>]>
-            - if <[value]> == <player>:
-                - define playerextra <&6><&l>YOU<&sp>
-            - else:
-                - define playerextra:!
-            - if <server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]> >= <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition].sub[<proc[jug_config_read].context[kill_juggernaut_points|<[map]>]>]> && !<[value].has_flag[juggernaut_data.is_juggernaut]>:
-                - define closeextra <&e><&l>⚑<&sp>
-            - else if <server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]> >= <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition].sub[<proc[jug_config_read].context[juggernaut_kill_points|<[map]>]>]> && <[value].has_flag[juggernaut_data.is_juggernaut]>:
-                - define closeextra <&e><&l>⚑<&sp>
-            - else:
-                - define closeextra:!
-            - define list:->:<element[<[closeextra].if_null[]><[place]><[playerextra].if_null[]><&7><[value].name>:<&sp><&a><&l><server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]>]>
-        - if <[sidebarextra].exists>:
-            - define list:->:<[sidebarextra]>
-        - if <[sidebarextraplayer].exists>:
-            - define list:->:<[sidebarextraplayer]>
-        - sidebar title:<proc[jug_gradient].context[JUGGERNAUT|#990000/#ff0000|bold]> values:<[list]>
+            - define list:->:<proc[jug_sidebar_player].context[<[map]>|<[value]>|<[loop_index]>|false]>
+        - define amount 0
+        - ~run jug_update_sidebar_lines def:<[map]>|<[list].size>
+        - foreach <[list].reverse>:
+            - execute as_server "sidebar setrow <&dq>Juggernaut - <[map].to_titlecase><&dq> <[amount]> <&dq><[value]><&dq>"
+            - define amount:+:1
+        - define amount 1
+        - foreach <[sidebarlist]>:
+            - execute as_server "sidebar setrow <&dq>Juggernaut - <[map].to_titlecase><&dq> <[sidebarlist].size.sub[<[amount]>]> <&dq><proc[jug_sidebar_player].context[<[map]>|<[value]>|<[loop_index]>|true]><&dq> player:<[value].name>"
+            - define amount:+:1
+        - foreach <[ovrPlayers].exclude[<[sidebarlist]>]>:
+            - if <proc[jug_config_read].context[sidebar_size]> > 1:
+                - execute as_server "sidebar setrow <&dq>Juggernaut - <[map].to_titlecase><&dq> 1 &7... player:<[value].name>"
+            - execute as_server "sidebar setrow <&dq>Juggernaut - <[map].to_titlecase><&dq> 0 <&dq><proc[jug_sidebar_player].context[<[map]>|<[value]>|<[ovrPlayers].find[<[value]>]>|true]><&dq> player:<[value].name>"
     - else:
         - define mapBase <server.flag[juggernaut_maps.<[map]>]>
         - if <[mapBase.host_data.host].exists>:
-            - define "list:->:<&5>Host: <&d><[mapBase.host_data.host].name>"
+            - define "list:->:&5Host: &d<[mapBase.host_data.host].name>"
         - if <[mapBase.game_data.spectators].size.if_null[0]> >= 1:
-            - define add:<&sp><&7>(<[mapBase.game_data.spectators].size><&sp>Spectator<proc[jug_plural_s].context[<[mapBase.game_data.spectators].size>]>)
+            - define add:<&sp>&7(<[mapBase.game_data.spectators].size><&sp>Spectator<proc[jug_plural_s].context[<[mapBase.game_data.spectators].size>]>)
         - if <[mapBase.game_data.players].keys.size.if_null[0]> >= <proc[jug_config_read].context[mininum_players]> || <[mapBase.host_data.host].exists>:
-            - define "list:->:<&7>Players: <&f><[mapBase.game_data.players].keys.size.if_null[0]>"
+            - define "list:->:&7Players: &f<[mapBase.game_data.players].keys.size.if_null[0]>"
         - else:
-            - define "list:->:<&7>Players: <&f><[mapBase.game_data.players].keys.size.if_null[0]>/<proc[jug_config_read].context[mininum_players]><[add].if_null[]>"
+            - define "list:->:&7Players: &f<[mapBase.game_data.players].keys.size.if_null[0]>/<proc[jug_config_read].context[mininum_players]><[add].if_null[]>"
         - define add:!
         - if <[mapBase.game_data.countdown].exists>:
             - if <[mapBase.game_data.countdown]> != <[mapBase.game_data.saved_countdown]>:
-                - define add:<&sp><&e>▷
-            - define "list:->:<&2>Starts In: <&a><[mapBase.game_data.countdown]>s<[add].if_null[]>"
+                - define add:<&sp>&e▷
+            - define "list:->:&2Starts In: &a<[mapBase.game_data.countdown]>s<[add].if_null[]>"
             - define add:!
-        - define list:->:<&sp>
+        #- define list:->:<&sp>
         - if <[mapBase.game_data.ready_players].size> >= <[mapBase.game_data.players].keys.size.if_null[0]> && <[mapBase.game_data.players].keys.size.if_null[0]> >= 1:
-            - define add:<&a><&l>✓<&sp>
-        - define "list:->:<[add].if_null[]><&6>Ready: <&e><[mapBase.game_data.ready_players].size>/<[mapBase.game_data.players].keys.size.if_null[0]>"
+            - define add:&a&l✓<&sp>
+        - define "list:->:<[add].if_null[]>&6Ready: &e<[mapBase.game_data.ready_players].size>/<[mapBase.game_data.players].keys.size.if_null[0]>"
         - if !<[mapBase.host_data.host].exists>:
             - define list:->:<&sp>
-            - define "list:->:<&c>Settings Vote: <proc[jug_custom_settings_top_display].context[<[map]>|short]>"
-        - sidebar title:<proc[jug_gradient].context[JUGGERNAUT|#990000/#ff0000|bold]> values:<[list]>
+            - define "list:->:&cSettings Vote: <proc[jug_custom_settings_top_display].context[<[map]>|short]>"
+        - ~run jug_update_sidebar_lines def:<[map]>|<[list].size>
+        - foreach <[list].reverse>:
+            - execute as_server "sidebar setrow <&dq>Juggernaut - <[map].to_titlecase><&dq> <[loop_index].sub[1]> <&dq><[value]><&dq>"
+jug_sidebar_player:
+    type: procedure
+    debug: false
+    definitions: map|player|pos|isPlayer
+    script:
+    - if <[pos]> == 1:
+        - define place "&e&l1st "
+    - else if <[pos]> == 2:
+        - define place "&f&l2nd "
+    - else if <[pos]> == 3:
+        - define place "&6&l3rd "
+    - else:
+        - define place "&7<[pos]>th "
+    - if <server.flag[juggernaut_maps.<[map]>.game_data.players.<[player]>.score]> >= <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition].sub[<proc[jug_config_read].context[kill_juggernaut_points|<[map]>]>]> && !<[player].has_flag[juggernaut_data.is_juggernaut]>:
+        - define closeextra &e&l⚑<&sp>
+    - else if <server.flag[juggernaut_maps.<[map]>.game_data.players.<[player]>.score]> >= <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition].sub[<proc[jug_config_read].context[juggernaut_kill_points|<[map]>]>]> && <[player].has_flag[juggernaut_data.is_juggernaut]>:
+        - define closeextra &e&l⚑<&sp>
+    - else:
+        - define closeextra:!
+    - if <[isPlayer]>:
+        - define you "&6&lYOU "
+    - determine <element[<[closeextra].if_null[]><[place]><[you].if_null[]>&7<[player].name>:<&sp>&a&l<server.flag[juggernaut_maps.<[map]>.game_data.players.<[player]>.score]>]>
 jug_sort_players:
     type: procedure
     definitions: player1|player2
@@ -2735,7 +2753,7 @@ jug_stop_hosting:
 jug_hosting_main_inv:
   type: inventory
   inventory: CHEST
-  title: Juggernaut Hosting Menu
+  title: Juggernaut Game Settings
   size: 54
   gui: true
   debug: false
