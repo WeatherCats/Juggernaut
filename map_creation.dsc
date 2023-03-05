@@ -2207,7 +2207,6 @@ jug_give_kit:
         - adjust def:item lore:<proc[jug_item_description].context[<player.flag[juggernaut_data.kit]>|<[key]>]>
         - inventory set d:<player.inventory> o:<[item]> slot:<[key]>
     - run JUG_KIT_DISPLAY def:create
-    - narrate "cvstats send spawned_kit arena:<[map]> game:juggernaut kit:<player.flag[juggernaut_data.kit]> player:<player.name>"
     - execute as_server "cvstats send spawned_kit arena:<[map]> game:juggernaut kit:<player.flag[juggernaut_data.kit]> player:<player.name>"
     - if !<server.flag[juggernaut_maps.<[map]>.game_data.custom_settings.compass_disabled].is_truthy>:
         - give compass[display_name=<&c>Juggernaut<&sp>Tracker]
