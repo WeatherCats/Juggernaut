@@ -330,7 +330,7 @@ kits:
   chestplate_type: chainmail_chestplate
   primary_color: aaaaff
   secondary_color: 7777ff
-  gui_item: snowball
+  gui_item: ice
   display_name: Frostmancer
   description: Frostmancer is a magic kit with an ability that shoots snowballs that slow, deal knockback, and make the opponent take more damage from you.
   armor: 7
