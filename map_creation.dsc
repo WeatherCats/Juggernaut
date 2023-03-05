@@ -1077,6 +1077,7 @@ jug_start_task:
                 - flag server juggernaut_maps.<[map]>.game_data.id:<util.random_uuid>
                 - teleport <proc[jug_viewers].context[<[map]>]> to:<server.flag[juggernaut_maps.<[map]>.spawn]>
                 - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys>:
+                    - execute as_server "cvstats send player_game_start arena:<[map]> game:juggernaut player:<[value].name>"
                     - cast damage_resistance duration:<proc[jug_config_read].context[spawn_protection_duration|<[map]>]> amplifier:<proc[jug_config_read].context[spawn_protection_level|<[map]>].sub[1]> player:<[value]>
                     - run jug_give_kit player:<[value]>
                     - run jug_mana_start player:<[value]>
@@ -1105,7 +1106,6 @@ jug_start_task:
                 - if <server.flag[juggernaut_maps.<[map]>.game_data.spectators].exists>:
                     - foreach <server.flag[juggernaut_maps.<[map]>.game_data.spectators]>:
                         - flag <[value]> juggernaut_data.hidden_from:<server.flag[juggernaut_maps.<[map]>.game_data.players].keys>
-                        - execute as_server "cvstats send player_game_start arena:<[map]> game:juggernaut player:<[value].name>"
                         - adjust <[value]> hide_from_players:<[value].flag[juggernaut_data.hidden_from]>
                         - adjust <[value]> can_fly:true
                         - adjust <[value]> invulnerable:true
