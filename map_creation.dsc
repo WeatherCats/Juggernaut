@@ -1105,7 +1105,7 @@ jug_start_task:
                 - if <server.flag[juggernaut_maps.<[map]>.game_data.spectators].exists>:
                     - foreach <server.flag[juggernaut_maps.<[map]>.game_data.spectators]>:
                         - flag <[value]> juggernaut_data.hidden_from:<server.flag[juggernaut_maps.<[map]>.game_data.players].keys>
-                        - execute as_server "cvstats send game_start arena:<[map]> game:juggernaut player:<[value].name>"
+                        - execute as_server "cvstats send player_game_start arena:<[map]> game:juggernaut player:<[value].name>"
                         - adjust <[value]> hide_from_players:<[value].flag[juggernaut_data.hidden_from]>
                         - adjust <[value]> can_fly:true
                         - adjust <[value]> invulnerable:true
