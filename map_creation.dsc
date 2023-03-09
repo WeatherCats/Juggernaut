@@ -2660,20 +2660,20 @@ jug_tutorial:
     script:
     - choose <[stage]>:
         - case intro:
-            - clickable jug_tutorial def:points usages:1 save:next
-            - clickable jug_tutorial def:none usages:1 save:prev
+            - clickable jug_tutorial def:points usages:1 save:next until:2m
+            - clickable jug_tutorial def:none usages:1 save:prev until:2m
             - narrate "<&c><&l>-/-/-/- <&e>Introduction to Juggernaut <&c><&l>-\-\-\-<&nl><&7>Welcome to Juggernaut! Juggernaut is sort of like a reverse tag in Minecraft, with one player being it (the juggernaut), and everyone else trying to kill them to become the juggernaut. If you want more information, I would recommend clicking the arrows below to look at the next pages!<&nl><&c><&l>-/-/-/- <element[<&e>≪<&sp>Prev].on_click[<entry[prev].command>]> <&c><&l>-/-\- <element[<&e>Next<&sp>≫].on_click[<entry[next].command>]> <&c><&l>-\-\-\-"
         - case points:
-            - clickable jug_tutorial def:starting usages:1 save:next
-            - clickable jug_tutorial def:intro usages:1 save:prev
+            - clickable jug_tutorial def:starting usages:1 save:next until:2m
+            - clickable jug_tutorial def:intro usages:1 save:prev until:2m
             - narrate "<&c><&l>-/-/-/- <&e>Score & Winning <&c><&l>-\-\-\-<&nl><&7>In order to win, you must reach a certain amount of points specified in the sidebar. There are two ways to get points: Either kill the juggernaut (<&a><proc[jug_config_read].context[kill_juggernaut_points].if_null[null]><&7>), or kill a player as the juggernaut (<&a><proc[jug_config_read].context[juggernaut_kill_points].if_null[null]><&7>).<&nl><&c><&l>-/-/-/- <element[<&e>≪<&sp>Prev].on_click[<entry[prev].command>]> <&c><&l>-/-\- <element[<&e>Next<&sp>≫].on_click[<entry[next].command>]> <&c><&l>-\-\-\-"
         - case starting:
-            - clickable jug_tutorial def:kits usages:1 save:next
-            - clickable jug_tutorial def:points usages:1 save:prev
+            - clickable jug_tutorial def:kits usages:1 save:next until:2m
+            - clickable jug_tutorial def:points usages:1 save:prev until:2m
             - narrate "<&c><&l>-/-/-/- <&e>Starting a Game <&c><&l>-\-\-\-<&nl><&7>Once you have clicked a map, you will get put into a waiting lobby. Here, you can pick your kit (your choice resets every time you join a lobby), and you can ready up. If every player is ready, the game countdown is automatically set to be lower and the game will start momentarily.<&nl><&c><&l>-/-/-/- <element[<&e>≪<&sp>Prev].on_click[<entry[prev].command>]> <&c><&l>-/-\- <element[<&e>Next<&sp>≫].on_click[<entry[next].command>]> <&c><&l>-\-\-\-"
         - case kits:
-            - clickable jug_tutorial def:none usages:1 save:next
-            - clickable jug_tutorial def:starting usages:1 save:prev
+            - clickable jug_tutorial def:none usages:1 save:next until:2m
+            - clickable jug_tutorial def:starting usages:1 save:prev until:2m
             - narrate "<&c><&l>-/-/-/- <&e>Kits & Abilities <&c><&l>-\-\-\-<&nl><&7>There are several kits you can choose from. Don't worry, you can switch kits every time you die! If you want to see what a kit does, just right click and it will show a preview of the kit. Kits also have abilities that can be activated by clicking on an item while playing, and have various powers. These abilities are even more powerful if you are the juggernaut!<&nl><&c><&l>-/-/-/- <element[<&e>≪<&sp>Prev].on_click[<entry[prev].command>]> <&c><&l>-/-\- <element[<&e>Next<&sp>≫].on_click[<entry[next].command>]> <&c><&l>-\-\-\-"
         - case none:
             - narrate "<&c>I'm sorry, that page doesn't exist."

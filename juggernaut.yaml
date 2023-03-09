@@ -1,5 +1,5 @@
 # Sets the mininum players required to start a game. Default: 2
-mininum_players: 1
+mininum_players: 2
 #########################################################################################################################################################
 # Ready spam limits the amount of times a player can spam ready/unready. By default, they can ready/unready a maximum of 3 times in 8 seconds. If       # # exceeded, the player must wait until it has been 8 seconds since they first clicked ready/unready.                                                    #
 #########################################################################################################################################################
