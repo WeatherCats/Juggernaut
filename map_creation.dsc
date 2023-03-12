@@ -1246,10 +1246,10 @@ jug_kill_script:
         on player flagged:juggernaut_data.in_game loads crossbow:
         - if <context.crossbow.has_flag[projectile_damage]>:
             - determine passively KEEP_ITEM
-        on snowball flagged:snowball_slow hits player flagged:juggernaut_data.in_game:
+        on snowball flagged:snowball_knockback hits player flagged:juggernaut_data.in_game:
         - if !<context.shooter.has_flag[juggernaut_data.is_juggernaut]> && !<player.has_flag[juggernaut_data.is_juggernaut]>:
             - stop
-        - adjust <player> velocity:<context.projectile.velocity.normalize.mul[<context.projectile.flag[snowball_knockback]>].with_y[0.4]>
+        - adjust <player> velocity:<context.projectile.velocity.normalize.mul[<context.projectile.flag[snowball_knockback].if_null[0]>].with_y[0.4]>
         - define life_id <player.flag[juggernaut_data.life_id]>
         - definemap attributes:
             generic_movement_speed:
@@ -1684,6 +1684,7 @@ jug_remove_player:
     - if <[type]> == setspectate:
         - flag <player> juggernaut_data.ready_spam:<[ready_spam]>
     - inventory clear d:<player.inventory>
+    - compass reset
     - execute as_server "sidebar hide player:<player.name>"
     - if <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size.if_null[0]> < <proc[jug_config_read].context[mininum_players]>:
         - if !<server.flag[juggernaut_maps.<[map]>.host_data.host].exists> || <server.flag[juggernaut_maps.<[map]>.game_data.phase]> >= 2:
@@ -1691,7 +1692,6 @@ jug_remove_player:
                 - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_exclude[<[map]>.game_data.countdown]>
                 - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_exclude[<[map]>.game_data.saved_countdown]>
                 - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_with[<[map]>.game_data.phase].as[0]>
-                - run jug_stop_game def:<[map]>
             - else if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> == 2:
                 - run jug_stop_game def:<[map]>
         - else if !<server.flag[juggernaut_maps.<[map]>.host_data.host].exists> && <server.flag[juggernaut_maps.<[map]>.game_data.phase]> == 1:
@@ -2575,6 +2575,8 @@ jug_ability_actionbar:
                     - flag <player> juggernaut_data.ability_cooldown_reductions.<[item]>:!
                     - define cooldown_left:+:<[bonus_time]>
                 - define bars <[cooldown_left].div[<[cooldown_time]>].if_null[0]>
+                - if <[bars]> > 1:
+                    - while stop
                 - bossbar update <[uuid]> "title:<&d><[ability.display_name]> <&5>(<[type_display]>) <&a><&l><[cooldown_time].sub[<[cooldown_left]>]>s" progress:<[bars]>
                 - flag <player> juggernaut_data.ability_cooldowns.<[item]>:<[cooldown_time].sub[<[cooldown_left]>]>
         - else:
@@ -2705,7 +2707,7 @@ jug_jug_tracker:
         - ratelimit <player> 1s
         - define map <player.flag[juggernaut_data.map]>
         - define juggernaut <player>
-        - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys>:
+        - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.include[<server.flag[juggernaut_maps.<[map]>.game_data.spectators].keys.if_null[<list>]>]>:
             - run jug_jug_tracker_update def:<[juggernaut]> player:<[value]>
         on player flagged:juggernaut_data.in_game clicks block with:compass bukkit_priority:LOW:
         - determine passively cancelled
@@ -3828,7 +3830,6 @@ jug_opponents_proc:
     script:
     - define map <player.flag[juggernaut_data.map]>
     - define players <list>
-    - choose <[state]>
     - if <player.has_flag[juggernaut_data.is_juggernaut]>:
         - define players <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.filter_tag[<[filter_value].has_flag[juggernaut_data.is_juggernaut].not>].parse_tag[<[parse_value].as_player>]>
     - else:
