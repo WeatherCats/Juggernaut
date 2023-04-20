@@ -1249,6 +1249,8 @@ jug_kill_script:
         on snowball flagged:snowball_knockback hits player flagged:juggernaut_data.in_game:
         - if !<context.shooter.has_flag[juggernaut_data.is_juggernaut]> && !<player.has_flag[juggernaut_data.is_juggernaut]>:
             - stop
+        - if !<context.projectile.has_flag[snowball_knockback]>:
+            - stop
         - adjust <player> velocity:<context.projectile.velocity.normalize.mul[<context.projectile.flag[snowball_knockback].if_null[0]>].with_y[0.4]>
         - define life_id <player.flag[juggernaut_data.life_id]>
         - definemap attributes:
@@ -1260,11 +1262,11 @@ jug_kill_script:
         - inventory adjust d:<player> slot:37 add_attribute_modifiers:<[attributes]>
         - if !<player.flag[juggernaut_data.damage_multipliers.<context.shooter>].exists>:
             - flag <player> juggernaut_data.damage_multipliers.<context.shooter>:0
-        - flag <player> juggernaut_data.damage_multipliers.<context.shooter>:+:<context.projectile.flag[snowball_damage_bonus]>
-        - wait <context.projectile.flag[snowball_slow_duration]>s
+        - flag <player> juggernaut_data.damage_multipliers.<context.shooter>:+:<context.projectile.flag[snowball_damage_bonus].if_null[0]>
+        - wait <context.projectile.flag[snowball_slow_duration].if_null[0]>s
         - if <[life_id]> == <player.flag[juggernaut_data.life_id].if_null[0]>:
             - inventory adjust d:<player> slot:37 remove_attribute_modifiers:<list[<[attributes.generic_movement_speed.1.id]>]>
-        - flag <player> juggernaut_data.damage_multipliers.<context.shooter>:-:<context.projectile.flag[snowball_damage_bonus]>
+        - flag <player> juggernaut_data.damage_multipliers.<context.shooter>:-:<context.projectile.flag[snowball_damage_bonus].if_null[0]>
         - if <player.flag[juggernaut_data.damage_multipliers.<context.shooter>]> == 0:
             - flag <player> juggernaut_data.damage_multipliers.<context.shooter>:!
         on player flagged:juggernaut_data.in_game changes food level:
@@ -3754,6 +3756,7 @@ jug_trap_particles:
     - define act <[abilities.trap_active_duration.<[player_type]>].if_null[<[abilities.trap_active_duration]>]>
     - define tstun <[abilities.trap_stun_duration.<[player_type]>].if_null[<[abilities.trap_stun_duration]>]>
     - define hstun <[abilities.hit_stun_amount.<[player_type]>].if_null[<[abilities.hit_stun_amount]>]>
+    - define life_id <player.flag[juggernaut_data.life_id]>
     - repeat <[wind].mul[20]> as:rep1:
         - repeat 5:
             - playeffect effect:CRIT at:<[loc].with_yaw[<[angle]>].with_pitch[0].add[0,0.5,0].forward[<[rep1].mul[<[rad].div[<[wind].mul[20]>]>]>]> quantity:1 offset:0,0,0 visibility:200
@@ -3761,6 +3764,8 @@ jug_trap_particles:
         - wait 1t
     - repeat <[act].mul[20]>:
         - repeat 5:
+            - if <player.flag[juggernaut_data.life_id].if_null[0]> != <[life_id]>:
+                - stop
             - playeffect effect:CRIT at:<[loc].with_yaw[<[angle]>].with_pitch[0].add[0,0.5,0].forward[<[rad]>]> quantity:1 offset:0,0,0 visibility:200
             - define angle:+:4
             - if <[loc].find_players_within[<[rad]>].exclude[<server.online_players.exclude[<proc[jug_opponents_proc].context[alive]>]>].size> > 0:
@@ -3779,6 +3784,8 @@ jug_trap_particles:
                 - playsound <[trapped]> sound:BLOCK_ANVIL_LAND pitch:0 volume:0.5
                 - playsound <player> sound:BLOCK_ANVIL_LAND pitch:2 volume:0.5
                 - wait <[tstun]>s
+                - if <player.flag[juggernaut_data.life_id].if_null[0]> != <[life_id]>:
+                    - stop
                 - inventory adjust d:<[trapped]> slot:37 remove_attribute_modifiers:<list[<[attributes.generic_movement_speed.1.id]>]>
                 - stop
         - wait 1t
