@@ -1077,7 +1077,7 @@ jug_start_task:
                 - flag server juggernaut_maps.<[map]>.game_data.id:<util.random_uuid>
                 - teleport <proc[jug_viewers].context[<[map]>]> to:<server.flag[juggernaut_maps.<[map]>.spawn]>
                 - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys>:
-                    - execute as_server "cvstats send player_game_start arena:<[map]> game:juggernaut player:<[value].name>"
+                    - execute as_server "cvstats send player_game_start arena:<[map]> game:juggernaut player:<[value].name> custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
                     - cast damage_resistance duration:<proc[jug_config_read].context[spawn_protection_duration|<[map]>]> amplifier:<proc[jug_config_read].context[spawn_protection_level|<[map]>].sub[1]> player:<[value]>
                     - run jug_give_kit player:<[value]>
                     - run jug_mana_start player:<[value]>
@@ -1113,7 +1113,7 @@ jug_start_task:
                         - inventory set d:<[value].inventory> o:jug_waiting_leave slot:9
                         - inventory set d:<[value].inventory> o:jug_player_compass slot:1
                 - flag server juggernaut_maps.<[map]>.game_data.time_started:<util.time_now>
-                - execute as_server "cvstats send game_start arena:<[map]> game:juggernaut"
+                - execute as_server "cvstats send game_start arena:<[map]> game:juggernaut custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
                 - flag server juggernaut_maps.<[map]>.games_played:+:1
                 - if <server.flag[juggernaut_maps.<[map]>.game_data.custom_settings].exists>:
                     - narrate <proc[jug_settings_list_proc].context[map|<[map]>]> targets:<proc[jug_viewers].context[<[map]>]>
@@ -1291,8 +1291,8 @@ jug_kill_script:
         - if <context.damager.exists> && <context.damager> != <context.entity> && <context.damager.is_player> && <context.damager.has_flag[juggernaut_data.in_game]>:
             - if <context.damager.has_flag[juggernaut_data.is_juggernaut]>:
                 - run JUG_GIVE_POINTS_TASK def:<[map]>|juggernaut_kill|<context.entity> player:<context.damager>
-                - execute as_server "cvstats send pvp_kill arena:<[map]> game:juggernaut kit:<context.damager.flag[juggernaut_data.kit]> player:<context.damager.name>"
-                - execute as_server "cvstats send pvp_death arena:<[map]> game:juggernaut kit:<context.entity.flag[juggernaut_data.kit]> player:<context.entity.name>"
+                - execute as_server "cvstats send pvp_kill arena:<[map]> game:juggernaut kit:<context.damager.flag[juggernaut_data.kit]> player:<context.damager.name> custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
+                - execute as_server "cvstats send pvp_death arena:<[map]> game:juggernaut kit:<context.entity.flag[juggernaut_data.kit]> player:<context.entity.name> custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
                 #- flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score:+:<proc[jug_config_read].context[juggernaut_kill_points|<[map]>]>
                 #- flag server juggernaut_maps.<[map]>.game_data.players.<context.damager>.score_time:<util.time_now>
                 - narrate "<&f><&l>× <&f><context.entity.name> <&7>was killed by <&c><context.damager.name>" targets:<[jug_viewers]>
@@ -1300,28 +1300,28 @@ jug_kill_script:
                 - run jug_update_sidebar def:<[map]>|on|<context.damager>
             - else if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
                 - narrate "<&c><&l>× <&c><context.entity.name> <&7>was killed by <&f><context.damager.name>" targets:<[jug_viewers]>
-                - execute as_server "cvstats send pvp_kill arena:<[map]> game:juggernaut kit:<context.damager.flag[juggernaut_data.kit]> player:<context.damager.name>"
-                - execute as_server "cvstats send pvp_death arena:<[map]> game:juggernaut kit:<context.entity.flag[juggernaut_data.kit]> player:<context.entity.name>"
+                - execute as_server "cvstats send pvp_kill arena:<[map]> game:juggernaut kit:<context.damager.flag[juggernaut_data.kit]> player:<context.damager.name> custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
+                - execute as_server "cvstats send pvp_death arena:<[map]> game:juggernaut kit:<context.entity.flag[juggernaut_data.kit]> player:<context.entity.name> custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
                 - ~run jug_new_juggernaut_task def:<context.damager>|<[map]> player:<context.entity>
         - else if <context.entity.has_flag[juggernaut_data.is_juggernaut]>:
             - if <context.entity.flag[juggernaut_data.last_damager].exists> && <context.entity.flag[juggernaut_data.last_damager]> != <context.entity> && <context.entity.flag[juggernaut_data.last_damager].is_player> && <context.entity.flag[juggernaut_data.last_damager].has_flag[juggernaut_data.in_game]>:
                 - define killer <context.entity.flag[juggernaut_data.last_damager]>
-                - execute as_server "cvstats send pvp_kill arena:<[map]> game:juggernaut kit:<[killer].flag[juggernaut_data.kit]> player:<[killer].name>"
-                - execute as_server "cvstats send pvp_death arena:<[map]> game:juggernaut kit:<context.entity.flag[juggernaut_data.kit]> player:<context.entity.name>"
+                - execute as_server "cvstats send pvp_kill arena:<[map]> game:juggernaut kit:<[killer].flag[juggernaut_data.kit]> player:<[killer].name> custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
+                - execute as_server "cvstats send pvp_death arena:<[map]> game:juggernaut kit:<context.entity.flag[juggernaut_data.kit]> player:<context.entity.name> custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
                 - narrate "<&c><&l>× <&c><context.entity.name> <&7>was killed by <&f><[killer].name>" targets:<[jug_viewers]>
                 - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
             - else if <context.entity.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<context.entity>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first.exists>:
                 - define killer <context.entity.location.find_entities[player].within[300].filter_tag[<[filter_value].has_flag[juggernaut_data.in_game].and[<[filter_value].has_flag[juggernaut_data.dead].not.and[<[filter_value].equals[<context.entity>].not.and[<[filter_value].has_flag[juggernaut_data.spectator].not>]>]>]>].first>
-                - execute as_server "cvstats send pvp_death arena:<[map]> game:juggernaut kit:<context.entity.flag[juggernaut_data.kit]> player:<context.entity.name>"
+                - execute as_server "cvstats send pvp_death arena:<[map]> game:juggernaut kit:<context.entity.flag[juggernaut_data.kit]> player:<context.entity.name> custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
                 - narrate "<&c><&l>× <&c><context.entity.name> <&7>died!" targets:<[jug_viewers]>
                 - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
             - else if <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.exclude[<context.entity>].size> > 0:
                 - define killer <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.exclude[<context.entity>].random>
-                - execute as_server "cvstats send pvp_death arena:<[map]> game:juggernaut kit:<context.entity.flag[juggernaut_data.kit]> player:<context.entity.name>"
+                - execute as_server "cvstats send pvp_death arena:<[map]> game:juggernaut kit:<context.entity.flag[juggernaut_data.kit]> player:<context.entity.name> custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
                 - narrate "<&c><&l>× <&c><context.entity.name> <&7>died!" targets:<[jug_viewers]>
                 - ~run jug_new_juggernaut_task def:<[killer]>|<[map]> player:<context.entity>
             - else:
-                - execute as_server "cvstats send pvp_death arena:<[map]> game:juggernaut kit:<context.entity.flag[juggernaut_data.kit]> player:<context.entity.name>"
+                - execute as_server "cvstats send pvp_death arena:<[map]> game:juggernaut kit:<context.entity.flag[juggernaut_data.kit]> player:<context.entity.name> custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
                 - narrate "<&c><&l>× <&c><context.entity.name> <&7>died!" targets:<proc[jug_viewers].context[<[map]>]>
         - else:
             - narrate "<&f><&l>× <&e><context.entity.name> <&7>died!" targets:<proc[jug_viewers].context[<[map]>]>
@@ -1399,9 +1399,9 @@ jug_magic_event:
                 - if <[vector].forward[<[value].mul[0.2]>].material.name> != air && <[vector].forward[<[value].mul[0.2]>].material.name> != water:
                     - stop
                 - hurt <context.item.flag[magic_damage]> <[vector].forward[<[value].mul[0.2]>].find_entities[player].within[0.01]> source:<player> cause:ENTITY_ATTACK
-                - define wait_time:+:<context.item.flag[magic_speed].div[<context.item.flag[magic_range]>].mul[0.2]>
+                - define wait_time:+:<element[0.05].div[<context.item.flag[magic_speed].div[0.2]>]>
                 - if <[wait_time]> >= 0.05:
-                    - wait <context.item.flag[magic_speed].div[<context.item.flag[magic_range]>].mul[0.2].round_up_to_precision[0.05]>s
+                    - wait <element[0.05].div[<context.item.flag[magic_speed].div[0.2]>].round_up_to_precision[0.05]>s
                     - define count:+:1
                     - define wait_time:-:<context.item.flag[magic_speed].div[<context.item.flag[magic_range]>].mul[0.2].round_up_to_precision[0.05]>
         - else:
@@ -1918,9 +1918,9 @@ jug_update_sidebar:
     - if <[player].exists> && <server.flag[juggernaut_maps.<[map]>.game_data.phase]> >= 2:
         - if <server.flag[juggernaut_maps.<[map]>.game_data.players.<[player]>.score].if_null[0]> >= <server.flag[juggernaut_maps.<[map]>.game_data.victory_condition].if_null[1000]>:
             - title title:<&e><&l><[player].name><&sp><&a>Wins! targets:<proc[jug_viewers].context[<[map]>]>
-            - execute as_server "cvstats send pvp_player_result arena:<[map]> game:juggernaut player:<[player].name> team:none result:win"
+            - execute as_server "cvstats send pvp_player_result arena:<[map]> game:juggernaut player:<[player].name> team:none result:win custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
             - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.exclude[<[player]>]>:
-                - execute as_server "cvstats send pvp_player_result arena:<[map]> game:juggernaut player:<[value].name> team:none result:loss"
+                - execute as_server "cvstats send pvp_player_result arena:<[map]> game:juggernaut player:<[value].name> team:none result:loss custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
             - run jug_stop_game def:<[map]>|true
 jug_update_sidebar_lines:
     type: task
@@ -2207,7 +2207,7 @@ jug_give_kit:
         - adjust def:item lore:<proc[jug_item_description].context[<player.flag[juggernaut_data.kit]>|<[key]>]>
         - inventory set d:<player.inventory> o:<[item]> slot:<[key]>
     - run JUG_KIT_DISPLAY def:create
-    - execute as_server "cvstats send spawned_kit arena:<[map]> game:juggernaut kit:<player.flag[juggernaut_data.kit]> player:<player.name>"
+    - execute as_server "cvstats send spawned_kit arena:<[map]> game:juggernaut kit:<player.flag[juggernaut_data.kit]> player:<player.name> custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
     - if !<server.flag[juggernaut_maps.<[map]>.game_data.custom_settings.compass_disabled].is_truthy>:
         - give compass[display_name=<&c>Juggernaut<&sp>Tracker]
 jug_abilities:
@@ -4272,11 +4272,11 @@ jug_kit_armor_proc:
     definitions: amount|type
     debug: false
     script:
-    - if <[amount]> >= 12:
+    - if <[amount]> >= 10:
         - determine netherite_<[type]>
-    - else if <[amount]> >= 9:
+    - else if <[amount]> >= 8:
         - determine diamond_<[type]>
-    - else if <[amount]> >= 7:
+    - else if <[amount]> >= 6:
         - determine iron_<[type]>
     - else if <[amount]> >= 4:
         - determine chainmail_<[type]>
@@ -4516,3 +4516,8 @@ jug_kit_display_remove:
     events:
         after entity_flagged:jug_kit_display added to world:
         - remove <context.entity>
+jug_custom_game_proc:
+    type: procedure
+    definitions: map
+    script:
+    - determine <server.flag[juggernaut_maps.<[map]>.game_data.custom_settings].exists>
