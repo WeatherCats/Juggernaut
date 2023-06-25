@@ -34,11 +34,11 @@ juggernaut_settings:
  resistances:
   min_players: 4
   base:
-   per_player: 0.07
-   max_res: 0.7
-  projectile:
    per_player: 0.05
    max_res: 0.5
+  projectile:
+   per_player: 0.02
+   max_res: 0.2
  speed_reduction: 0.01
 kits:
  tank:
@@ -428,8 +428,8 @@ kits:
      mininum_cooldown: 2
      countdown: 1
      explosion_radius:
-      player: 3.25
-      juggernaut: 3.75
+      player: 2.5
+      juggernaut: 3
      launch_velocity: 3
  trapper:
   chestplate_type: chainmail_chestplate
