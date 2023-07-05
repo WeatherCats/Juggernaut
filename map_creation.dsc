@@ -4540,5 +4540,6 @@ jug_kit_display_remove:
 jug_custom_game_proc:
     type: procedure
     definitions: map
+    debug: false
     script:
     - determine <server.flag[juggernaut_maps.<[map]>.game_data.custom_settings].exists>
