@@ -50,12 +50,12 @@ kits:
   description: Tank has very high defense and good damage, but not a lot of speed. Tank's ability charges forward in a straight line, dealing damage to opponents nearby.
   armor: 11
   armor_toughness: 0
-  speed: 0.0925
+  speed: 0.09
   inventory:
    1:
     type: DIAMOND_AXE
     display_type: axe
-    attack_damage: 6.75
+    attack_damage: 6.5
     attack_speed: 0.8
     ability:
      type: tank
@@ -90,7 +90,7 @@ kits:
    1:
     type: BOW
     display_type: bow
-    projectile_damage: 2.65
+    projectile_damage: 2.55
     ability:
      type: sharpshooter
      click_type: left
@@ -125,7 +125,7 @@ kits:
    1:
     type: BOW
     display_type: bow
-    projectile_damage: 2.5
+    projectile_damage: 2.4
     ability:
      type: archer
      click_type: left
@@ -139,13 +139,13 @@ kits:
      mininum_cooldown: 1
      arrow_speed: 5
      arrow_damage:
-      player: 2.55
-      juggernaut: 3.1
+      player: 2.4
+      juggernaut: 2.8
    2:
     type: GOLDEN_SWORD
     display_type: sword
-    attack_damage: 4
-    attack_speed: 1
+    attack_damage: 5
+    attack_speed: 1.3
    9:
     type: ARROW
  healer:
@@ -162,12 +162,12 @@ kits:
    1:
     type: BOW
     display_type: bow
-    projectile_damage: 2.45
+    projectile_damage: 2.4
     ability:
      type: healer
      click_type: left
-     display_name: 'Heal'
-     description: Heals your for a bit of health, then spawns a healing circle at your locaiton.
+     display_name: 'Healing Circle'
+     description: Spawns a healing circle at your locaiton.
      description_stats:
       Cooldown: cooldown
       Healing Circle Radius: circle_radius
@@ -175,7 +175,7 @@ kits:
       Healing Circle Heal Frequency: circle_frequency
      cooldown: 20
      mininum_cooldown: 7
-     circle_radius: 3
+     circle_radius: 4.5
      circle_duration:
       player: 5
       juggernaut: 7
@@ -194,7 +194,7 @@ kits:
   gui_item: diamond_sword
   display_name: Assassin
   description: Assassin is a very fast kit with great damage, but no defense. Assassin's ability quickly moves you in the direction you are looking.
-  armor: 1
+  armor: 2
   armor_toughness: 0
   speed: 0.13
   inventory:
@@ -258,7 +258,7 @@ kits:
   gui_item: shield
   display_name: Knight
   description: Knight is a fairly tough kit with good armor, a good weapon, and a shield, but lowered speed. Knight's ability charges forward while holding the shield, dealing damage to nearby opponents along the way.
-  armor: 9
+  armor: 8
   armor_toughness: 0
   speed: 0.095
   inventory:
@@ -322,10 +322,10 @@ kits:
       Fireball Countdown: countdown
      mana_cost: 80
      fireball_radius:
-      player: 2.65
-      juggernaut: 3
+      player: 2.55
+      juggernaut: 2.8
      fireball_speed: 0.3
-     countdown: 1
+     countdown: 2
  frostmancer:
   chestplate_type: chainmail_chestplate
   primary_color: aaaaff
@@ -349,20 +349,22 @@ kits:
     ability:
      type: frostmancer
      click_type: left
-     display_name: Snowball Flurry
-     description: Shoots out several snowballs that slow, deal knockback, and make the opponent take more damage from you.
+     display_name: Snowball
+     description: Shoots out a snowball that slows, deals knockback, and makes the opponent take more damage from you for a limited time.
      description_stats:
       Mana Cost: mana_cost
       Snowball Amount: snowball_amount
+      Snowball Radius: snowball_radius
       Snowball Slow: snowball_slow
       Snowball Slow Duration: snowball_slow_duration
       Snowball Knockback: snowball_knockback
       Snowball Speed: snowball_speed
       Snoowball Damage Bonus: snowball_damage_bonus
-     mana_cost: 30
-     snowball_amount:
-      player: 2
-      juggernaut: 3
+     mana_cost: 15
+     snowball_amount: 1
+     snowball_radius:
+      player: 3
+      juggernaut: 5
      snowball_slow: -0.03
      snowball_slow_duration: 3
      snowball_knockback: 0.5
@@ -382,7 +384,7 @@ kits:
    1:
     type: NETHERITE_SWORD
     display_type: sword
-    attack_damage: 10
+    attack_damage: 9
     attack_speed: 1
     ability:
      type: berserker
@@ -425,11 +427,11 @@ kits:
       Countdown: countdown
       Explosion Radius: explosion_radius
      cooldown: 25
-     mininum_cooldown: 2
-     countdown: 1
+     mininum_cooldown: 3
+     countdown: 2
      explosion_radius:
       player: 2.5
-      juggernaut: 3
+      juggernaut: 2.75
      launch_velocity: 3
  trapper:
   chestplate_type: chainmail_chestplate
@@ -492,7 +494,7 @@ kits:
    1:
     type: BOW
     display_type: bow
-    projectile_damage: 2.35
+    projectile_damage: 2.3
     ability:
      type: adventurer
      click_type: left
@@ -525,14 +527,14 @@ kits:
   gui_item: red_dye
   display_name: Samurai
   description: Samurai is a melee kit with an ability that momentarily reflects damage back at its opponents.
-  armor: 6
+  armor: 7
   armor_toughness: 0
   speed: 0.1
   inventory:
    1:
     type: STONE_SWORD
     display_type: sword
-    attack_damage: 5.5
+    attack_damage: 6
     attack_speed: 1.4
     ability:
      type: samurai
@@ -548,8 +550,8 @@ kits:
      mininum_cooldown: 4
      duration: 2
      damage_multiplier:
-      player: 1.25
-      juggernaut: 1.5
+      player: 1.5
+      juggernaut: 1.75
      knockback:
       player: 1
       juggernaut: 1.5

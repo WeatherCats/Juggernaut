@@ -854,7 +854,7 @@ jug_map_selection_gui:
   gui: true
   debug: false
   definitions:
-    g: black_stained_glass_pane[display_name=<&sp>]
+    g: black_stained_glass_pane[display=<&sp>]
     t: jug_tutorial_item
     k: jug_kit_display_item
   procedural items:
@@ -867,7 +867,7 @@ jug_map_selection_gui:
             - repeat 28:
                 - define list:->:air
             - repeat 2:
-                - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
+                - define list <[list].include[black_stained_glass_pane[display=<&sp>]]>
             - determine <[list]>
         - define page <server.flag[juggernaut_maps].keys.get[<[pageMin]>].to[<[pageMax]>]>
     - else:
@@ -875,13 +875,13 @@ jug_map_selection_gui:
             - repeat 28:
                 - define list:->:air
             - repeat 2:
-                - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
+                - define list <[list].include[black_stained_glass_pane[display=<&sp>]]>
             - determine <[list]>
         - define page <server.flag[juggernaut_maps].keys.filter_tag[<server.flag[juggernaut_maps.<[filter_value]>.hidden].exists.not>].get[<[pageMin]>].to[<[pageMax]>]>
 # Fills empty slots with player heads, with page number allowing those later im the list access
     - foreach <[page]>:
         - define item <server.flag[juggernaut_maps.<[value]>.display_item]>
-        - adjust def:item display_name:<&f><&l><server.flag[juggernaut_maps.<[value]>.display_name].unescaped.parse_color>
+        - adjust def:item display:<&f><&l><server.flag[juggernaut_maps.<[value]>.display_name].unescaped.parse_color>
         - adjust def:item flag:map:<[value]>
         - choose <server.flag[juggernaut_maps.<[value]>.game_data.phase]>:
             - case 0:
@@ -926,11 +926,11 @@ jug_map_selection_gui:
     - if <player.flag[gui_page]> > 1:
         - define list <[list].include[jug_prev_page_item[flag=menu:jug_map_selection_gui]]>
     - else:
-        - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
+        - define list <[list].include[black_stained_glass_pane[display=<&sp>]]>
     - if <server.flag[juggernaut_maps].keys.get[<[pageMax].add[1]>].exists>:
         - define list <[list].include[jug_next_page_item[flag=menu:jug_map_selection_gui]]>
     - else:
-        - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
+        - define list <[list].include[black_stained_glass_pane[display=<&sp>]]>
     - determine <[list]>
   slots:
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
@@ -960,7 +960,7 @@ jug_inv_click:
             - inventory set d:<player.inventory> o:jug_waiting_spectate_item slot:8
             - if <server.flag[juggernaut_maps.<[map]>.host_data.host].exists>:
                 - inventory set d:<player.inventory> o:jug_host_settings_item slot:7
-            - inventory set d:<player.inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
+            - inventory set d:<player.inventory> o:FIREWORK_STAR[display=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
             - inventory set d:<player.inventory> o:jug_custom_settings_item slot:3
             - inventory set d:<player.inventory> o:jug_waiting_ready slot:2
             - inventory set d:<player.inventory> o:jug_waiting_kit slot:1
@@ -1090,10 +1090,11 @@ jug_start_task:
                         - adjust <[value]> health_data:<server.flag[juggernaut_maps.<[map]>.game_data.custom_settings.max_health]>/<server.flag[juggernaut_maps.<[map]>.game_data.custom_settings.max_health]>
                     - flag <[value]> juggernaut_data.life_id:<util.random_uuid>
                     - flag server juggernaut_maps.<[map]>.game_data.players.<[value]>.score_history:<list>
+                    - title 'title:<&e>Game started!' "subtitle:<&7>Kit: <&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>" player:<[value]>
                 - define juggernaut <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.random>
                 - flag server juggernaut_maps.<[map]>.game_data.juggernaut:<[juggernaut]>
                 - flag <[juggernaut]> juggernaut_data.is_juggernaut:true
-                - title 'title:<&c>You are the Juggernaut!' player:<[juggernaut]>
+                - title 'title:<&c>You are the Juggernaut!' "subtitle:<&7>Kit: <&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>" player:<[juggernaut]>
                 - if <server.flag[juggernaut_maps.<[map]>.game_data.custom_settings.juggernaut_spawning].if_null[null]> != never:
                     - teleport <[juggernaut]> to:<server.flag[juggernaut_maps.<[map]>.jug_spawn]>
                 - if <server.flag[juggernaut_maps.<[map]>.game_data.custom_settings.jug_scoring_method].if_null[null]> == interval:
@@ -1165,9 +1166,9 @@ jug_rejoin_task:
     - inventory open d:JUG_KIT_SELECTION_GUI
     - inventory set d:<player.inventory> o:jug_waiting_kit slot:1
     - if <player.has_flag[juggernaut_data.kit]>:
-        - inventory set d:<player.inventory> o:<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>;flag=juggernaut_kit_representation:true] slot:5
+        - inventory set d:<player.inventory> o:<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>;flag=juggernaut_kit_representation:true] slot:5
     - else:
-        - inventory set d:<player.inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
+        - inventory set d:<player.inventory> o:FIREWORK_STAR[display=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
     - adjust <player> fake_experience:1|<proc[jug_config_read].context[respawn_timer|<[map]>].round>
     - repeat <proc[jug_config_read].context[respawn_timer|<[map]>].round>:
         - if <player.has_flag[juggernaut_data.in_game]>:
@@ -1250,29 +1251,36 @@ jug_kill_script:
         on player flagged:juggernaut_data.in_game loads crossbow:
         - if <context.crossbow.has_flag[projectile_damage]>:
             - determine passively KEEP_ITEM
-        on snowball flagged:snowball_knockback hits player flagged:juggernaut_data.in_game:
-        - if !<context.shooter.has_flag[juggernaut_data.is_juggernaut]> && !<player.has_flag[juggernaut_data.is_juggernaut]>:
-            - stop
+        on entity_flagged:snowball_knockback hits:
         - if !<context.projectile.has_flag[snowball_knockback]>:
             - stop
-        - adjust <player> velocity:<context.projectile.velocity.normalize.mul[<context.projectile.flag[snowball_knockback].if_null[0]>].with_y[0.4]>
-        - define life_id <player.flag[juggernaut_data.life_id]>
-        - definemap attributes:
-            generic_movement_speed:
-                1:
-                    operation: ADD_NUMBER
-                    amount: <context.projectile.flag[snowball_slow]>
-                    id: <util.random.uuid>
-        - inventory adjust d:<player> slot:37 add_attribute_modifiers:<[attributes]>
-        - if !<player.flag[juggernaut_data.damage_multipliers.<context.shooter>].exists>:
-            - flag <player> juggernaut_data.damage_multipliers.<context.shooter>:0
-        - flag <player> juggernaut_data.damage_multipliers.<context.shooter>:+:<context.projectile.flag[snowball_damage_bonus].if_null[0]>
-        - wait <context.projectile.flag[snowball_slow_duration].if_null[0]>s
-        - if <[life_id]> == <player.flag[juggernaut_data.life_id].if_null[0]>:
-            - inventory adjust d:<player> slot:37 remove_attribute_modifiers:<list[<[attributes.generic_movement_speed.1.id]>]>
-        - flag <player> juggernaut_data.damage_multipliers.<context.shooter>:-:<context.projectile.flag[snowball_damage_bonus].if_null[0]>
-        - if <player.flag[juggernaut_data.damage_multipliers.<context.shooter>]> == 0:
-            - flag <player> juggernaut_data.damage_multipliers.<context.shooter>:!
+        - define __player <context.shooter>
+        - define loc <context.hit_entity.location.if_null[<context.hit_block>].if_null["null"]>
+        - if <[loc]> == "null":
+            - stop
+        - define rad <context.projectile.flag[snowball_radius]>
+        - run jug_particle_bubble def:frostmancer|<[rad]>|null|<[loc]>
+        - if <[loc].find_players_within[<[rad]>].exclude[<server.online_players.exclude[<proc[jug_opponents_proc].context[alive]>]>].size> > 0:
+                - define hitPlayers <[loc].find_players_within[<[rad]>].exclude[<server.online_players.exclude[<proc[jug_opponents_proc].context[alive]>]>]>
+                - foreach <[hitPlayers]> as:hit:
+                    - adjust <[hit]> velocity:<context.projectile.velocity.normalize.mul[<context.projectile.flag[snowball_knockback].if_null[0]>].with_y[0.4]>
+                    - define life_id <[hit].flag[juggernaut_data.life_id]>
+                    - definemap attributes:
+                        generic_movement_speed:
+                            1:
+                                operation: ADD_NUMBER
+                                amount: <context.projectile.flag[snowball_slow]>
+                                id: <util.random_uuid>
+                    - inventory adjust d:<[hit]> slot:37 add_attribute_modifiers:<[attributes]>
+                    - if !<[hit].flag[juggernaut_data.damage_multipliers.<context.shooter>].exists>:
+                        - flag <[hit]> juggernaut_data.damage_multipliers.<context.shooter>:0
+                    - flag <[hit]> juggernaut_data.damage_multipliers.<context.shooter>:+:<context.projectile.flag[snowball_damage_bonus].if_null[0]>
+                    - wait <context.projectile.flag[snowball_slow_duration].if_null[0]>s
+                    - if <[life_id]> == <[hit].flag[juggernaut_data.life_id].if_null[0]>:
+                        - inventory adjust d:<[hit]> slot:37 remove_attribute_modifiers:<list[<[attributes.generic_movement_speed.1.id]>]>
+                    - flag <[hit]> juggernaut_data.damage_multipliers.<context.shooter>:-:<context.projectile.flag[snowball_damage_bonus].if_null[0]>
+                    - if <[hit].flag[juggernaut_data.damage_multipliers.<context.shooter>]> == 0:
+                        - flag <[hit]> juggernaut_data.damage_multipliers.<context.shooter>:!
         on player flagged:juggernaut_data.in_game changes food level:
         - determine 20
         on player flagged:juggernaut_data.in_game heals because SATIATED:
@@ -1344,6 +1352,8 @@ jug_kill_script:
             - flag <context.entity> juggernaut_data.last_damager:!
             - flag <context.entity> juggernaut_data.hidden_from:<server.flag[juggernaut_maps.<[map]>.game_data.players].keys>
             - flag <context.entity> juggernaut_data.life_id:!
+            # Clear ability flags
+            - flag <context.entity> juggernaut_data.reflect_damage:!
             - adjust <context.entity> hide_from_players:<player.flag[juggernaut_data.hidden_from]>
             - adjust <context.entity> can_fly:true
             - adjust <player> invulnerable:true
@@ -1354,7 +1364,7 @@ jug_kill_script:
                 - flag <context.entity> juggernaut_data.kit_selection:true
                 - inventory open d:JUG_KIT_SELECTION_GUI
                 - inventory set d:<context.entity.inventory> o:jug_waiting_kit slot:1
-                - inventory set d:<player.inventory> o:<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>;flag=juggernaut_kit_representation:true] slot:5
+                - inventory set d:<player.inventory> o:<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>;flag=juggernaut_kit_representation:true] slot:5
             - else:
                 - flag <player> juggernaut_data.kit:!
             - adjust <context.entity> fake_experience:1|<proc[jug_config_read].context[respawn_timer|<[map]>].round>
@@ -1536,9 +1546,9 @@ jug_leave_lobby:
             - flag <player> juggernaut_data.kit:!
             - narrate "<&c>The host has enabled random only, which means your kit selection has been reset!" targets:<player>
         - if <player.flag[juggernaut_data.kit].exists>:
-            - inventory set d:<player.inventory> o:<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>;flag=juggernaut_kit_representation:true] slot:5
+            - inventory set d:<player.inventory> o:<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>;flag=juggernaut_kit_representation:true] slot:5
         - else:
-            - inventory set d:<player.inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
+            - inventory set d:<player.inventory> o:FIREWORK_STAR[display=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
         - if <player.has_flag[juggernaut_data.is_host]>:
             - inventory set d:<player.inventory> o:jug_host_settings_item slot:1
             - inventory set d:<player.inventory> o:jug_waiting_kit slot:2
@@ -1554,7 +1564,7 @@ jug_leave_lobby:
         - if <server.flag[juggernaut_maps.<[map]>.game_data.custom_settings.banned_kits].contains[<player.flag[juggernaut_data.kit].if_null[]>].if_null[false]>:
             - narrate "<&c>The kit you had selected has been disabled by the host! You have been reset back to using a random kit."
             - flag <player> juggernaut_data.kit:!
-            - inventory set d:<player.inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
+            - inventory set d:<player.inventory> o:FIREWORK_STAR[display=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
         - wait 1t
         - flag <player> juggernaut_data.ready_spam:+:1
         - wait <proc[jug_config_read].context[ready_spam_rate]>s
@@ -1597,7 +1607,7 @@ jug_leave_lobby:
         - if !<server.flag[juggernaut_maps.<[map]>.game_data.ready_players].contains[<player>]>:
             - narrate "<&c>You are already not ready!"
         - if <player.flag[juggernaut_data].get[ready_spam]> < <proc[jug_config_read].context[ready_spam_limit]>:
-            - if <server.flag[juggernaut_maps.<[map]>.game_data.countdown]> != <server.flag[juggernaut_maps.<[map]>.game_data.saved_countdown]>:
+            - if <server.flag[juggernaut_maps.<[map]>.game_data.countdown].if_null[0]> != <server.flag[juggernaut_maps.<[map]>.game_data.saved_countdown].if_null[0]>:
                 - playsound <proc[jug_viewers].context[<[map]>]> sound:BLOCK_NOTE_BLOCK_PLING pitch:0.0 volume:1
             - flag server juggernaut_maps:<server.flag[juggernaut_maps].deep_with[<player.flag[juggernaut_data].get[map]>.game_data.ready_players].as[<server.flag[juggernaut_maps.<player.flag[juggernaut_data].get[map]>.game_data.ready_players].exclude[<player>]>]>
             - narrate "<&c><&l>- <&e><player.name> <&6>is no longer ready. <&e>(<server.flag[juggernaut_maps.<player.flag[juggernaut_data].get[map]>.game_data.ready_players].size>/<server.flag[juggernaut_maps.<player.flag[juggernaut_data].get[map]>.game_data.players].keys.size.if_null[0]>)" targets:<proc[jug_viewers].context[<player.flag[juggernaut_data.map]>]>
@@ -1751,7 +1761,7 @@ jug_stop_game:
                     - define playercolor <&6><&l>YOU<&sp><&7>
                 - else:
                     - define playercolor <&7>
-                - define list:->:<element[<[place]><[playercolor]><[value].name>:<&sp><&a><&l><server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]>].on_hover[<proc[jug_score_history_proc].context[<[map]>|<[value]>].if_null[<&7>N/A]>]>
+                - define list:->:<element[<[place]><[playercolor]><[value].as[player].name><&co><&sp><&a><&l><server.flag[juggernaut_maps.<[map]>.game_data.players.<[value]>.score]>].on_hover[<proc[jug_score_history_proc].context[<[map]>|<[value]>].if_null[<&7>N/A]>]>
             - narrate <[list].separated_by[<&nl>]> targets:<[player]>
     - if <server.flag[juggernaut_maps.<[map]>.host_data].exists>:
         - run jug_stop_hosting def:<[map]>
@@ -1836,7 +1846,7 @@ jug_player_compass_gui:
   gui: true
   debug: false
   definitions:
-    g: black_stained_glass_pane[display_name=<&sp>]
+    g: black_stained_glass_pane[display=<&sp>]
   procedural items:
     - define size 28
     - define pageMin <[size].mul[<player.flag[gui_page].sub[1]>].add[1]>
@@ -1847,8 +1857,8 @@ jug_player_compass_gui:
     - if <[page].size> > 0:
         - foreach <[page]>:
             - define item <item[player_head]>
-            - adjust def:item skull_skin:<[value].uuid>
-            - adjust def:item display_name:<&e><[value].name>
+            - adjust def:item skull_skin:<[value].as[player].uuid>
+            - adjust def:item display:<&e><[value].as[player].name>
             - adjust def:item flag:player:<[value]>
             - define list <[list].include[<[item]>]>
     - repeat <[size].sub[<[page].size>]>:
@@ -2047,7 +2057,7 @@ jug_kit_selection_gui:
   gui: true
   debug: false
   definitions:
-    g: black_stained_glass_pane[display_name=<&sp>]
+    g: black_stained_glass_pane[display=<&sp>]
   procedural items:
     - define size 28
     - define map <player.flag[juggernaut_data.map].if_null[null]>
@@ -2061,7 +2071,7 @@ jug_kit_selection_gui:
         - define prim <&color[#<[value].get[primary_color]>]>
         - define sec <&color[#<[value].get[secondary_color]>]>
         - define item <[value].get[gui_item].as_item>
-        - adjust def:item display_name:<[sec]><&l><&k>;<[prim]><&l><&k>;<[sec]><&l><&k>;<&sp><[prim]><[value].get[display_name]><&sp><[sec]><&l><&k>;<[prim]><&l><&k>;<[sec]><&l><&k>;
+        - adjust def:item display:<[sec]><&l><&k>;<[prim]><&l><&k>;<[sec]><&l><&k>;<&sp><[prim]><[value].get[display_name]><&sp><[sec]><&l><&k>;<[prim]><&l><&k>;<[sec]><&l><&k>;
         - adjust def:item flag:kit:<[key]>
         - adjust def:item lore:<&7><[value.description].split_lines_by_width[250].replace[<&nl>].with[<&nl><&7>]>
         - adjust def:item hides:all
@@ -2073,15 +2083,15 @@ jug_kit_selection_gui:
     - if <player.flag[gui_page]> > 1:
         - define list <[list].include[jug_prev_page_item[flag=menu:jug_kit_selection_gui]]>
     - else:
-        - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
-    - define item FIREWORK_STAR[display_name=<element[<&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;<&sp><&7>Random<&sp>Kit<&sp><&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;].escaped>;lore=<&7>Chooses<&sp>a<&sp>random<&sp>kit.;flag=kit:random;hides=all]
+        - define list <[list].include[black_stained_glass_pane[display=<&sp>]]>
+    - define item FIREWORK_STAR[display=<&c><&l><&k>:<&7><&l><&k>:<&c><&l><&k>:<&sp><&7>Random<&sp>Kit<&sp><&c><&l><&k>:<&7><&l><&k>:<&c><&l><&k>:;lore=<&7>Chooses<&sp>a<&sp>random<&sp>kit.;flag=kit:random;hides=all]
     - if !<player.has_flag[juggernaut_data.kit]>:
-        - define item FIREWORK_STAR[display_name=<element[<&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;<&sp><&7>Random<&sp>Kit<&sp><&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;].escaped>;lore=<&7>Chooses<&sp>a<&sp>random<&sp>kit.;flag=kit:random;hides=all;enchantments=<map[].with[luck].as[1]>]
+        - define item FIREWORK_STAR[display=<&c><&l><&k>:<&7><&l><&k>:<&c><&l><&k>:<&sp><&7>Random<&sp>Kit<&sp><&c><&l><&k>:<&7><&l><&k>:<&c><&l><&k>:;lore=<&7>Chooses<&sp>a<&sp>random<&sp>kit.;flag=kit:random;hides=all;enchantments=<map[].with[luck].as[1]>]
     - define list:->:<[item]>
     - if <proc[jug_config_read].context[kits].keys.get[<[pageMax].add[1]>].exists>:
         - define list <[list].include[jug_next_page_item[flag=menu:jug_kit_selection_gui]]>
     - else:
-        - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
+        - define list <[list].include[black_stained_glass_pane[display=<&sp>]]>
     - determine <[list]>
   slots:
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
@@ -2098,8 +2108,8 @@ jug_kit_preview_gui:
   gui: true
   debug: false
   definitions:
-    g: black_stained_glass_pane[display_name=<&sp>]
-    b: jug_exit_menu_item[flag=menu:jug_kit_selection_gui;display_name=<&7><&lt><&sp>Back<&sp>To<&sp>Kits]
+    g: black_stained_glass_pane[display=<&sp>]
+    b: jug_exit_menu_item[flag=menu:jug_kit_selection_gui;display=<&7><&lt><&sp>Back<&sp>To<&sp>Kits]
   procedural items:
     - define list <list>
     - define kit_root <proc[jug_config_read].context[kits].get[<player.flag[juggernaut_data.preview_kit]>]>
@@ -2143,7 +2153,7 @@ jug_kit_inv_click:
             - if <context.click> == LEFT && <player.has_flag[juggernaut_data.in_game]>:
                 - flag <player> juggernaut_data.kit:<context.item.flag[kit]>
                 - flag <player> juggernaut_data.kit_selection:!
-                - inventory set d:<player.inventory> o:<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>;flag=juggernaut_kit_representation:true] slot:5
+                - inventory set d:<player.inventory> o:<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.gui_item]>[display=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<player.flag[juggernaut_data.kit]>.display_name]>;flag=juggernaut_kit_representation:true] slot:5
                 - if <player.has_flag[juggernaut_data.dead]>:
                     - if !<player.has_flag[juggernaut_data.dead_countdown]>:
                         - run jug_respawn_script player:<player>
@@ -2154,7 +2164,7 @@ jug_kit_inv_click:
         - else if <player.has_flag[juggernaut_data.in_game]>:
             - flag <player> juggernaut_data.kit:!
             - flag <player> juggernaut_data.kit_selection:!
-            - inventory set d:<player.inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
+            - inventory set d:<player.inventory> o:FIREWORK_STAR[display=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
             - if <player.has_flag[juggernaut_data.dead]>:
                 - if !<player.has_flag[juggernaut_data.dead_countdown]>:
                     - run jug_respawn_script player:<player>
@@ -2217,7 +2227,7 @@ jug_give_kit:
     - run JUG_KIT_DISPLAY def:create
     - execute as_server "cvstats send spawned_kit arena:<[map]> game:juggernaut kit:<player.flag[juggernaut_data.kit]> player:<player.name> custom_game:<proc[jug_custom_game_proc].context[<[map]>]>"
     - if !<server.flag[juggernaut_maps.<[map]>.game_data.custom_settings.compass_disabled].is_truthy>:
-        - give compass[display_name=<&c>Juggernaut<&sp>Tracker]
+        - give compass[display=<&c>Juggernaut<&sp>Tracker]
 jug_abilities:
     type: world
     debug: false
@@ -2259,12 +2269,12 @@ jug_abilities:
                             1:
                                 operation: ADD_NUMBER
                                 amount: -100
-                                id: <util.random.uuid>
+                                id: <util.random_uuid>
                         generic_knockback_resistance:
                             1:
                                 operation: ADD_NUMBER
                                 amount: 1
-                                id: <util.random.uuid>
+                                id: <util.random_uuid>
                     - inventory adjust d:<player> slot:37 add_attribute_modifiers:<[attributes]>
                     - inventory adjust slot:39 enchantments:luck=1
                     - run jug_particle_bubble def:tank_on|1.2|outward
@@ -2305,7 +2315,7 @@ jug_abilities:
                             1:
                                 operation: ADD_NUMBER
                                 amount: <[ability.bonus_damage.<[player_type]>].if_null[<[ability.bonus_damage]>]>
-                                id: <util.random.uuid>
+                                id: <util.random_uuid>
                     - inventory adjust slot:37 add_attribute_modifiers:<[attributes]>
                     - inventory adjust slot:39 enchantments:luck=1
                     - run jug_particle_bubble def:berserker_on|1.2|outward
@@ -2346,12 +2356,12 @@ jug_abilities:
                             1:
                                 operation: ADD_NUMBER
                                 amount: <[ability.damage_reduction.<[player_type]>].if_null[<[ability.damage_reduction]>].mul[-1]>
-                                id: <util.random.uuid>
+                                id: <util.random_uuid>
                         generic_movement_speed:
                             1:
                                 operation: ADD_NUMBER
                                 amount: <[ability.speed_reduction.<[player_type]>].if_null[<[ability.speed_reduction]>].mul[-1]>
-                                id: <util.random.uuid>
+                                id: <util.random_uuid>
                     - inventory adjust slot:37 add_attribute_modifiers:<[attributes]>
                     - cast invisibility duration:<[ability.duration.<[player_type]>].if_null[<[ability.duration]>]>
                     - run JUG_KIT_DISPLAY def:remove
@@ -2363,7 +2373,7 @@ jug_abilities:
                             1:
                                 operation: ADD_NUMBER
                                 amount: -100
-                                id: <util.random.uuid>
+                                id: <util.random_uuid>
                     - inventory adjust d:<player> slot:37 add_attribute_modifiers:<[attributes]>
                     - run jug_give_nojump def:<[ability.countdown.<[player_type]>].if_null[<[ability.countdown]>]>
                     - repeat 3:
@@ -2389,7 +2399,7 @@ jug_abilities:
                             1:
                                 operation: ADD_NUMBER
                                 amount: -100
-                                id: <util.random.uuid>
+                                id: <util.random_uuid>
                     - definemap reflect_damage:
                         damage_multiplier: <[ability.damage_multiplier.<[player_type]>].if_null[<[ability.damage_multiplier]>]>
                         knockback: <[ability.knockback.<[player_type]>].if_null[<[ability.knockback]>]>
@@ -2404,21 +2414,22 @@ jug_abilities:
                         - inventory adjust d:<player> slot:37 remove_attribute_modifiers:<list[<[attributes.generic_movement_speed.1.id]>]>
                         - inventory adjust slot:39 remove_enchantments:<list[].include[luck]>
                         - run jug_particle_bubble def:samurai_off|1.2|inward
+                        # TODO: On death, remove this and related automatically
                         - flag <player> juggernaut_data.reflect_damage:!
         - else if <[ability.mana_cost].exists> && <player.flag[juggernaut_data.mana]> >= <[ability.mana_cost]>:
             - if <server.flag[juggernaut_maps.<[map]>.game_data.custom_settings.abilities_disabled].is_truthy>:
                 - narrate "<&c>Sorry, due to the host's settings abilities are disabled!"
                 - stop
-            - run jug_mana_use def:<[ability.mana_cost]> player:<player>
-            - ratelimit <player> 1s
             - choose <[ability.type]>:
                 - case mage:
+                    - ratelimit <player> <[ability.countdown]>s
+                    - run jug_mana_use def:<[ability.mana_cost]> player:<player>
                     - definemap attributes:
                         generic_movement_speed:
                             1:
                                 operation: ADD_NUMBER
                                 amount: -100
-                                id: <util.random.uuid>
+                                id: <util.random_uuid>
                     - inventory adjust d:<player> slot:37 add_attribute_modifiers:<[attributes]>
                     - run jug_give_nojump def:<[ability.countdown.<[player_type]>].if_null[<[ability.countdown]>]>
                     - repeat 3:
@@ -2445,6 +2456,8 @@ jug_abilities:
                         - if <entry[mage_fireball].spawned_entity.is_spawned>:
                             - remove <entry[mage_fireball].spawned_entity>
                 - case frostmancer:
+                    - ratelimit <player> 0.3s
+                    - run jug_mana_use def:<[ability.mana_cost]> player:<player>
                     - define life_id:<player.flag[juggernaut_data.life_id].if_null[0]>
                     - repeat <[ability.snowball_amount.<[player_type]>].if_null[<[ability.snowball_amount]>]>:
                         - if <player.flag[juggernaut_data.life_id].if_null[0]> == <[life_id]>:
@@ -2453,6 +2466,7 @@ jug_abilities:
                             - flag <entry[frostmancer_snowball].spawned_entity> snowball_slow_duration:<[ability.snowball_slow_duration.<[player_type]>].if_null[<[ability.snowball_slow_duration]>]>
                             - flag <entry[frostmancer_snowball].spawned_entity> snowball_knockback:<[ability.snowball_knockback.<[player_type]>].if_null[<[ability.snowball_knockback]>]>
                             - flag <entry[frostmancer_snowball].spawned_entity> snowball_damage_bonus:<[ability.snowball_damage_bonus.<[player_type]>].if_null[<[ability.snowball_damage_bonus]>]>
+                            - flag <entry[frostmancer_snowball].spawned_entity> snowball_radius:<[ability.snowball_radius.<[player_type]>].if_null[<[ability.snowball_radius]>]>
                             - adjust <entry[frostmancer_snowball].spawned_entity> velocity:<player.location.direction.vector.mul[<[ability.snowball_speed.<[player_type]>].if_null[<[ability.snowball_speed]>]>]>
                             - adjust <entry[frostmancer_snowball].spawned_entity> shooter:<player>
                             - wait 0.2s
@@ -2621,7 +2635,7 @@ jug_active_players:
     definitions: map
     debug: false
     script:
-    - determine <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.filter_tag[<[filter_value].has_flag[juggernaut_data.dead].not>].filter_tag[<[filter_value].has_flag[juggernaut_data.spectator].not>]>
+    - determine <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.filter_tag[<[filter_value].as[player].has_flag[juggernaut_data.dead].not>].filter_tag[<[filter_value].as[player].has_flag[juggernaut_data.spectator].not>]>
 jug_map_assignment:
 ## When assigning, do '/npc assign --set jug_map_assignment'
     type: assignment
@@ -2784,7 +2798,7 @@ jug_hosting_main_inv:
   gui: true
   debug: false
   definitions:
-    g: black_stained_glass_pane[display_name=<&sp>]
+    g: black_stained_glass_pane[display=<&sp>]
     t: jug_tutorial_item
   procedural items:
     - define map <player.flag[juggernaut_data.map].if_null[]>
@@ -2792,87 +2806,87 @@ jug_hosting_main_inv:
     - if <player.has_flag[juggernaut_data.is_host]> || !<server.flag[juggernaut_maps.<[map]>].exists>:
         - define item <item[redstone]>
         - adjust def:item flag:juggernaut:reset_all
-        - adjust def:item "display_name:<&e><&l>Reset All"
+        - adjust def:item "display:<&e><&l>Reset All"
         - define lore <list>
         - adjust def:item "lore:<&7>Resets all settings back to default. <&nl><&e>Control Drop: <&7>Reset"
         - define list:->:<[item]>
     - define item <item[clock]>
     - adjust def:item flag:juggernaut:respawn_timer
-    - adjust def:item display_name:<&e><&l>Respawn<&sp>Timer
+    - adjust def:item display:<&e><&l>Respawn<&sp>Timer
     - adjust def:item "lore:<&7>Time it takes for players to respawn <&nl><&nl><proc[jug_settings_value_proc].context[host|<[map]>|respawn_timer]>"
     - define list:->:<[item]>
     - define item <item[emerald]>
     - adjust def:item flag:juggernaut:points
-    - adjust def:item display_name:<&e><&l>Points<&sp>Earned
+    - adjust def:item display:<&e><&l>Points<&sp>Earned
     - adjust def:item "lore:<&7>Points earned from various actions <&nl><&nl><player.flag[juggernaut_data.host_data.points].equals[kill_juggernaut_points].if_true[<&a>].if_false[<&7>].if_null[<&a>]>[1] <proc[jug_settings_value_proc].context[host|<[map]>|kill_juggernaut_points]> <&nl><player.flag[juggernaut_data.host_data.points].equals[juggernaut_kill_points].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[2] <proc[jug_settings_value_proc].context[host|<[map]>|juggernaut_kill_points]> <&nl><player.flag[juggernaut_data.host_data.points].equals[jug_scoring_method].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[3] <proc[jug_settings_value_proc].context[host|<[map]>|jug_scoring_method]> <&nl><player.flag[juggernaut_data.host_data.points].equals[jug_interval_time].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[4] <proc[jug_settings_value_proc].context[host|<[map]>|jug_interval_time]>"
     - define list:->:<[item]>
     - define item <item[shield]>
     - adjust def:item flag:juggernaut:spawn_protection
-    - adjust def:item display_name:<&e><&l>Spawn<&sp>Protection
+    - adjust def:item display:<&e><&l>Spawn<&sp>Protection
     - adjust def:item "lore:<&7>Resistance given when respawning <&nl><&nl><player.flag[juggernaut_data.host_data.spawn_protection].equals[spawn_protection_duration].if_true[<&a>].if_false[<&7>].if_null[<&a>]>[1] <proc[jug_settings_value_proc].context[host|<[map]>|spawn_protection_duration]> <&nl><player.flag[juggernaut_data.host_data.spawn_protection].equals[spawn_protection_level].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[2] <proc[jug_settings_value_proc].context[host|<[map]>|spawn_protection_level]>"
     - define list:->:<[item]>
     - define item <item[gold_ingot]>
     - adjust def:item flag:juggernaut:victory_condition
-    - adjust def:item display_name:<&e><&l>Victory<&sp>Condition
+    - adjust def:item display:<&e><&l>Victory<&sp>Condition
     - adjust def:item "lore:<&7>The amount of points required to win <&nl><&nl><proc[jug_settings_value_proc].context[host|<[map]>|victory_conditions]>"
     - define list:->:<[item]>
     - define item <item[diamond_chestplate]>
     - adjust def:item flag:juggernaut:resistances
-    - adjust def:item display_name:<&e><&l>Juggernaut<&sp>Resistances
+    - adjust def:item display:<&e><&l>Juggernaut<&sp>Resistances
     - adjust def:item "lore:<&7>Damage multipliers to the juggernaut from <&nl><&7>various sources. Lower numbers decrease <&nl><&7>damage taken. <&nl><&nl><player.flag[juggernaut_data.host_data.resistances].equals[base].if_true[<&a>].if_false[<&7>].if_null[<&a>]>[1] <proc[jug_settings_value_proc].context[host|<[map]>|juggernaut_base_resistance]> <&nl><player.flag[juggernaut_data.host_data.resistances].equals[projectile].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[2] <proc[jug_settings_value_proc].context[host|<[map]>|juggernaut_projectile_resistance]> <&nl><player.flag[juggernaut_data.host_data.resistances].equals[entity_explosion].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[3] <proc[jug_settings_value_proc].context[host|<[map]>|juggernaut_entity_explosion_resistance]> <&nl><player.flag[juggernaut_data.host_data.resistances].equals[entity_attack].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[4] <proc[jug_settings_value_proc].context[host|<[map]>|juggernaut_entity_attack_resistance]>"
     - define list:->:<[item]>
     - define item <item[slime_ball]>
     - adjust def:item flag:juggernaut:kits
-    - adjust def:item display_name:<&e><&l>Kit<&sp>Choices
+    - adjust def:item display:<&e><&l>Kit<&sp>Choices
     - adjust def:item "lore:<&7>Restrict possible kits, or make it random only <&nl><&nl><proc[jug_settings_value_proc].context[host|<[map]>|banned_kits]> <&nl><&7><proc[jug_settings_value_proc].context[host|<[map]>|random_only]>"
     - define list:->:<[item]>
     - define item <item[light_blue_dye]>
     - adjust def:item flag:juggernaut:abilities
-    - adjust def:item display_name:<&e><&l>Abilities
+    - adjust def:item display:<&e><&l>Abilities
     - adjust def:item "lore:<&7>Ability related options. <&nl><&nl><player.flag[juggernaut_data.host_data.abilities].equals[cooldown_multiplier].if_true[<&a>].if_false[<&7>].if_null[<&a>]>[1] <proc[jug_settings_value_proc].context[host|<[map]>|cooldown_multiplier]> <&nl><player.flag[juggernaut_data.host_data.abilities].equals[mana_multiplier].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[2] <proc[jug_settings_value_proc].context[host|<[map]>|mana_multiplier]> <&nl><player.flag[juggernaut_data.host_data.abilities].equals[abilities_disabled].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[3] <proc[jug_settings_value_proc].context[host|<[map]>|abilities_disabled]>"
     - define list:->:<[item]>
     - define item <item[compass]>
     - adjust def:item flag:juggernaut:tracking
-    - adjust def:item display_name:<&e><&l>Tracking
+    - adjust def:item display:<&e><&l>Tracking
     - adjust def:item "lore:<&7>Lets you disable the juggernaut tracker or the glowing. <&nl><&nl><player.flag[juggernaut_data.host_data.tracking].equals[compass_disabled].if_true[<&a>].if_false[<&7>].if_null[<&a>]>[1] <proc[jug_settings_value_proc].context[host|<[map]>|compass_disabled]> <&nl><player.flag[juggernaut_data.host_data.tracking].equals[glowing_disabled].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[2] <proc[jug_settings_value_proc].context[host|<[map]>|glowing_disabled]>"
     - define list:->:<[item]>
     - define item <item[golden_apple]>
     - adjust def:item flag:juggernaut:health
-    - adjust def:item display_name:<&e><&l>Healing
+    - adjust def:item display:<&e><&l>Healing
     - adjust def:item "lore:<&7>Change max health, or disable natural regeneration. <&nl><&nl><player.flag[juggernaut_data.host_data.health].equals[max_health].if_true[<&a>].if_false[<&7>].if_null[<&a>]>[1] <proc[jug_settings_value_proc].context[host|<[map]>|max_health]> <&nl><player.flag[juggernaut_data.host_data.health].equals[regen_disabled].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[2] <proc[jug_settings_value_proc].context[host|<[map]>|regen_disabled]>"
     - define list:->:<[item]>
     - define item <item[red_bed]>
     - adjust def:item flag:juggernaut:spawning
-    - adjust def:item display_name:<&e><&l>Spawning
+    - adjust def:item display:<&e><&l>Spawning
     - adjust def:item "lore:<&7>Choose when the juggernaut spawn is used. <&nl><&nl><proc[jug_settings_value_proc].context[host|<[map]>|juggernaut_spawning]>"
     - define list:->:<[item]>
     - define item <item[diamond_sword]>
     - adjust def:item flag:juggernaut:pvp
-    - adjust def:item display_name:<&e><&l>PVP<&sp>Settings
+    - adjust def:item display:<&e><&l>PVP<&sp>Settings
     - adjust def:item "lore:<&7>Edit settings regarding PVP. <&nl><&nl><player.flag[juggernaut_data.host_data.pvp].equals[attack_cooldown_type].if_true[<&a>].if_false[<&7>].if_null[<&a>]>[1] <proc[jug_settings_value_proc].context[host|<[map]>|attack_cooldown_type]> <&nl><player.flag[juggernaut_data.host_data.pvp].equals[combo_mode].if_true[<&a>].if_false[<&7>].if_null[<&7>]>[2] <proc[jug_settings_value_proc].context[host|<[map]>|combo_mode]>"
     - define list:->:<[item]>
     - if <player.has_flag[juggernaut_data.is_host]>:
         - if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> == 0 && <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.size.if_null[0]> >= <proc[jug_config_read].context[mininum_players]>:
             - define item <item[lime_dye]>
             - adjust def:item flag:juggernaut:start_game
-            - adjust def:item display_name:<&a><&l>Start<&sp>Game
+            - adjust def:item display:<&a><&l>Start<&sp>Game
             - adjust def:item "lore:<&7>Click here to start the game"
             - define list:->:<[item]>
         - else if <server.flag[juggernaut_maps.<[map]>.game_data.phase]> == 0:
             - define item <item[gray_dye]>
             - adjust def:item flag:juggernaut:start_game
-            - adjust def:item display_name:<&7><&l>Start<&sp>Game
+            - adjust def:item display:<&7><&l>Start<&sp>Game
             - adjust def:item "lore:<&7>Click here to start the game <&nl><&c>Not enough players! Mininum: <&l><proc[jug_config_read].context[mininum_players]>"
             - define list:->:<[item]>
         - else:
             - define item <item[air]>
             - define list:->:<[item]>
     - else:
-        - define list:->:black_stained_glass_pane[display_name=<&sp>]
+        - define list:->:black_stained_glass_pane[display=<&sp>]
     - if <player.has_flag[juggernaut_data.is_host]> || !<server.flag[juggernaut_maps.<[map]>].exists>:
         - define item <item[repeater]>
         - adjust def:item flag:juggernaut:saves
-        - adjust def:item display_name:<&e><&l>Saves
+        - adjust def:item display:<&e><&l>Saves
         - define lore <list>
         - define "lore:->:<&e>Left Click: <&7>Load Settings"
         - define "lore:->:<&e>Right Click: <&7>Save Settings<&nl>"
@@ -2882,22 +2896,22 @@ jug_hosting_main_inv:
         - define list:->:<[item]>
         - define item <item[oak_sign]>
         - adjust def:item flag:juggernaut:host_info
-        - adjust def:item "display_name:<&e><&l>Numerical Settings Keys"
+        - adjust def:item "display:<&e><&l>Numerical Settings Keys"
         - adjust def:item "lore:<&e>Left Click: <&7>Increase<&nl><&e>Right Click: <&7>Decrease<&nl><&e>Shift Left Click: <&7>Substantial Increase <&nl><&e>Shift Right Click: <&7>Substantial Decrease <&nl><&e>Drop: <&7>Reset to Default <&nl><&nl><&7>(Left click to view other pages) <&nl><&a>○<&7>○○○"
         - choose <player.flag[juggernaut_data.host_data.host_info].if_null[1]>:
             - case 2:
-                - adjust def:item "display_name:<&e><&l>Toggle Settings Keys"
+                - adjust def:item "display:<&e><&l>Toggle Settings Keys"
                 - adjust def:item "lore:<&e>Left Click/Right Click: <&7>Toggle<&nl><&e>Drop: <&7>Reset to Default <&nl><&nl><&7>(Left click to view other pages) <&nl><&7>○<&a>○<&7>○○"
             - case 3:
-                - adjust def:item "display_name:<&e><&l>List Settings Keys"
+                - adjust def:item "display:<&e><&l>List Settings Keys"
                 - adjust def:item "lore:<&e>Left Click: <&7>Next Option<&nl><&e>Right Click: <&7>Previous Option<&nl><&e>Drop: <&7>Reset to Default <&nl><&nl><&7>(Left click to view other pages) <&nl><&7>○○<&a>○<&7>○"
             - case 4:
-                - adjust def:item "display_name:<&e><&l>Items w/ Multiple Settings Keys"
+                - adjust def:item "display:<&e><&l>Items w/ Multiple Settings Keys"
                 - adjust def:item "lore:<&e>Number Keys: <&7>Select Associated Setting <&nl><&nl><&7>(Left click to view other pages) <&nl><&7>○○○<&a>○"
         - define list:->:<[item]>
     - else:
         - repeat 2:
-            - define list:->:black_stained_glass_pane[display_name=<&sp>]
+            - define list:->:black_stained_glass_pane[display=<&sp>]
     - determine <[list]>
   slots:
     - [g] [g] [g] [g] [] [g] [g] [g] [g]
@@ -3143,9 +3157,9 @@ jug_hosting_click:
                                 - narrate "<&c>The kit you had selected has been disabled by the host! You have been reset back to using a random kit." targets:<[value]>
                                 - flag <[value]> juggernaut_data.kit:!
                             - if <[value].flag[juggernaut_data.kit].exists>:
-                                - inventory set d:<[value].inventory> o:<proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.display_name]>;flag=juggernaut_kit_representation:true] slot:5
+                                - inventory set d:<[value].inventory> o:<proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.gui_item]>[display=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.display_name]>;flag=juggernaut_kit_representation:true] slot:5
                             - else:
-                                - inventory set d:<[value].inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
+                                - inventory set d:<[value].inventory> o:FIREWORK_STAR[display=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
                             - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.filter_tag[<[filter_value].open_inventory.script.name.equals[jug_kit_selection_gui].if_null[false]>].if_null[<list>]>:
                                 - inventory open d:jug_kit_selection_gui player:<[value]>
                     - case drop:
@@ -3411,7 +3425,7 @@ jug_kit_host_settings_gui:
   gui: true
   debug: false
   definitions:
-    g: black_stained_glass_pane[display_name=<&sp>]
+    g: black_stained_glass_pane[display=<&sp>]
   procedural items:
     - define size 28
     - define map <player.flag[juggernaut_data.map].if_null[null]>
@@ -3425,7 +3439,7 @@ jug_kit_host_settings_gui:
         - define prim <&color[#<[value].get[primary_color]>]>
         - define sec <&color[#<[value].get[secondary_color]>]>
         - define item <[value].get[gui_item].as_item>
-        - adjust def:item display_name:<[sec]><&l><&k>;<[prim]><&l><&k>;<[sec]><&l><&k>;<&sp><[prim]><[value].get[display_name]><&sp><[sec]><&l><&k>;<[prim]><&l><&k>;<[sec]><&l><&k>;
+        - adjust def:item display:<[sec]><&l><&k>;<[prim]><&l><&k>;<[sec]><&l><&k>;<&sp><[prim]><[value].get[display_name]><&sp><[sec]><&l><&k>;<[prim]><&l><&k>;<[sec]><&l><&k>;
         - adjust def:item flag:kit:<[key]>
         - adjust def:item "lore:<&7><[value.description].split_lines_by_width[250].replace[<&nl>].with[<&nl><&7>]> <&nl><&nl><&7>Enabled: <player.flag[juggernaut_custom_settings.banned_kits].contains[<[key]>].if_true[<&c>Off].if_false[<&a>On].if_null[<&a>On]>"
         - adjust def:item hides:all
@@ -3437,15 +3451,15 @@ jug_kit_host_settings_gui:
     - if <player.flag[gui_page]> > 1:
         - define list <[list].include[jug_prev_page_item[flag=menu:jug_kit_selection_gui]]>
     - else:
-        - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
-    - define item "<item[FIREWORK_STAR[display_name=<element[<&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;<&sp><&7>Random Kit Only<&sp><&c><&l><&k>;<&7><&l><&k>;<&c><&l><&k>;].escaped>;lore=<&7>Force players to only choose random kits.<&nl><&nl><&7>Enabled: <player.flag[juggernaut_custom_settings.random_only].exists.if_true[<&a>On].if_false[<&c>Off]>;flag=kit:random;hides=all]]>"
+        - define list <[list].include[black_stained_glass_pane[display=<&sp>]]>
+    - define item "<item[FIREWORK_STAR[display=<&c><&l><&k>:<&7><&l><&k>:<&c><&l><&k>:<&sp><&7>Random Kit Only<&sp><&c><&l><&k>:<&7><&l><&k>:<&c><&l><&k>:;lore=<&7>Force players to only choose random kits.<&nl><&nl><&7>Enabled: <player.flag[juggernaut_custom_settings.random_only].exists.if_true[<&a>On].if_false[<&c>Off]>;flag=kit:random;hides=all]]>"
     - if <player.flag[juggernaut_custom_settings.random_only].exists>:
         - adjust def:item enchantments:<map[].with[luck].as[1]>
     - define list:->:<[item]>
     - if <proc[jug_config_read].context[kits].keys.get[<[pageMax].add[1]>].exists>:
         - define list <[list].include[jug_next_page_item[flag=menu:jug_kit_selection_gui]]>
     - else:
-        - define list <[list].include[black_stained_glass_pane[display_name=<&sp>]]>
+        - define list <[list].include[black_stained_glass_pane[display=<&sp>]]>
     - determine <[list]>
   slots:
     - [g] [g] [g] [g] [g] [g] [g] [g] [g]
@@ -3489,7 +3503,7 @@ jug_kit_host_settings_click:
                     - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.if_null[<list>]>:
                         - narrate "<&c>The host has enabled random only, which means your kit selection has been reset!" targets:<[value]>
                         - flag <[value]> juggernaut_data.kit:!
-                        - inventory set d:<[value].inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
+                        - inventory set d:<[value].inventory> o:FIREWORK_STAR[display=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
             - else:
                 - flag <player> juggernaut_custom_settings.random_only:!
                 - if <[map].exists>:
@@ -3501,7 +3515,7 @@ jug_kit_host_settings_click:
             - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.filter_tag[<player.flag[juggernaut_custom_settings.banned_kits].contains[<[filter_value].flag[juggernaut_data.kit].if_null[null]>].if_null[false]>].if_null[<list>]>:
                 - narrate "<&c>The kit you had selected has been disabled by the host! You have been reset back to using a random kit." targets:<[value]>
                 - flag <[value]> juggernaut_data.kit:!
-                - inventory set d:<[value].inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
+                - inventory set d:<[value].inventory> o:FIREWORK_STAR[display=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
             - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.filter_tag[<[filter_value].open_inventory.script.name.equals[jug_kit_selection_gui].if_null[false]>].if_null[<list>]>:
                 - inventory open d:jug_kit_selection_gui player:<[value]>
         - inventory open d:jug_kit_host_settings_gui
@@ -3791,7 +3805,7 @@ jug_trap_particles:
                         1:
                             operation: ADD_NUMBER
                             amount: -100
-                            id: <util.random.uuid>
+                            id: <util.random_uuid>
                 - inventory adjust d:<[trapped]> slot:37 add_attribute_modifiers:<[attributes]>
                 - run jug_give_nojump def:3 player:<[trapped]>
                 - playsound <[trapped]> sound:BLOCK_ANVIL_LAND pitch:0 volume:0.5
@@ -3825,7 +3839,7 @@ jug_trap_event:
                     1:
                         operation: ADD_NUMBER
                         amount: -<[hstun]>
-                        id: <util.random.uuid>
+                        id: <util.random_uuid>
             - inventory adjust d:<context.hit_entity> slot:37 add_attribute_modifiers:<[attributes]>
             - run jug_give_nojump def:2 player:<context.hit_entity>
             - playsound <context.shooter> sound:ENTITY_ARROW_HIT_PLAYER
@@ -3852,7 +3866,7 @@ jug_opponents_proc:
     - define map <player.flag[juggernaut_data.map]>
     - define players <list>
     - if <player.has_flag[juggernaut_data.is_juggernaut]>:
-        - define players <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.filter_tag[<[filter_value].has_flag[juggernaut_data.is_juggernaut].not>].parse_tag[<[parse_value].as_player>]>
+        - define players <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.filter_tag[<[filter_value].as[player].has_flag[juggernaut_data.is_juggernaut].not>].parse_tag[<[parse_value].as_player>]>
     - else:
         - define players:->:<server.flag[juggernaut_maps.<[map]>.game_data.juggernaut]>
     - choose <[state]>:
@@ -3943,7 +3957,7 @@ jug_gradient:
     debug: false
     script:
     - define cols <[colors].split[/].parse_tag[<color[<[parse_value]>]>]>
-    - define mods <[modifiers].split[/]>
+    - define mods <[modifiers].if_null[<list>].split[/]>
     - define test <list>
     - define r <[cols].get[1].red>
     - define g <[cols].get[1].green>
@@ -4027,22 +4041,22 @@ jug_custom_settings_inv:
   gui: true
   debug: false
   definitions:
-    g: black_stained_glass_pane[display_name=<&sp>]
+    g: black_stained_glass_pane[display=<&sp>]
   procedural items:
     - define map <player.flag[juggernaut_data.map].if_null[]>
     - define list <list>
     - define settings_size <server.flag[juggernaut_maps.<[map]>.game_data.custom_settings_options].if_null[<list>].size>
     - if !<server.flag[juggernaut_maps.<[map]>.host_data.host].exists>:
         - define item:<item[comparator]>
-        - adjust def:item "display_name:<&e><&l>Current Vote Winner"
+        - adjust def:item "display:<&e><&l>Current Vote Winner"
         - adjust def:item lore:<&e><proc[jug_custom_settings_top_display].context[<[map]>]>
         - define list:->:<[item]>
     - else:
-        - define list:->:black_stained_glass_pane[display_name=<&sp>]
+        - define list:->:black_stained_glass_pane[display=<&sp>]
     - foreach <server.flag[juggernaut_maps.<[map]>.game_data.custom_settings_options].if_null[<list>]>:
         - define item:<item[player_head]>
         - adjust def:item skull_skin:<[key].uuid>
-        - adjust def:item display_name:<&e><[value.save_name]>
+        - adjust def:item display:<&e><[value.save_name]>
         - define lore:<list>
         - if !<server.flag[juggernaut_maps.<[map]>.host_data.host].exists>:
             - if <player.flag[juggernaut_data.settings_vote].if_null[null]> == <[key]>:
@@ -4058,7 +4072,7 @@ jug_custom_settings_inv:
         - define list:->:<item[air]>
     - if !<server.flag[juggernaut_maps.<[map]>.host_data.host].exists>:
         - define item:<item[redstone]>
-        - adjust def:item "display_name:<&e>Default Settings"
+        - adjust def:item "display:<&e>Default Settings"
         - define lore:<list>
         - if <player.flag[juggernaut_data.settings_vote].if_null[null]> == default:
             - define "lore:->:<&a><&o>You voted for these settings!"
@@ -4068,9 +4082,9 @@ jug_custom_settings_inv:
         - adjust def:item flag:jug_data.setting:default
         - define list:->:<[item]>
     - else:
-        - define list:->:black_stained_glass_pane[display_name=<&sp>]
+        - define list:->:black_stained_glass_pane[display=<&sp>]
     - define item:<item[repeater]>
-    - adjust def:item "display_name:<&e>Settings Submission"
+    - adjust def:item "display:<&e>Settings Submission"
     - define lore <list>
     - if !<server.flag[juggernaut_maps.<[map]>.game_data.custom_settings_options.<player>].exists>:
         - repeat 9:
@@ -4283,9 +4297,9 @@ jug_apply_custom_settings:
                     - narrate "<&c>The kit you had selected has been disabled! You have been reset back to using a random kit." targets:<[value]>
                     - flag <[value]> juggernaut_data.kit:!
                 - if <[value].flag[juggernaut_data.kit].exists>:
-                    - inventory set d:<[value].inventory> o:<proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.gui_item]>[display_name=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.display_name]>;flag=juggernaut_kit_representation:true] slot:5
+                    - inventory set d:<[value].inventory> o:<proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.gui_item]>[display=<&7>Selected<&sp>Kit:<&sp><&color[#<proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.primary_color]>]><&l><proc[jug_config_read].context[kits.<[value].flag[juggernaut_data.kit]>.display_name]>;flag=juggernaut_kit_representation:true] slot:5
                 - else:
-                    - inventory set d:<[value].inventory> o:FIREWORK_STAR[display_name=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
+                    - inventory set d:<[value].inventory> o:FIREWORK_STAR[display=<&7>Selected<&sp>Kit:<&sp><&l>Random;flag=juggernaut_kit_representation:true] slot:5
                 - foreach <server.flag[juggernaut_maps.<[map]>.game_data.players].keys.filter_tag[<[filter_value].open_inventory.script.name.equals[jug_kit_selection_gui].if_null[false]>].if_null[<list>]>:
                     - inventory open d:jug_kit_selection_gui player:<[value]>
 jug_kit_armor_proc:
@@ -4317,15 +4331,17 @@ jug_juggernaut_slowness:
                     1:
                         operation: ADD_SCALAR
                         amount: -0.1
-                        id: <util.random.uuid>
+                        id: <util.random_uuid>
             - inventory adjust d:<player> slot:37 add_attribute_modifiers:<[attributes]>
             - narrate "<&7>You have been slowed by being the juggernaut! You now move <&c><[value].mul[10]><&chr[0025]> <&7>slower!"
 jug_particle_bubble:
     type: task
     debug: false
-    definitions: type|distance|mod
+    definitions: type|distance|mod|overrideLoc
     script:
     - define baseLoc <player.location.add[0,0.95,0]>
+    - if <[overrideLoc].exists>:
+        - define baseLoc <[overrideLoc]>
     - repeat 15 as:pitch:
         - repeat 30 as:yaw:
             - define Loc <[baseLoc].with_yaw[<element[0].add[<[yaw].sub[1].mul[12]>]>].with_pitch[<element[90].sub[<[pitch].sub[1].mul[12]>]>].forward[<[distance]>]>
@@ -4388,6 +4404,13 @@ jug_particle_bubble:
                         - define color #777722
                     - else:
                         - define color #777700
+                - case frostmancer:
+                    - if <[ran]> > 0.5:
+                        - define color #aaaaff
+                    - else if <[ran]> > 0.2:
+                        - define color #7777ff
+                    - else:
+                        - define color #ddddff
             - choose <[mod].if_null[null]>:
                 - case inward:
                     - define vel <[baseLoc].sub[<[loc]>].x>,<[baseLoc].sub[<[loc]>].y>,<[baseLoc].sub[<[loc]>].z>
